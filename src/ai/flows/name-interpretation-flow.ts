@@ -80,5 +80,3 @@ const interpretNameFlow = ai.defineFlow(
     return output!;
   }
 );
-
-```
