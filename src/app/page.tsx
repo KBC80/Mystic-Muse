@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -29,20 +30,19 @@ export default function HomePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {features.map((feature) => (
-          <Card key={feature.href} className="hover:shadow-xl transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center gap-4 pb-2">
-              <div className="p-2 bg-secondary rounded-md">
-                <feature.icon className="h-6 w-6 text-secondary-foreground" />
-              </div>
-              <CardTitle className="text-xl">{feature.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-4">{feature.description}</CardDescription>
-              <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
-                <Link href={feature.href}>탐색하기</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <Link href={feature.href} key={feature.href} className="block h-full group">
+            <Card className="h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:scale-[1.02] transition-all duration-300 ease-in-out cursor-pointer">
+              <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                <div className="p-2 bg-secondary rounded-md">
+                  <feature.icon className="h-6 w-6 text-secondary-foreground" />
+                </div>
+                <CardTitle className="text-xl text-primary group-hover:text-primary/90">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow pt-2">
+                <CardDescription>{feature.description}</CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -58,3 +58,4 @@ export default function HomePage() {
     </div>
   );
 }
+
