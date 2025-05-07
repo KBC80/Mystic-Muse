@@ -11,32 +11,32 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   {
-    title: 'Home',
+    title: '홈',
     href: '/',
     icon: Home,
   },
   {
-    title: 'Name Interpretation',
+    title: '이름 풀이',
     href: '/name-interpretation',
     icon: PenTool,
   },
   {
-    title: 'Name Generation',
+    title: '작명 서비스',
     href: '/name-generation',
     icon: Baby,
   },
   {
-    title: 'Today\'s Fortune',
+    title: '오늘의 운세',
     href: '/todays-fortune',
     icon: CalendarHeart,
   },
   {
-    title: 'Dream Interpretation',
+    title: '꿈 해몽',
     href: '/dream-interpretation',
     icon: CloudMoon,
   },
   {
-    title: 'Tarot Reading',
+    title: '타로 리딩',
     href: '/tarot-reading',
     icon: LayoutGrid,
   },

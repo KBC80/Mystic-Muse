@@ -22,7 +22,7 @@ import { dreamInterpretation, type DreamInterpretationOutput, type DreamInterpre
 import { CloudMoon, Sparkles, AlertTriangle, Gift, WandSparkles } from 'lucide-react';
 
 const formSchema = z.object({
-  dreamContent: z.string().min(10, "Please describe your dream in at least 10 characters."),
+  dreamContent: z.string().min(10, "꿈 내용을 최소 10자 이상 입력해주세요."),
 });
 
 type DreamInterpretationFormValues = z.infer<typeof formSchema>;
@@ -47,13 +47,24 @@ export default function DreamInterpretationPage() {
       const interpretationResult = await dreamInterpretation(values as DreamInterpretationInput);
       setResult(interpretationResult);
     } catch (err) {
-      console.error("Dream interpretation error:", err);
-      setError(err instanceof Error ? err.message : "An unknown error occurred during dream interpretation.");
+      console.error("꿈 해석 오류:", err);
+      setError(err instanceof Error ? err.message : "꿈 해석 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
   }
   
+  const getOmenText = (omen: 'good' | 'bad' | 'neutral') => {
+    switch (omen) {
+      case 'good':
+        return '좋은 징조';
+      case 'bad':
+        return '나쁜 징조';
+      default:
+        return '중립적인 징조';
+    }
+  };
+
   const getOmenStyle = (omen: 'good' | 'bad' | 'neutral') => {
     switch (omen) {
       case 'good':
@@ -71,10 +82,10 @@ export default function DreamInterpretationPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <CloudMoon className="text-primary h-6 w-6" /> Dream Interpretation
+            <CloudMoon className="text-primary h-6 w-6" /> 꿈 해석
           </CardTitle>
           <CardDescription>
-            Describe your dream, and we'll help you uncover its hidden meanings and symbols.
+            당신의 꿈을 설명해주시면 숨겨진 의미와 상징을 찾는 데 도움을 드립니다.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -85,23 +96,23 @@ export default function DreamInterpretationPage() {
                 name="dreamContent"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Dream</FormLabel>
+                    <FormLabel>당신의 꿈</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., I dreamt of flying over a vast ocean..."
+                        placeholder="예) 광활한 바다 위를 나는 꿈을 꾸었어요..."
                         className="min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      The more details you provide, the better the interpretation.
+                      자세한 내용을 제공할수록 더 나은 해석을 받을 수 있습니다.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "Interpret My Dream"}
+                {isLoading ? <LoadingSpinner size={20} /> : "내 꿈 해석하기"}
               </Button>
             </form>
           </Form>
@@ -111,13 +122,13 @@ export default function DreamInterpretationPage() {
       {isLoading && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">Unraveling the mysteries of your dream...</p>
+          <p className="ml-2 text-muted-foreground">당신의 꿈의 신비를 풀고 있습니다...</p>
         </div>
       )}
 
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>Interpretation Error</AlertTitle>
+          <AlertTitle>해석 오류</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -126,44 +137,44 @@ export default function DreamInterpretationPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center gap-2">
-              <WandSparkles className="h-6 w-6 text-primary"/> Your Dream's Meaning
+              <WandSparkles className="h-6 w-6 text-primary"/> 당신의 꿈의 의미
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
               <h3 className="text-xl font-semibold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-secondary-foreground"/> Dream Summary
+                <Sparkles className="h-5 w-5 text-secondary-foreground"/> 꿈 요약
               </h3>
               <p className="text-muted-foreground">{result.summary}</p>
             </div>
             <div>
-              <h3 className="text-xl font-semibold">Symbol Analysis</h3>
+              <h3 className="text-xl font-semibold">상징 분석</h3>
               <p className="text-muted-foreground">{result.symbolAnalysis}</p>
             </div>
             <div>
-              <h3 className="text-xl font-semibold">Omen</h3>
+              <h3 className="text-xl font-semibold">징조</h3>
               <p className={`px-3 py-1 inline-block rounded-md text-sm font-medium ${getOmenStyle(result.omen)}`}>
-                {result.omen.charAt(0).toUpperCase() + result.omen.slice(1)} Omen
+                {getOmenText(result.omen)}
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-xl font-semibold flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-secondary-foreground"/> Additional Cautions
+                  <AlertTriangle className="h-5 w-5 text-secondary-foreground"/> 추가 주의사항
                 </h3>
                 <p className="text-muted-foreground">{result.additionalCautions}</p>
               </div>
               <div>
                 <h3 className="text-xl font-semibold flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-secondary-foreground"/> Good Fortune
+                  <Sparkles className="h-5 w-5 text-secondary-foreground"/> 좋은 운세
                 </h3>
                 <p className="text-muted-foreground">{result.goodFortune}</p>
               </div>
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-secondary-foreground"/> Lucky Numbers from Your Dream</h3>
+              <h3 className="text-xl font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-secondary-foreground"/> 꿈에서 나온 행운의 숫자</h3>
               <div className="flex space-x-2 mt-2">
                 {result.luckyNumbers.map((num) => (
                   <span key={num} className="flex items-center justify-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-bold text-lg shadow-md">

@@ -1,35 +1,35 @@
 'use server';
 
 /**
- * @fileOverview A tarot card reading AI agent.
+ * @fileOverview 타로 카드 리딩 AI 에이전트입니다.
  *
- * - tarotCardReading - A function that handles the tarot card reading process.
- * - TarotCardReadingInput - The input type for the tarotCardReading function.
- * - TarotCardReadingOutput - The return type for the tarotCardReading function.
+ * - tarotCardReading - 타로 카드 리딩 과정을 처리하는 함수입니다.
+ * - TarotCardReadingInput - tarotCardReading 함수의 입력 타입입니다.
+ * - TarotCardReadingOutput - tarotCardReading 함수의 반환 타입입니다.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const TarotCardReadingInputSchema = z.object({
-  question: z.string().describe('The question the user is asking.'),
-  card1: z.string().describe('The first tarot card selected by the user.'),
-  card2: z.string().describe('The second tarot card selected by the user.'),
-  card3: z.string().describe('The third tarot card selected by the user.'),
+  question: z.string().describe('사용자가 묻는 질문입니다.'),
+  card1: z.string().describe('사용자가 선택한 첫 번째 타로 카드입니다.'),
+  card2: z.string().describe('사용자가 선택한 두 번째 타로 카드입니다.'),
+  card3: z.string().describe('사용자가 선택한 세 번째 타로 카드입니다.'),
 });
 export type TarotCardReadingInput = z.infer<typeof TarotCardReadingInputSchema>;
 
 const TarotCardReadingOutputSchema = z.object({
   card1Interpretation: z
     .string()
-    .describe('The interpretation of the first tarot card.'),
+    .describe('첫 번째 타로 카드에 대한 해석입니다.'),
   card2Interpretation: z
     .string()
-    .describe('The interpretation of the second tarot card.'),
+    .describe('두 번째 타로 카드에 대한 해석입니다.'),
   card3Interpretation: z
     .string()
-    .describe('The interpretation of the third tarot card.'),
-  overallAdvice: z.string().describe('Overall advice based on the card readings.'),
+    .describe('세 번째 타로 카드에 대한 해석입니다.'),
+  overallAdvice: z.string().describe('카드 리딩을 바탕으로 한 전반적인 조언입니다.'),
 });
 export type TarotCardReadingOutput = z.infer<typeof TarotCardReadingOutputSchema>;
 
@@ -41,18 +41,18 @@ const prompt = ai.definePrompt({
   name: 'tarotCardReadingPrompt',
   input: {schema: TarotCardReadingInputSchema},
   output: {schema: TarotCardReadingOutputSchema},
-  prompt: `You are an expert tarot card reader. A user has asked the following question: {{{question}}}. They have selected three cards: {{{card1}}}, {{{card2}}}, and {{{card3}}}.
+  prompt: `당신은 전문 타로 카드 리더입니다. 사용자가 다음 질문을 했습니다: {{{question}}}. 사용자는 세 장의 카드 {{{card1}}}, {{{card2}}}, {{{card3}}}를 선택했습니다. 모든 답변은 한국어로 해주세요.
 
-  Provide an interpretation of each card in relation to the user's question.
+  사용자의 질문과 관련하여 각 카드를 해석해주세요.
 
-  Then, provide overall advice based on the card readings, and offer specific interpretations for the user's current situation.
-  Remember that tarot card reading is a blend of art and intuition. Trust the wisdom of the cards and let them guide you toward clarity and insight.
-  Interpret each card in relation to the question: {{{question}}}.
-  Make sure to add a card interpretation for each of the 3 cards chosen. 
+  그런 다음, 카드 리딩을 바탕으로 전반적인 조언을 제공하고, 사용자의 현재 상황에 대한 구체적인 해석을 제시해주세요.
+  타로 카드 리딩은 예술과 직관의 조화라는 것을 기억하세요. 카드의 지혜를 믿고 명확성과 통찰력으로 인도하도록 하세요.
+  각 카드를 질문과 관련하여 해석해주세요: {{{question}}}.
+  선택된 3장의 각 카드에 대한 해석을 반드시 추가해주세요.
 
-  Card 1: {{{card1}}}
-  Card 2: {{{card2}}}
-  Card 3: {{{card3}}}
+  카드 1: {{{card1}}}
+  카드 2: {{{card2}}}
+  카드 3: {{{card3}}}
 `,
 });
 
@@ -67,3 +67,4 @@ const tarotCardReadingFlow = ai.defineFlow(
     return output!;
   }
 );
+

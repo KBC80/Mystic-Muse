@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Mystic Muse',
-  description: 'Integrated fortune-telling services: astrology, philosophy, tarot, and dream interpretation.',
+  title: '미스틱 뮤즈',
+  description: '통합 운세 서비스: 사주, 작명, 타로, 꿈 해석을 제공합니다.',
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning>
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased font-sans")}>
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />

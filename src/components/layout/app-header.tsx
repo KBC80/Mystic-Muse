@@ -5,7 +5,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { navItems } from '@/config/nav';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes'; // Will need to install next-themes
+import { useTheme } from 'next-themes'; 
 import { useEffect, useState } from 'react';
 
 export function AppHeader() {
@@ -18,22 +18,22 @@ export function AppHeader() {
   }, []);
   
   const currentPage = navItems.find(item => item.href === pathname || (item.href !== "/" && pathname.startsWith(item.href)));
-  const pageTitle = currentPage ? currentPage.title : "Mystic Muse";
+  const pageTitle = currentPage ? currentPage.title : "미스틱 뮤즈";
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   if (!mounted) {
-    return ( // Render a placeholder or null during SSR to avoid hydration mismatch
+    return ( 
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur md:px-6">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
-             {/* Placeholder for SidebarTrigger */}
+             {/* SidebarTrigger 자리 표시자 */}
           </div>
-          <h1 className="text-lg font-semibold md:text-xl">Loading...</h1>
+          <h1 className="text-lg font-semibold md:text-xl">로딩 중...</h1>
         </div>
-         {/* Placeholder for ThemeToggle */}
+         {/* ThemeToggle 자리 표시자 */}
       </header>
     );
   }
@@ -46,7 +46,7 @@ export function AppHeader() {
         </div>
         <h1 className="text-lg font-semibold md:text-xl">{pageTitle}</h1>
       </div>
-      <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+      <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="테마 전환">
         {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
       </Button>
     </header>

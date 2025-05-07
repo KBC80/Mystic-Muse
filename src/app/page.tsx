@@ -6,11 +6,11 @@ import { WandSparkles, PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid } fro
 
 export default function HomePage() {
   const features = [
-    { title: "Name Interpretation", href: "/name-interpretation", icon: PenTool, description: "Analyze the meaning of your name based on ancient wisdom." },
-    { title: "Name Generation", href: "/name-generation", icon: Baby, description: "Find the perfect name for your child, aligned with auspicious principles." },
-    { title: "Today's Fortune", href: "/todays-fortune", icon: CalendarHeart, description: "Discover what the day holds for you in various aspects of life." },
-    { title: "Dream Interpretation", href: "/dream-interpretation", icon: CloudMoon, description: "Uncover the hidden messages and symbols in your dreams." },
-    { title: "Tarot Reading", href: "/tarot-reading", icon: LayoutGrid, description: "Gain insights and guidance on your questions through tarot cards." },
+    { title: "이름 풀이", href: "/name-interpretation", icon: PenTool, description: "고대의 지혜를 바탕으로 당신의 이름이 가진 의미를 분석합니다." },
+    { title: "작명 서비스", href: "/name-generation", icon: Baby, description: "길운의 원리에 맞춰 아이에게 완벽한 이름을 찾아드립니다." },
+    { title: "오늘의 운세", href: "/todays-fortune", icon: CalendarHeart, description: "오늘 하루, 당신의 삶 다양한 측면에서 어떤 일들이 펼쳐질지 알아보세요." },
+    { title: "꿈 해몽", href: "/dream-interpretation", icon: CloudMoon, description: "당신의 꿈 속에 숨겨진 메시지와 상징들을 파헤쳐 보세요." },
+    { title: "타로 리딩", href: "/tarot-reading", icon: LayoutGrid, description: "타로 카드를 통해 당신의 질문에 대한 통찰과 지침을 얻으세요." },
   ];
 
   return (
@@ -20,10 +20,10 @@ export default function HomePage() {
           <WandSparkles className="h-12 w-12 text-primary-foreground" />
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">
-          Welcome to Mystic Muse
+          미스틱 뮤즈에 오신 것을 환영합니다
         </h1>
         <p className="text-lg text-muted-foreground">
-          Your guide to understanding the seen and unseen. Explore fortunes, names, dreams, and tarot.
+          보이는 것과 보이지 않는 것을 이해하기 위한 당신의 안내자. 운세, 이름, 꿈, 타로를 탐험하세요.
         </p>
       </header>
 
@@ -39,7 +39,7 @@ export default function HomePage() {
             <CardContent>
               <CardDescription className="mb-4">{feature.description}</CardDescription>
               <Button asChild variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
-                <Link href={feature.href}>Explore</Link>
+                <Link href={feature.href}>탐색하기</Link>
               </Button>
             </CardContent>
           </Card>
@@ -47,12 +47,12 @@ export default function HomePage() {
       </div>
 
       <section className="text-center py-10 bg-card rounded-lg shadow-md">
-        <h2 className="text-3xl font-semibold text-primary mb-4">Ready to Begin Your Journey?</h2>
+        <h2 className="text-3xl font-semibold text-primary mb-4">여정을 시작할 준비가 되셨나요?</h2>
         <p className="text-md text-muted-foreground mb-6 max-w-2xl mx-auto">
-          Mystic Muse offers a sanctuary for self-discovery and foresight. Each tool is designed to provide clarity and inspiration. Start exploring now and unlock the wisdom within.
+          미스틱 뮤즈는 자기 발견과 예지력을 위한 안식처를 제공합니다. 각 도구는 명확성과 영감을 제공하도록 설계되었습니다. 지금 바로 탐색을 시작하고 내면의 지혜를 발견하세요.
         </p>
         <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
-          <Link href="/name-interpretation">Start with Name Interpretation</Link>
+          <Link href="/name-interpretation">이름 풀이로 시작하기</Link>
         </Button>
       </section>
     </div>

@@ -28,7 +28,7 @@ export function AppSidebar() {
             <WandSparkles className="h-6 w-6" />
           </Button>
           <h1 className="text-xl font-semibold text-primary group-data-[collapsible=icon]:hidden">
-            Mystic Muse
+            미스틱 뮤즈
           </h1>
         </Link>
       </SidebarHeader>
@@ -56,7 +56,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Mystic Muse
+          &copy; {new Date().getFullYear()} 미스틱 뮤즈
         </p>
       </SidebarFooter>
     </Sidebar>
