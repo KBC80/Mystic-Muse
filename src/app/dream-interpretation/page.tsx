@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -19,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { dreamInterpretation, type DreamInterpretationOutput, type DreamInterpretationInput } from '@/ai/flows/dream-interpretation';
-import { CloudMoon, Sparkles, AlertTriangle, Gift, WandSparkles } from 'lucide-react';
+import { CloudMoon, Sparkles, AlertTriangle, Gift, WandSparkles, Home } from 'lucide-react';
 
 const formSchema = z.object({
   dreamContent: z.string().min(10, "꿈 내용을 최소 10자 이상 입력해주세요."),
@@ -79,6 +81,15 @@ export default function DreamInterpretationPage() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-6">
+        <Link href="/" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
+            <Home className="mr-2 h-4 w-4" />
+            홈으로 돌아가기
+          </Button>
+        </Link>
+      </div>
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">

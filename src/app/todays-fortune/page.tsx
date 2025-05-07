@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -25,9 +27,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift } from 'lucide-react';
-// Placeholder for actual AI flow import
-// import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
+import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home } from 'lucide-react';
+import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
 
 
 const formSchema = z.object({
@@ -39,47 +40,17 @@ const formSchema = z.object({
 
 type TodaysFortuneFormValues = z.infer<typeof formSchema>;
 
-// Placeholder for AI response structure
-interface TodaysFortuneResult {
-  overallFortune: string; // (애정, 건강, 직업, 대인관계)
-  love: string;
-  health: string;
-  work: string;
-  relationships: string;
-  luckyNumbers: number[];
-}
-
-// Placeholder server action - replace with actual AI flow call
-async function getTodaysFortune(data: TodaysFortuneFormValues): Promise<TodaysFortuneResult> {
-  console.log("임시 함수: AI 오늘의 운세 호출됨", data);
-  await new Promise(resolve => setTimeout(resolve, 1500)); // API 지연 시뮬레이션
-
-  // 예시 데이터 반환 (한국어)
-  return {
-    overallFortune: `오늘, ${data.name}님, 당신의 에너지는 활기차고 예상치 못한 기회가 생길 수 있습니다. 명확한 의사소통에 집중하고 새로운 경험에 열려 있으세요. 전반적으로 긍정적인 하루가 될 것입니다!`,
-    love: "관계를 깊게 하기에 좋은 날입니다. 싱글이라면 우연한 만남이 의미 있을 수 있습니다. 연인이 있다면 감사를 표현하세요.",
-    health: "에너지 레벨이 좋습니다. 가벼운 운동을 고려해보세요. 수분 섭취에 신경 쓰세요.",
-    work: "생산성이 높습니다. 어려운 작업을 처리하기 좋은 날입니다. 협업이 결실을 맺을 것입니다.",
-    relationships: "사교 활동이 유리합니다. 오랜 친구와 다시 연락하거나 새로운 친구를 사귀세요. 가족 생활에 조화가 있습니다.",
-    luckyNumbers: [Math.floor(Math.random() * 45) + 1, Math.floor(Math.random() * 45) + 1, Math.floor(Math.random() * 45) + 1].filter((v, i, a) => a.indexOf(v) === i).slice(0,3)
-  };
-  // 실제 AI Flow 호출 예시:
-  // const input: GetDailyFortuneInput = { ...data };
-  // return await getDailyFortune(input);
-}
-
-
 export default function TodaysFortunePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TodaysFortuneResult | null>(null);
+  const [result, setResult] = useState<GetDailyFortuneOutput | null>(null);
 
   const form = useForm<TodaysFortuneFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       birthDate: "",
       calendarType: "solar",
-      birthTime: "",
+      birthTime: "모름",
       name: "",
     },
   });
@@ -89,10 +60,11 @@ export default function TodaysFortunePage() {
     setError(null);
     setResult(null);
     try {
-      const fortuneResult = await getTodaysFortune(values);
+      const fortuneResult = await getDailyFortune(values as GetDailyFortuneInput);
       setResult(fortuneResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+      console.error("오늘의 운세 오류:", err);
+      setError(err instanceof Error ? err.message : "오늘의 운세 확인 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +72,15 @@ export default function TodaysFortunePage() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-6">
+        <Link href="/" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
+            <Home className="mr-2 h-4 w-4" />
+            홈으로 돌아가기
+          </Button>
+        </Link>
+      </div>
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">

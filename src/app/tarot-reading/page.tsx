@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -21,7 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { tarotCardReading, type TarotCardReadingOutput, type TarotCardReadingInput } from '@/ai/flows/tarot-card-reading';
 import { generateDeck, type TarotCard } from '@/lib/tarot-cards';
 import Image from 'next/image';
-import { LayoutGrid, WandSparkles, Shuffle, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, WandSparkles, Shuffle, CheckCircle2, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
@@ -144,6 +146,15 @@ export default function TarotReadingPage() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-6">
+        <Link href="/" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
+            <Home className="mr-2 h-4 w-4" />
+            홈으로 돌아가기
+          </Button>
+        </Link>
+      </div>
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">

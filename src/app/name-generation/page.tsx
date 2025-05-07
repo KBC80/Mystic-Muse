@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,7 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GENDER_OPTIONS, CALENDAR_TYPES, EAST_ASIAN_BIRTH_TIMES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Baby, Sparkles, Parentheses, CalendarDays, Clock } from 'lucide-react';
+import { Baby, Sparkles, Parentheses, CalendarDays, Clock, Home } from 'lucide-react';
 import { generateAuspiciousName, type GenerateAuspiciousNameInput, type GenerateAuspiciousNameOutput } from '@/ai/flows/name-generation-flow';
 
 
@@ -84,6 +86,15 @@ export default function NameGenerationPage() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-6">
+        <Link href="/" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
+            <Home className="mr-2 h-4 w-4" />
+            홈으로 돌아가기
+          </Button>
+        </Link>
+      </div>
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
