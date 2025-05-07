@@ -12,9 +12,13 @@ import {z} from 'genkit';
 
 const GenerateAuspiciousNameInputSchema = z.object({
   fatherName: z.string().describe('아버지의 성함입니다.'),
-  fatherSaju: z.string().describe('아버지의 사주 (예: 갑자년 을축월 병인일 정묘시).'),
+  fatherBirthDate: z.string().describe('아버지의 생년월일입니다 (YYYY-MM-DD 형식).'),
+  fatherCalendarType: z.enum(['solar', 'lunar']).describe('아버지의 달력 유형입니다 (solar: 양력, lunar: 음력).'),
+  fatherBirthTime: z.string().describe('아버지의 태어난 시간입니다 (예: 자시, 축시 등 12지신 시간 또는 "모름").'),
   motherName: z.string().describe('어머니의 성함입니다.'),
-  motherSaju: z.string().describe('어머니의 사주 (예: 갑자년 을축월 병인일 정묘시).'),
+  motherBirthDate: z.string().describe('어머니의 생년월일입니다 (YYYY-MM-DD 형식).'),
+  motherCalendarType: z.enum(['solar', 'lunar']).describe('어머니의 달력 유형입니다 (solar: 양력, lunar: 음력).'),
+  motherBirthTime: z.string().describe('어머니의 태어난 시간입니다 (예: 자시, 축시 등 12지신 시간 또는 "모름").'),
   childLastName: z.string().describe('자녀의 성입니다.'),
   childGender: z.enum(['male', 'female']).describe('자녀의 성별입니다 (male: 남자, female: 여자).'),
 });
@@ -40,13 +44,15 @@ const auspiciousNamePrompt = ai.definePrompt({
   name: 'auspiciousNamePrompt',
   input: {schema: GenerateAuspiciousNameInputSchema},
   output: {schema: GenerateAuspiciousNameOutputSchema},
-  prompt: `당신은 한국 전통 성명학 전문가입니다. 다음 정보를 바탕으로 {{{childGender}}} 아이에게 길운을 가져다 줄 아름답고 의미 있는 한글 이름 5개를 추천해주세요. 각 이름에는 가능한 경우 한자 표기, 이름의 의미, 그리고 음양오행 분석을 포함해야 합니다. 모든 답변은 한국어로 해주세요.
+  prompt: `당신은 한국 전통 성명학 및 사주명리학 전문가입니다. 다음 부모님과 자녀의 정보를 바탕으로, 부모님의 사주를 고려하여 {{{childGender}}} 아이에게 길운을 가져다 줄 아름답고 의미 있는 한글 이름 5개를 추천해주세요. 각 이름에는 가능한 경우 한자 표기, 이름의 의미, 그리고 음양오행 및 사주와의 조화에 대한 분석을 포함해야 합니다. 모든 답변은 한국어로 해주세요.
 
 부모 정보:
 - 아버지 성함: {{{fatherName}}}
-- 아버지 사주: {{{fatherSaju}}}
+- 아버지 생년월일: {{{fatherBirthDate}}} ({{{fatherCalendarType}}})
+- 아버지 태어난 시간: {{{fatherBirthTime}}}
 - 어머니 성함: {{{motherName}}}
-- 어머니 사주: {{{motherSaju}}}
+- 어머니 생년월일: {{{motherBirthDate}}} ({{{motherCalendarType}}})
+- 어머니 태어난 시간: {{{motherBirthTime}}}
 
 자녀 정보:
 - 성: {{{childLastName}}}
@@ -56,7 +62,7 @@ const auspiciousNamePrompt = ai.definePrompt({
 1.  **이름 (한글)**: 예) 지우
 2.  **한자 (선택 사항)**: 예) 智祐
 3.  **의미**: 이름의 뜻과 좋은 점을 상세히 설명합니다.
-4.  **음양오행**: 이름이 사주와 어떻게 조화를 이루는지, 어떤 기운을 보강하는지 설명합니다.
+4.  **음양오행 및 사주 조화**: 이름이 부모 및 자녀의 사주와 어떻게 조화를 이루는지, 어떤 기운을 보강하는지 설명합니다.
 
 5개의 독창적이고 현대적이면서도 전통적인 가치를 담은 이름을 제시해주세요.
 `,
@@ -73,3 +79,4 @@ const generateAuspiciousNameFlow = ai.defineFlow(
     return output!;
   }
 );
+
