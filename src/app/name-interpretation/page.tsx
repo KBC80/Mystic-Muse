@@ -26,9 +26,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, NAME_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PenTool, Palette, Users, Heart, Shield, Briefcase, TrendingUp, Gift } from 'lucide-react';
-// Placeholder for actual AI flow import
-// import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
+import { PenTool, Palette, Users, TrendingUp, Gift } from 'lucide-react';
+import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
 
 const formSchema = z.object({
   birthDate: z.string().min(1, "생년월일을 입력해주세요."),
@@ -40,57 +39,60 @@ const formSchema = z.object({
 
 type NameInterpretationFormValues = z.infer<typeof formSchema>;
 
-// Placeholder for AI response structure
-interface NameInterpretationResult {
-  nameAnalysis: string;
-  lifeStages: {
-    earlyYears: string; // (애정, 건강, 직업)
-    middleYears: string;
-    laterYears: string;
-    finalYears: string;
-  };
-  compatibility: {
-    zodiacSign: string; // 띠
-    colors: string[];
-  };
-  luckyNumbers: number[];
-}
 
-// Placeholder server action - replace with actual AI flow call
-async function getNameInterpretation(data: NameInterpretationFormValues): Promise<NameInterpretationResult> {
-  console.log("임시 함수: AI 이름 해석 호출됨", data);
-  // API 지연 시뮬레이션
+// AI 응답 구조는 InterpretNameOutput 타입을 사용합니다.
+// interface NameInterpretationResult {
+//   nameAnalysis: string;
+//   lifeStages: {
+//     초년운: string; 
+//     중년운: string;
+//     장년운: string;
+//     말년운: string;
+//   };
+//   compatibility: {
+//     zodiacSign: string; 
+//     colors: string[];
+//   };
+//   luckyNumbers: number[];
+// }
+
+
+// 실제 AI 흐름 호출로 대체됩니다.
+async function getNameInterpretation(data: NameInterpretationFormValues): Promise<InterpretNameOutput> {
+  console.log("AI 이름 해석 호출됨", data);
+  
+  // 실제 AI Flow 호출
+  // const input: InterpretNameInput = { ...data };
+  // return await interpretName(input);
+
+  // API 지연 시뮬레이션 및 예시 데이터 반환
   await new Promise(resolve => setTimeout(resolve, 1500));
 
   const calendarTypeKr = CALENDAR_TYPES.find(c => c.value === data.calendarType)?.label || data.calendarType;
   const birthTimeKr = EAST_ASIAN_BIRTH_TIMES.find(t => t.value === data.birthTime)?.label || data.birthTime;
   const nameTypeKr = NAME_TYPES.find(n => n.value === data.nameType)?.label || data.nameType;
 
-  // 예시 데이터 반환 (한국어)
   return {
-    nameAnalysis: `${data.birthDate} (${calendarTypeKr}) ${birthTimeKr}에 태어난 '${data.name}'(${nameTypeKr})님의 이름을 분석한 결과, 역동적이면서도 사려 깊은 성향을 나타냅니다. 이 이름은 창의성과 리더십의 에너지와 공명합니다.`,
+    nameAnalysis: `${data.birthDate} (${calendarTypeKr}) ${birthTimeKr}에 태어난 '${data.name}'(${nameTypeKr})님의 이름은 성명학적으로 볼 때, OOO 기운이 강하며 이는 창의성과 현실감각 사이의 조화를 의미합니다. 발음오행상으로는 X, 수리오행상으로는 Y의 특성을 지니고 있어... (더 상세한 분석 내용).`,
     lifeStages: {
-      earlyYears: "초년: 학업과 강한 유대감 형성에 중점을 둡니다. 애정: 유망. 건강: 대체로 양호. 직업: 기초 다짐.",
-      middleYears: "중년: 직업 및 개인적 성취에서 상당한 성장을 이룹니다. 애정: 안정적. 건강: 균형 잡힌 생활 유지. 직업: 최고 성과.",
-      laterYears: "말년: 지혜와 성취감을 가져옵니다. 유산과 가족에 초점 이동. 애정: 깊은 관계. 건강: 주의 필요. 직업: 멘토 역할.",
-      finalYears: "노년: 성찰과 평화의 시기. 노력의 결실을 즐깁니다. 애정: 소중함. 건강: 부드러운 관리. 직업: 유산."
+      초년운: "초년에는 학업에 대한 호기심이 왕성하고 새로운 지식을 빠르게 습득하는 능력이 돋보입니다. 다만, 다소 내성적인 성향으로 인해 적극적인 친구 관계 형성에 어려움을 느낄 수 있으니, 다양한 활동 참여를 통해 사회성을 기르는 것이 중요합니다. 건강은 대체로 양호하나, 활동적인 시기인 만큼 안전사고에 유의하고 규칙적인 생활 습관을 형성하는 것이 좋습니다. 예술적 재능이 발현될 가능성이 높으니 관련 분야에 관심을 가져보는 것도 좋겠습니다.",
+      중년운: "중년에는 타고난 분석력과 꾸준함을 바탕으로 전문 분야에서 두각을 나타낼 가능성이 높습니다. 직업적으로는 안정적인 성장을 이루며, 특히 연구 개발이나 교육 분야에서 큰 성과를 거둘 수 있습니다. 재물운은 꾸준히 상승하나, 투기보다는 장기적인 안목으로 안정적인 자산 관리에 힘써야 합니다. 결혼 생활에서는 배우자와의 진솔한 대화와 상호 존중이 중요하며, 자녀 양육에 있어서는 자율성을 존중하되 올바른 가치관을 심어주는 데 중점을 두어야 합니다.",
+      장년운: "장년기에는 그동안 쌓아온 경험과 지혜를 바탕으로 사회적으로 존경받는 위치에 오르거나, 자신이 원하는 분야에서 의미 있는 성취를 이룰 수 있습니다. 다만, 건강 관리에 더욱 세심한 주의가 필요한 시기입니다. 규칙적인 운동과 균형 잡힌 식습관을 유지하고, 정기적인 건강 검진을 통해 잠재적인 질병을 예방하는 것이 중요합니다. 자녀들은 독립하여 각자의 길을 가고, 이들과의 원만하고 지지적인 관계 유지가 정서적 안정에 큰 도움이 될 것입니다. 새로운 취미나 학습을 통해 삶의 활력을 유지하는 것도 좋은 방법입니다.",
+      말년운: "말년에는 정신적인 풍요로움과 내면의 평화를 누리며 안정된 생활을 영위할 것입니다. 과거의 노력과 성취를 바탕으로 후학을 양성하거나 사회에 공헌하는 활동에서 큰 보람을 느낄 수 있습니다. 건강은 꾸준한 관리가 중요하며, 무리한 활동보다는 명상, 가벼운 산책 등을 통해 심신의 안정을 도모하는 것이 좋습니다. 가족 및 오랜 친구들과의 따뜻한 교류가 삶의 만족도를 높여주며, 지나온 삶을 성찰하고 지혜를 나누는 시기가 될 것입니다."
     },
     compatibility: {
-      zodiacSign: "용띠", // 예시
-      colors: ["진청색", "금색", "숲 녹색"],
+      zodiacSign: "원숭이띠, 쥐띠와 좋은 궁합을 이룹니다. 이들과 함께하면 긍정적인 에너지를 얻고 서로 발전할 수 있습니다.", 
+      colors: ["하늘색", "연녹색", "상아색"],
     },
-    luckyNumbers: [Math.floor(Math.random() * 45) + 1, Math.floor(Math.random() * 45) + 1, Math.floor(Math.random() * 45) + 1].filter((v, i, a) => a.indexOf(v) === i).slice(0,3) // 중복 없는 숫자
+    luckyNumbers: [7, 16, 33].sort((a,b) => a-b)
   };
-  // 실제 AI Flow 호출 예시:
-  // const input: InterpretNameInput = { ...data };
-  // return await interpretName(input);
 }
 
 
 export default function NameInterpretationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<NameInterpretationResult | null>(null);
+  const [result, setResult] = useState<InterpretNameOutput | null>(null);
 
   const form = useForm<NameInterpretationFormValues>({
     resolver: zodResolver(formSchema),
@@ -108,10 +110,13 @@ export default function NameInterpretationPage() {
     setError(null);
     setResult(null);
     try {
-      const interpretationResult = await getNameInterpretation(values);
+      // 실제 AI 흐름 호출
+      const interpretationResult = await interpretName(values);
+      // const interpretationResult = await getNameInterpretation(values); // Placeholder 사용 시
       setResult(interpretationResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+      console.error("이름 해석 오류:", err);
+      setError(err instanceof Error ? err.message : "이름 해석 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -261,7 +266,7 @@ export default function NameInterpretationPage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <h3 className="text-xl font-semibold flex items-center gap-2"><PenTool className="h-5 w-5 text-secondary-foreground"/>이름 분석</h3>
-              <p className="text-muted-foreground">{result.nameAnalysis}</p>
+              <p className="text-muted-foreground whitespace-pre-wrap">{result.nameAnalysis}</p>
             </div>
 
             <div className="space-y-2">
@@ -269,28 +274,27 @@ export default function NameInterpretationPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-2"><CardTitle className="text-lg">초년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground">{result.lifeStages.earlyYears}</p></CardContent>
+                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.초년운}</p></CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2"><CardTitle className="text-lg">중년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground">{result.lifeStages.middleYears}</p></CardContent>
+                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.중년운}</p></CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-lg">장년운</CardTitle></CardHeader>
+                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.장년운}</p></CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2"><CardTitle className="text-lg">말년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground">{result.lifeStages.laterYears}</p></CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-lg">노년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground">{result.lifeStages.finalYears}</p></CardContent>
+                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.말년운}</p></CardContent>
                 </Card>
               </div>
-               <p className="text-xs text-muted-foreground mt-2">포함된 요소: 애정 (<Heart className="inline h-3 w-3"/>), 건강 (<Shield className="inline h-3 w-3"/>), 직업 (<Briefcase className="inline h-3 w-3"/>).</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-secondary-foreground"/>좋은 궁합</h3>
-                <p className="text-muted-foreground">띠: {result.compatibility.zodiacSign}</p>
+                <p className="text-muted-foreground whitespace-pre-wrap">띠: {result.compatibility.zodiacSign}</p>
                 <p className="text-muted-foreground">색상: <span className="flex gap-1 items-center flex-wrap">{result.compatibility.colors.map(color => <span key={color} className="inline-block px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">{color}</span>)}</span></p>
               </div>
 
