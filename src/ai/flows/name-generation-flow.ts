@@ -25,10 +25,10 @@ const GenerateAuspiciousNameInputSchema = z.object({
 export type GenerateAuspiciousNameInput = z.infer<typeof GenerateAuspiciousNameInputSchema>;
 
 const GeneratedNameSchema = z.object({
-  name: z.string().describe('추천된 한글 이름입니다.'),
-  hanja: z.string().optional().describe('추천된 이름의 한자 표기입니다 (선택 사항).'),
-  meaning: z.string().describe('이름의 의미와 풀이입니다.'),
-  yinYangFiveElements: z.string().describe('이름에 담긴 음양오행 분석 결과입니다.'),
+  name: z.string().describe('추천된 한글 전체 이름입니다 (성 포함).'),
+  hanja: z.string().optional().describe('추천된 이름의 한자 표기입니다 (이름 부분만 해당, 선택 사항).'),
+  meaning: z.string().describe('이름의 의미와 풀이, 성씨와의 조화, 세련된 느낌에 대한 설명입니다.'),
+  yinYangFiveElements: z.string().describe('이름에 담긴 음양오행 분석 결과 및 사주와의 조화입니다.'),
 });
 
 const GenerateAuspiciousNameOutputSchema = z.object({
@@ -44,7 +44,14 @@ const auspiciousNamePrompt = ai.definePrompt({
   name: 'auspiciousNamePrompt',
   input: {schema: GenerateAuspiciousNameInputSchema},
   output: {schema: GenerateAuspiciousNameOutputSchema},
-  prompt: `당신은 한국 전통 성명학 및 사주명리학 전문가입니다. 다음 부모님과 자녀의 정보를 바탕으로, 부모님의 사주를 고려하여 {{{childGender}}} 아이에게 길운을 가져다 줄 아름답고 의미 있는 한글 이름 5개를 추천해주세요. 각 이름에는 가능한 경우 한자 표기, 이름의 의미, 그리고 음양오행 및 사주와의 조화에 대한 분석을 포함해야 합니다. 모든 답변은 한국어로 해주세요.
+  prompt: `당신은 한국 전통 성명학 및 사주명리학 전문가입니다. 다음 부모님과 자녀의 정보를 바탕으로, 부모님의 사주를 고려하여 {{{childGender}}} 아이에게 길운을 가져다 줄 아름답고 의미 있는 이름 5개를 추천해주세요.
+
+**중요 지침:**
+1.  추천하는 이름은 반드시 자녀의 성씨 **'{{{childLastName}}}'**를 포함한 **전체 이름**이어야 합니다. (예: 성씨가 '김'이고 추천 이름이 '서윤'이면, '김서윤'으로 제공)
+2.  이름은 **'{{{childLastName}}}'** 성씨와 자연스럽게 어울리며, **세련되고 현대적인 느낌**을 주어야 합니다.
+3.  단순히 예쁜 이름이 아니라, **깊고 좋은 의미**를 담고 있어야 합니다.
+4.  각 이름에는 가능한 경우 **한자 표기 (이름 부분)**, 이름의 **의미와 풀이 (성씨와의 조화 및 세련된 느낌 포함)**, 그리고 **음양오행 및 사주와의 조화**에 대한 분석을 포함해야 합니다.
+5.  모든 답변은 **한국어**로 해주세요.
 
 부모 정보:
 - 아버지 성함: {{{fatherName}}}
@@ -58,13 +65,12 @@ const auspiciousNamePrompt = ai.definePrompt({
 - 성: {{{childLastName}}}
 - 성별: {{{childGender}}} (male: 남자, female: 여자)
 
-각 추천 이름은 다음 형식을 따라야 합니다:
-1.  **이름 (한글)**: 예) 지우
-2.  **한자 (선택 사항)**: 예) 智祐
-3.  **의미**: 이름의 뜻과 좋은 점을 상세히 설명합니다.
-4.  **음양오행 및 사주 조화**: 이름이 부모 및 자녀의 사주와 어떻게 조화를 이루는지, 어떤 기운을 보강하는지 설명합니다.
-
-5개의 독창적이고 현대적이면서도 전통적인 가치를 담은 이름을 제시해주세요.
+5개의 독창적이고 현대적이면서도 전통적인 가치를 담은, **'{{{childLastName}}}'** 성씨와 조화로운 이름을 제시해주세요.
+각 추천 이름은 다음 정보를 포함해야 합니다:
+-   **전체 이름 (한글)**: (예: 김서아)
+-   **한자 (선택 사항, 이름 부분만)**: (예: 書雅)
+-   **의미**: 이름의 뜻, 좋은 점, 그리고 {{{childLastName}}} 성씨와의 조화 및 세련된 느낌에 대한 설명.
+-   **음양오행 및 사주 조화**: 이름이 부모 및 자녀의 사주와 어떻게 조화를 이루는지, 어떤 기운을 보강하는지 설명.
 `,
 });
 
