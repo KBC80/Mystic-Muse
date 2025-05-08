@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Home, Ticket, TestTubeDiagonal } from 'lucide-react';
+import { PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Home, Ticket, Archive } from 'lucide-react';
 
 export interface NavItem {
   title: string;
@@ -7,7 +7,7 @@ export interface NavItem {
   icon: LucideIcon;
   label?: string;
   disabled?: boolean;
-  subItems?: NavItem[]; // For nested navigation if needed in the future
+  subItems?: NavItem[]; 
 }
 
 export const navItems: NavItem[] = [
@@ -42,20 +42,12 @@ export const navItems: NavItem[] = [
     icon: LayoutGrid,
   },
   {
-    title: '로또 번호 추천', // This now points to the landing page
-    href: '/lotto-recommendation',
-    icon: Ticket,
+    title: '로또 정보', // Updated title to be more general
+    href: '/lotto-recommendation', // Points to the landing page for Saju, Scientific, and History
+    icon: Ticket, 
   },
-  // Sub-items for lotto can be managed on the /lotto-recommendation page itself
-  // Or, if you want them in the sidebar directly, you can define them like this (currently not used by sidebar logic)
-  // {
-  //   title: '사주 로또 추천',
-  //   href: '/lotto-recommendation/saju',
-  //   icon: Ticket, 
-  // },
-  // {
-  //   title: '과학적 로또 추천',
-  //   href: '/lotto-recommendation/scientific',
-  //   icon: TestTubeDiagonal, 
-  // },
+  // 역대 당첨번호 조회는 /lotto-recommendation 페이지 내에서 접근 가능하므로,
+  // 별도의 최상위 메뉴로 추가하지 않거나, 필요시 subItems 형태로 구성할 수 있습니다.
+  // 현재 요청은 /lotto-recommendation 랜딩 페이지에 카드를 추가하는 것이므로,
+  // 여기서는 navItem을 그대로 둡니다.
 ];
