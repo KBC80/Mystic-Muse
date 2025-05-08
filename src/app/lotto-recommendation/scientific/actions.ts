@@ -248,8 +248,8 @@ export async function getInitialScientificLottoData(): Promise<{
   error?: string;
 }> {
   try {
-    // Fetch 10 for display, they are already sorted newest to oldest by getMostRecentDraws
-    const { draws: rawRecentDraws } = await getMostRecentDraws(10); 
+    // Fetch 5 for display, they are already sorted newest to oldest by getMostRecentDraws
+    const { draws: rawRecentDraws } = await getMostRecentDraws(5); 
     if (rawRecentDraws.length === 0) {
       return { error: "최근 당첨 번호를 가져올 수 없습니다." };
     }

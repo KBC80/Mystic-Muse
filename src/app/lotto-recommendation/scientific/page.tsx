@@ -65,7 +65,7 @@ const getLottoBallColorClass = (number: number): string => {
 };
 
 const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small' | 'medium' }) => {
-  const sizeClasses = size === 'small' ? 'h-7 w-7 text-xs' : 'h-10 w-10 text-lg';
+  const sizeClasses = size === 'small' ? 'h-9 w-9 text-sm' : 'h-10 w-10 text-lg'; // 'small' size updated: h-9 w-9 text-sm
   return (
     <div className={`flex items-center justify-center rounded-full font-bold shadow-md ${sizeClasses} ${getLottoBallColorClass(number)}`}>
       {number}
@@ -189,7 +189,7 @@ export default function ScientificLottoRecommendationPage() {
       {!isInitialLoading && recentDrawsForDisplay.length > 0 && (
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호 (최신 10회)</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호 (최신 5회)</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -220,7 +220,7 @@ export default function ScientificLottoRecommendationPage() {
                 ))}
               </TableBody>
             </Table>
-             <CardDescription className="text-xs mt-2 text-muted-foreground">* 최신 10회차의 당첨번호입니다. 실제 데이터는 동행복권 API를 통해 제공됩니다.</CardDescription>
+             <CardDescription className="text-xs mt-2 text-muted-foreground">* 최신 5회차의 당첨번호입니다. 실제 데이터는 동행복권 API를 통해 제공됩니다.</CardDescription>
           </CardContent>
         </Card>
       )}
@@ -348,3 +348,4 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
+
