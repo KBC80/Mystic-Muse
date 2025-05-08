@@ -9,7 +9,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
-import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap } from 'lucide-react';
+import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap, RotateCcw } from 'lucide-react';
+
+const LifeStageIcon = ({ stage }: { stage: string }) => {
+  switch (stage) {
+    case "초년운": return <Zap className="h-5 w-5 text-yellow-500" />;
+    case "중년운": return <TrendingUp className="h-5 w-5 text-green-500" />;
+    case "장년운": return <Users className="h-5 w-5 text-blue-500" />;
+    case "말년운": return <Palmtree className="h-5 w-5 text-purple-500" />;
+    default: return <Sparkles className="h-5 w-5 text-gray-500" />;
+  }
+};
 
 function NameInterpretationResultContent() {
   const searchParams = useSearchParams();
@@ -89,6 +99,9 @@ function NameInterpretationResultContent() {
       </div>
     );
   }
+  
+  const orderedLifeStages: (keyof InterpretNameOutput['lifeStages'])[] = ["초년운", "중년운", "장년운", "말년운"];
+
 
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
@@ -121,10 +134,13 @@ function NameInterpretationResultContent() {
               <TrendingUp className="h-6 w-6"/> 생애 주기별 운세
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.entries(result.lifeStages).map(([stage, description]) => (
+              {orderedLifeStages.map((stage) => (
                 <Card key={stage} className="bg-secondary/30">
-                  <CardHeader className="pb-2 pt-4"><CardTitle className="text-xl text-primary">{stage}</CardTitle></CardHeader>
-                  <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{description}</p></CardContent>
+                  <CardHeader className="pb-2 pt-4 flex flex-row items-center gap-2">
+                    <LifeStageIcon stage={stage} />
+                    <CardTitle className="text-xl text-primary">{stage}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.lifeStages[stage]}</p></CardContent>
                 </Card>
               ))}
             </div>
@@ -169,7 +185,7 @@ function NameInterpretationResultContent() {
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/name-interpretation" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
-            <PenTool className="mr-2 h-4 w-4" />
+            <RotateCcw className="mr-2 h-4 w-4" />
             다른 이름 풀이하기
           </Button>
         </Link>

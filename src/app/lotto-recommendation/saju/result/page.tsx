@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { recommendLottoNumbers, type LottoNumberRecommendationInput, type LottoNumberRecommendationOutput } from '@/ai/flows/lotto-number-recommendation-flow';
-import { Ticket, Home, Sparkles, MessageSquare, Hash, ExternalLink, RotateCcw } from 'lucide-react';
+import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions';
+import { Ticket, Home, Sparkles, MessageSquare, Hash, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -37,6 +38,10 @@ function SajuLottoResultContent() {
   const [result, setResult] = useState<LottoNumberRecommendationOutput | null>(null);
   const [inputName, setInputName] = useState<string>("");
 
+  const [latestDraw, setLatestDraw] = useState<LatestWinningNumber | null>(null);
+  const [isLoadingLatestDraw, setIsLoadingLatestDraw] = useState(true);
+  const [latestDrawError, setLatestDrawError] = useState<string | null>(null);
+
   useEffect(() => {
     const name = searchParams.get('name');
     const birthDate = searchParams.get('birthDate');
@@ -46,6 +51,7 @@ function SajuLottoResultContent() {
     if (!name || !birthDate || !calendarType || !birthTime) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
+      setIsLoadingLatestDraw(false);
       return;
     }
     
@@ -58,25 +64,44 @@ function SajuLottoResultContent() {
       birthTime,
     };
 
-    recommendLottoNumbers(input)
+    const fetchRecommendation = recommendLottoNumbers(input)
       .then(recommendationResult => {
         setResult(recommendationResult);
       })
       .catch(err => {
         console.error("사주 로또 번호 추천 결과 오류:", err);
-        setError(err instanceof Error ? err.message : "사주 로또 번호 추천 결과를 가져오는 중 알 수 없는 오류가 발생했습니다.");
+        setError(prev => prev ? `${prev}\n추천 오류: ${err.message}` : `추천 오류: ${err instanceof Error ? err.message : "사주 로또 번호 추천 결과를 가져오는 중 알 수 없는 오류가 발생했습니다."}`);
+      });
+
+    const fetchLatestLotto = getLatestLottoDraw()
+      .then(data => {
+        if (data.error) {
+          setLatestDrawError(data.error);
+        } else if (data.latestDraw) {
+          setLatestDraw(data.latestDraw);
+        }
+      })
+      .catch(err => {
+        setLatestDrawError("최신 당첨 번호 로딩 중 알 수 없는 오류 발생");
+        console.error("Error fetching latest draw for result page:", err);
       })
       .finally(() => {
-        setIsLoading(false);
+        setIsLoadingLatestDraw(false);
       });
+
+    Promise.all([fetchRecommendation, fetchLatestLotto]).finally(() => {
+      setIsLoading(false);
+    });
 
   }, [searchParams]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingLatestDraw) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">사주를 분석하여 번호를 생성 중입니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground">
+          {isLoading ? "사주를 분석하여 번호를 생성 중입니다..." : "최신 당첨 정보를 불러오는 중..."}
+        </p>
       </div>
     );
   }
@@ -118,6 +143,31 @@ function SajuLottoResultContent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          {latestDrawError && !isLoadingLatestDraw && (
+            <Alert variant="destructive" className="my-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>최신 정보 로딩 오류</AlertTitle>
+              <AlertDescription>{latestDrawError}</AlertDescription>
+            </Alert>
+          )}
+          {latestDraw && !isLoadingLatestDraw && !latestDrawError && (
+            <div className="mb-6 p-4 border rounded-md bg-secondary/20 shadow-sm">
+              <h3 className="text-lg font-semibold text-secondary-foreground flex items-center mb-3">
+                <Newspaper className="mr-2 h-5 w-5 text-primary" />
+                최신 ({latestDraw.drwNo}회) 당첨 번호
+                <span className="text-xs text-muted-foreground ml-2">({latestDraw.drwNoDate})</span>
+              </h3>
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap gap-y-2">
+                <span className="text-sm font-medium text-foreground">당첨번호:</span>
+                {latestDraw.numbers.map((num) => (
+                  <LottoBall key={`latest-res-${num}`} number={num} size="small"/>
+                ))}
+                <span className="text-sm font-medium text-foreground ml-1 sm:ml-2">+ 보너스:</span>
+                <LottoBall number={latestDraw.bnusNo} size="small"/>
+              </div>
+            </div>
+          )}
+
           {result.lottoSets.map((set, index) => (
             <Card key={index} className="p-6 bg-secondary/30 shadow-md">
               <CardHeader className="p-0 pb-3">
