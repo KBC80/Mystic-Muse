@@ -134,7 +134,7 @@ export default function TodaysFortunePage() {
                             disabled={(date) =>
                               date > new Date() || date < new Date("1920-01-01")
                             }
-                            initialFocus
+                            
                             captionLayout="dropdown-buttons"
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
