@@ -21,13 +21,37 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, Sparkles, Hash, HelpCircle, TrendingUp, Info } from 'lucide-react';
-import type { ScientificLottoRecommendationInput, ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
+import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
 import { getInitialScientificLottoData, getLottoRecommendationsAction, type ProcessedWinningNumber, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
 
 const formSchema = z.object({
-  includeNumbers: z.string().optional(),
-  excludeNumbers: z.string().optional(),
-});
+  includeNumbers: z.string().optional().refine(val => {
+    if (!val) return true;
+    const nums = val.split(',').map(n => parseInt(n.trim(), 10));
+    return nums.every(n => !isNaN(n) && n >= 1 && n <= 45);
+  }, { message: "1과 45 사이의 숫자를 쉼표로 구분하여 입력해주세요." })
+  .refine(val => {
+    if (!val) return true;
+    const nums = val.split(',').map(n => n.trim()).filter(n => n !== "");
+    return new Set(nums).size === nums.length;
+  }, { message: "포함할 숫자에 중복된 값이 있습니다."}),
+  excludeNumbers: z.string().optional().refine(val => {
+    if (!val) return true;
+    const nums = val.split(',').map(n => parseInt(n.trim(), 10));
+    return nums.every(n => !isNaN(n) && n >= 1 && n <= 45);
+  }, { message: "1과 45 사이의 숫자를 쉼표로 구분하여 입력해주세요." })
+  .refine(val => {
+    if (!val) return true;
+    const nums = val.split(',').map(n => n.trim()).filter(n => n !== "");
+    return new Set(nums).size === nums.length;
+  }, { message: "제외할 숫자에 중복된 값이 있습니다."}),
+}).refine(data => {
+    if (!data.includeNumbers || !data.excludeNumbers) return true;
+    const includeArr = data.includeNumbers.split(',').map(n => n.trim()).filter(n => n !== "");
+    const excludeArr = data.excludeNumbers.split(',').map(n => n.trim()).filter(n => n !== "");
+    return !includeArr.some(n => excludeArr.includes(n));
+}, { message: "포함할 숫자와 제외할 숫자에 중복된 값이 있습니다.", path: ["includeNumbers"] });
+
 
 type ScientificLottoFormValues = z.infer<typeof formSchema>;
 
@@ -37,7 +61,7 @@ export default function ScientificLottoRecommendationPage() {
   const [error, setError] = useState<string | null>(null);
   const [llmResult, setLlmResult] = useState<ScientificLottoRecommendationOutput | null>(null);
   const [recentDrawsForDisplay, setRecentDrawsForDisplay] = useState<ProcessedWinningNumber[]>([]);
-  const [calculatedAverages, setCalculatedAverages] = useState<CalculatedAverages | null>(null);
+  const [analysisAverages, setAnalysisAverages] = useState<CalculatedAverages | null>(null);
 
 
   const form = useForm<ScientificLottoFormValues>({
@@ -52,6 +76,7 @@ export default function ScientificLottoRecommendationPage() {
     async function loadData() {
       setIsInitialLoading(true);
       setError(null);
+      setAnalysisAverages(null); // Clear previous analysis summary
       try {
         const data = await getInitialScientificLottoData();
         if (data.error) {
@@ -59,6 +84,14 @@ export default function ScientificLottoRecommendationPage() {
         } else if (data.recentDraws) {
           setRecentDrawsForDisplay(data.recentDraws);
         }
+         // Also fetch analysis for initial display if desired, or wait for form submit
+        const initialAnalysis = await getLottoRecommendationsAction({}); // Empty form to get base analysis
+        if (initialAnalysis.error && !data.error) { // Don't overwrite main error if initial load failed
+            setError(prev => prev ? `${prev}\n분석 데이터 로딩 실패: ${initialAnalysis.error}` : `초기 분석 데이터 로딩 실패: ${initialAnalysis.error}`);
+        } else if (initialAnalysis.averages) {
+            setAnalysisAverages(initialAnalysis.averages);
+        }
+
       } catch (err) {
         console.error("초기 데이터 로딩 오류:", err);
         setError(err instanceof Error ? err.message : "초기 데이터 로딩 중 오류 발생");
@@ -69,45 +102,11 @@ export default function ScientificLottoRecommendationPage() {
     loadData();
   }, []);
 
-
-  const parseNumbersString = (str: string | undefined): number[] | undefined => {
-    if (!str) return undefined;
-    const nums = str.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n) && n >= 1 && n <= 45);
-    return nums.length > 0 ? nums : undefined;
-  };
-
   async function onSubmit(values: ScientificLottoFormValues) {
     setIsLoading(true);
     setError(null);
     setLlmResult(null);
-    setCalculatedAverages(null);
-
-    const includeNumbers = parseNumbersString(values.includeNumbers);
-    const excludeNumbers = parseNumbersString(values.excludeNumbers);
-    
-    let validationError = false;
-    if (values.includeNumbers && (!includeNumbers || includeNumbers.some(n => n < 1 || n > 45))) {
-      form.setError("includeNumbers", { type: "manual", message: "1과 45 사이의 숫자를 쉼표로 구분하여 입력해주세요." });
-      validationError = true;
-    }
-    if (values.excludeNumbers && (!excludeNumbers || excludeNumbers.some(n => n < 1 || n > 45))) {
-      form.setError("excludeNumbers", { type: "manual", message: "1과 45 사이의 숫자를 쉼표로 구분하여 입력해주세요." });
-      validationError = true;
-    }
-
-    if (includeNumbers && excludeNumbers) {
-        const overlap = includeNumbers.some(n => excludeNumbers.includes(n));
-        if (overlap) {
-            form.setError("includeNumbers", { type: "manual", message: "포함할 숫자와 제외할 숫자에 중복된 값이 있습니다." });
-            form.setError("excludeNumbers", { type: "manual", message: "포함할 숫자와 제외할 숫자에 중복된 값이 있습니다." });
-            validationError = true;
-        }
-    }
-
-    if (validationError) {
-      setIsLoading(false);
-      return;
-    }
+    // analysisAverages will be updated by the action if successful
     
     try {
       const result = await getLottoRecommendationsAction({
@@ -119,14 +118,11 @@ export default function ScientificLottoRecommendationPage() {
         setError(result.error);
       } else {
         setLlmResult(result.llmResponse || null);
-        setCalculatedAverages(result.averages || null);
-        if (result.drawsForAnalysis) { // Update display with draws used for analysis if needed
-           // setRecentDrawsForDisplay(result.drawsForAnalysis.slice(0,10)); // Or however many you want to show
-        }
+        setAnalysisAverages(result.averages || null);
       }
     } catch (err) {
       console.error("과학적 로또 번호 추천 오류:", err);
-      setError(err instanceof Error ? err.message : "과학적 로또 번호 추천 중 알 수 없는 오류가 발생했습니다.");
+      setError(err instanceof Error ? err.message : "과학적 로otto 번호 추천 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +147,7 @@ export default function ScientificLottoRecommendationPage() {
           <CardDescription className="flex items-start gap-1">
              <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
             <span>
-                실제 동행복권 데이터를 기반으로 로또 번호를 추천해 드립니다. 최근 당첨 번호와 통계적 분석 결과를 확인하세요.
+                실제 동행복권 API 데이터를 기반으로 로또 번호를 추천해 드립니다. 최근 당첨 번호와 통계적 분석 결과를 확인하세요.
             </span>
           </CardDescription>
         </CardHeader>
@@ -160,14 +156,23 @@ export default function ScientificLottoRecommendationPage() {
       {isInitialLoading && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">최신 당첨 번호를 불러오는 중...</p>
+          <p className="ml-2 text-muted-foreground">최신 당첨 번호 및 분석 데이터를 불러오는 중...</p>
         </div>
       )}
+      
+      {/* Display error prominently if it occurs during initial load or submission */}
+      {error && !isLoading && ( // Show general error if not in loading state for a new request
+        <Alert variant="destructive">
+          <AlertTitle>오류 발생</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
 
       {!isInitialLoading && recentDrawsForDisplay.length > 0 && (
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호 (최신 10회)</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -184,30 +189,30 @@ export default function ScientificLottoRecommendationPage() {
                   <TableRow key={win.drwNo}>
                     <TableCell>{win.drwNo}회</TableCell>
                     <TableCell>{win.drwNoDate}</TableCell>
-                    <TableCell>{win.numbers.join(', ')}</TableCell>
+                    <TableCell>{[win.drwtNo1, win.drwtNo2, win.drwtNo3, win.drwtNo4, win.drwtNo5, win.drwtNo6].join(', ')}</TableCell>
                     <TableCell>{win.bnusNo}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-             <CardDescription className="text-xs mt-2">* 최근 10회차의 당첨번호입니다.</CardDescription>
+             <CardDescription className="text-xs mt-2 text-muted-foreground">* 최신 10회차의 당첨번호입니다. 실제 데이터는 동행복권 API를 통해 제공됩니다.</CardDescription>
           </CardContent>
         </Card>
       )}
       
-      {calculatedAverages && (
+      {analysisAverages && !isInitialLoading && (
          <Card className="shadow-md">
             <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 24회차 분석 결과</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2"><TrendingUp className="h-5 w-5 text-secondary-foreground" />과거 데이터 분석 (최근 24회차 기준)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                    평균 당첨 번호 합계: <strong className="text-foreground">{calculatedAverages.averageSum.toFixed(2)}</strong>
+                    평균 당첨 번호 합계: <strong className="text-foreground">{analysisAverages.averageSum.toFixed(1)}</strong>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                    평균 짝수:홀수 비율: <strong className="text-foreground">{calculatedAverages.averageEvenOddRatio}</strong>
+                    가장 흔한 짝수:홀수 비율: <strong className="text-foreground">{analysisAverages.averageEvenOddRatio}</strong>
                 </p>
-                 <p className="text-xs text-muted-foreground pt-1">{calculatedAverages.summaryForDisplay}</p>
+                 <p className="text-xs text-muted-foreground pt-1">{analysisAverages.summaryForDisplay}</p>
             </CardContent>
         </Card>
       )}
@@ -216,10 +221,10 @@ export default function ScientificLottoRecommendationPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
-            <CheckSquare className="text-primary h-5 w-5" /> 번호 추천 설정
+            <CheckSquare className="text-primary h-5 w-5" /> AI 번호 추천 조건 설정
           </CardTitle>
           <CardDescription>
-            포함하거나 제외하고 싶은 번호가 있다면 입력해주세요. (쉼표로 구분, 1-45 사이 숫자)
+            포함하거나 제외하고 싶은 번호가 있다면 입력해주세요. (쉼표로 구분, 1-45 사이 숫자). AI는 입력된 조건과 함께 최근 24회차의 통계적 패턴을 고려하여 번호를 추천합니다.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -231,7 +236,7 @@ export default function ScientificLottoRecommendationPage() {
                   name="includeNumbers"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1"><CheckSquare className="h-4 w-4"/> 포함할 숫자 (선택)</FormLabel>
+                      <FormLabel className="flex items-center gap-1"><CheckSquare className="h-4 w-4"/> 포함할 숫자 (선택, 최대 6개)</FormLabel>
                       <FormControl>
                         <Textarea placeholder="예: 7, 14, 21" {...field} />
                       </FormControl>
@@ -254,44 +259,42 @@ export default function ScientificLottoRecommendationPage() {
                 />
               </div>
               <Button type="submit" disabled={isLoading || isInitialLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "과학적 번호 추천 받기"}
+                {isLoading ? <LoadingSpinner size={20} /> : "AI 과학적 번호 추천 받기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
 
-      {isLoading && !isInitialLoading && (
+      {isLoading && !isInitialLoading && ( // Show this loading only for form submission
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">데이터를 분석하여 번호를 생성 중입니다...</p>
+          <p className="ml-2 text-muted-foreground">AI가 데이터를 분석하여 번호를 생성 중입니다...</p>
         </div>
       )}
+      
+      {/* Error display for submission is handled by the general error block above */}
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {llmResult && (
+      {llmResult && !isLoading && ( // Ensure not loading when showing results
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" /> AI 분석 기반 추천 번호
+                <Sparkles className="h-6 w-6 text-primary" /> AI 분석 기반 추천 번호 (5세트)
             </CardTitle>
+             <CardDescription>
+                AI가 과거 데이터 통계와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <Card className="p-4 bg-secondary/30">
                 <CardHeader className="p-2 pb-1">
                     <CardTitle className="text-lg text-secondary-foreground flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" /> AI 예측 (다음 회차)
+                        <HelpCircle className="h-5 w-5" /> AI 예측 (다음 회차)
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-2 space-y-1">
                     <p className="text-sm text-muted-foreground">
-                        <strong className="text-secondary-foreground">예상 합계 범위:</strong> {llmResult.predictedSumRange}
+                        <strong className="text-secondary-foreground">예상 당첨 번호 합계 범위:</strong> {llmResult.predictedSumRange}
                     </p>
                     <p className="text-sm text-muted-foreground">
                         <strong className="text-secondary-foreground">예상 짝수:홀수 비율:</strong> {llmResult.predictedEvenOddRatio}
@@ -300,7 +303,7 @@ export default function ScientificLottoRecommendationPage() {
             </Card>
 
             {llmResult.recommendedSets.map((set, index) => (
-              <Card key={index} className="p-4 bg-secondary/30">
+              <Card key={index} className="p-4 bg-secondary/30 shadow">
                  <CardHeader className="p-2 pb-1">
                    <CardTitle className="text-lg text-secondary-foreground flex items-center gap-2">
                     <Hash className="h-5 w-5" /> 추천 번호 세트 {index + 1}
@@ -324,3 +327,5 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
+
+    
