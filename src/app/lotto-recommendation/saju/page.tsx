@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -31,8 +31,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Ticket, Home, Sparkles, MessageSquare, Hash, CalendarIcon } from 'lucide-react';
+import { Ticket, Home, Sparkles, MessageSquare, Hash, CalendarIcon, Newspaper, AlertTriangle } from 'lucide-react';
 import { recommendLottoNumbers, type LottoNumberRecommendationInput, type LottoNumberRecommendationOutput } from '@/ai/flows/lotto-number-recommendation-flow';
+import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions';
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -53,9 +54,10 @@ const getLottoBallColorClass = (number: number): string => {
   return 'bg-gray-300 text-black'; // Default/fallback
 };
 
-const LottoBall = ({ number }: { number: number }) => {
+const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small' | 'medium' }) => {
+  const sizeClasses = size === 'small' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-lg';
   return (
-    <div className={`flex items-center justify-center h-10 w-10 rounded-full font-bold text-lg shadow-md ${getLottoBallColorClass(number)}`}>
+    <div className={`flex items-center justify-center rounded-full font-bold shadow-md ${sizeClasses} ${getLottoBallColorClass(number)}`}>
       {number}
     </div>
   );
@@ -66,6 +68,31 @@ export default function SajuLottoRecommendationPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<LottoNumberRecommendationOutput | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const [latestDraw, setLatestDraw] = useState<LatestWinningNumber | null>(null);
+  const [isLoadingLatestDraw, setIsLoadingLatestDraw] = useState(true);
+  const [latestDrawError, setLatestDrawError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchLatest() {
+      setIsLoadingLatestDraw(true);
+      setLatestDrawError(null);
+      try {
+        const data = await getLatestLottoDraw();
+        if (data.error) {
+          setLatestDrawError(data.error);
+        } else if (data.latestDraw) {
+          setLatestDraw(data.latestDraw);
+        }
+      } catch (err) {
+        setLatestDrawError("최신 당첨 번호 로딩 중 알 수 없는 오류 발생");
+        console.error("Error fetching latest draw:", err);
+      } finally {
+        setIsLoadingLatestDraw(false);
+      }
+    }
+    fetchLatest();
+  }, []);
 
   const form = useForm<LottoRecommendationFormValues>({
     resolver: zodResolver(formSchema),
@@ -113,6 +140,37 @@ export default function SajuLottoRecommendationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoadingLatestDraw && (
+            <div className="flex items-center justify-center my-4 p-4 border rounded-md bg-secondary/10">
+              <LoadingSpinner size={24} />
+              <p className="ml-2 text-sm text-muted-foreground">최신 당첨 정보 로딩 중...</p>
+            </div>
+          )}
+          {latestDrawError && !isLoadingLatestDraw && (
+            <Alert variant="destructive" className="my-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>최신 정보 로딩 오류</AlertTitle>
+              <AlertDescription>{latestDrawError}</AlertDescription>
+            </Alert>
+          )}
+          {latestDraw && !isLoadingLatestDraw && !latestDrawError && (
+            <div className="mb-6 p-4 border rounded-md bg-secondary/20 shadow-sm">
+              <h3 className="text-lg font-semibold text-secondary-foreground flex items-center mb-3">
+                <Newspaper className="mr-2 h-5 w-5 text-primary" />
+                최신 ({latestDraw.drwNo}회) 당첨 번호
+                <span className="text-xs text-muted-foreground ml-2">({latestDraw.drwNoDate})</span>
+              </h3>
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap gap-y-2">
+                <span className="text-sm font-medium text-foreground">당첨번호:</span>
+                {latestDraw.numbers.map((num) => (
+                  <LottoBall key={`latest-${num}`} number={num} size="small"/>
+                ))}
+                <span className="text-sm font-medium text-foreground ml-1 sm:ml-2">+ 보너스:</span>
+                <LottoBall number={latestDraw.bnusNo} size="small"/>
+              </div>
+            </div>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -142,7 +200,7 @@ export default function SajuLottoRecommendationPage() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
+                           <Calendar
                             mode="single"
                             selected={field.value ? new Date(field.value) : undefined}
                             onSelect={(date) => {
@@ -155,6 +213,7 @@ export default function SajuLottoRecommendationPage() {
                             }
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
+                            captionLayout="dropdown-buttons"
                           />
                         </PopoverContent>
                       </Popover>
@@ -224,7 +283,7 @@ export default function SajuLottoRecommendationPage() {
                   )}
                 />
               </div>
-              <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Button type="submit" disabled={isLoading || isLoadingLatestDraw} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isLoading ? <LoadingSpinner size={20} /> : "사주 행운 번호 받기"}
               </Button>
             </form>
@@ -232,14 +291,14 @@ export default function SajuLottoRecommendationPage() {
         </CardContent>
       </Card>
 
-      {isLoading && (
+      {isLoading && !isLoadingLatestDraw && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
           <p className="ml-2 text-muted-foreground">사주를 분석하여 번호를 생성 중입니다...</p>
         </div>
       )}
 
-      {error && (
+      {error && !isLoading && (
         <Alert variant="destructive">
           <AlertTitle>오류</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
