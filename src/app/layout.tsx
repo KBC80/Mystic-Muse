@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -32,9 +33,9 @@ export default function RootLayout({
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased font-sans")}>
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col min-h-screen"> {/* Ensure this div takes full height */}
             <AppHeader />
-            <main className="flex-1 p-4 md:p-6 lg:p-8">
+            <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8"> {/* Ensure main content can grow */}
               {children}
             </main>
           </div>

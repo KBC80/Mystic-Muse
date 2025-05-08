@@ -79,16 +79,7 @@ export default function NameInterpretationPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="mb-6">
-        <Link href="/" passHref>
-          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
-            <Home className="mr-2 h-4 w-4" />
-            홈으로 돌아가기
-          </Button>
-        </Link>
-      </div>
-
+    <div className="space-y-8 flex flex-col flex-1">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
@@ -142,6 +133,7 @@ export default function NameInterpretationPage() {
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
                             captionLayout="dropdown-buttons"
+                            defaultView="years"
                           />
                         </PopoverContent>
                       </Popover>
@@ -314,7 +306,15 @@ export default function NameInterpretationPage() {
           </CardContent>
         </Card>
       )}
+
+      <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <Link href="/" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+            <Home className="mr-2 h-4 w-4" />
+            홈으로 돌아가기
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }
-
