@@ -7,6 +7,7 @@ export interface NavItem {
   icon: LucideIcon;
   label?: string;
   disabled?: boolean;
+  subItems?: NavItem[]; // For nested navigation if needed in the future
 }
 
 export const navItems: NavItem[] = [
@@ -41,13 +42,20 @@ export const navItems: NavItem[] = [
     icon: LayoutGrid,
   },
   {
-    title: '사주 로또 추천',
-    href: '/lotto-recommendation/saju',
-    icon: Ticket, // Or a more Saju-related icon if available
+    title: '로또 번호 추천', // This now points to the landing page
+    href: '/lotto-recommendation',
+    icon: Ticket,
   },
-  {
-    title: '과학적 로또 추천',
-    href: '/lotto-recommendation/scientific',
-    icon: TestTubeDiagonal, // Or a BarChart icon
-  },
+  // Sub-items for lotto can be managed on the /lotto-recommendation page itself
+  // Or, if you want them in the sidebar directly, you can define them like this (currently not used by sidebar logic)
+  // {
+  //   title: '사주 로또 추천',
+  //   href: '/lotto-recommendation/saju',
+  //   icon: Ticket, 
+  // },
+  // {
+  //   title: '과학적 로또 추천',
+  //   href: '/lotto-recommendation/scientific',
+  //   icon: TestTubeDiagonal, 
+  // },
 ];

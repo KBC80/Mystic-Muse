@@ -1,0 +1,65 @@
+
+"use client";
+
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Home, Ticket, TestTubeDiagonal } from 'lucide-react';
+
+export default function LottoRecommendationLandingPage() {
+  const recommendationTypes = [
+    {
+      title: "사주 로또 추천",
+      href: "/lotto-recommendation/saju",
+      icon: Ticket,
+      description: "사주 명리학을 기반으로 개인에게 맞는 특별한 행운 번호를 추천받아보세요."
+    },
+    {
+      title: "과학적 로또 추천",
+      href: "/lotto-recommendation/scientific",
+      icon: TestTubeDiagonal,
+      description: "과거 당첨 데이터와 통계적 분석을 통해 확률 높은 로또 번호 조합을 예측해 드립니다."
+    }
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="mb-6">
+        <Link href="/" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
+            <Home className="mr-2 h-4 w-4" />
+            홈으로 돌아가기
+          </Button>
+        </Link>
+      </div>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Ticket className="text-primary h-6 w-6" /> 로또 번호 추천
+          </CardTitle>
+          <CardDescription>
+            어떤 방식으로 로또 번호를 추천받고 싶으신가요? 아래에서 선택해주세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {recommendationTypes.map((type) => (
+            <Link href={type.href} key={type.href} className="block group">
+              <Card className="h-full flex flex-col shadow-md group-hover:shadow-xl group-hover:scale-[1.02] transition-all duration-300 ease-in-out cursor-pointer">
+                <CardHeader className="flex flex-row items-center gap-3 pb-2">
+                  <div className="p-2 bg-secondary rounded-md">
+                    <type.icon className="h-6 w-6 text-secondary-foreground" />
+                  </div>
+                  <CardTitle className="text-xl text-primary group-hover:text-primary/90">{type.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow pt-2">
+                  <CardDescription>{type.description}</CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
