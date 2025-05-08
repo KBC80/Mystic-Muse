@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,13 +31,7 @@ const formSchema = z.object({
 
 type TarotReadingFormValues = z.infer<typeof formSchema>;
 
-const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled, rotation, inFan }: { card: TarotCard; onClick: () => void; isSelected?: boolean; isDisabled?: boolean; rotation?: number; inFan?: boolean; }) => {
-  const fanStyle = inFan ? {
-    transform: `rotate(${rotation}deg) translateY(-${Math.abs(rotation || 0) * 0.5}px)`,
-    marginLeft: rotation !== undefined && rotation !== 0 ? '-40px' : '0', // Overlap cards
-    zIndex: isSelected ? 100 : Math.floor(Math.abs(rotation || 0)),
-  } : {};
-
+const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: TarotCard; onClick: () => void; isSelected?: boolean; isDisabled?: boolean; }) => {
   const selectedStyle = isSelected ? {
     transform: 'translateY(-20px) scale(1.1)',
     zIndex: 100,
@@ -48,31 +41,25 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled, rotation, inF
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled || (inFan && card.isFaceUp)}
+      disabled={isDisabled}
       className={cn(
         "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-accent relative",
-        "w-24 h-auto aspect-[2/3] inline-block", // Standard card size for the fan
+        "w-24 h-auto aspect-[2/3] inline-block", 
         (isDisabled && !isSelected) && "opacity-50 cursor-not-allowed",
-        card.isFaceUp && !inFan && "scale-100" // Keep face up cards in results normal
       )}
-      style={{ ...fanStyle, ...selectedStyle }}
-      aria-label={card.isFaceUp ? card.name : "타로 카드 뒷면"}
+      style={{ ...selectedStyle }}
+      aria-label="타로 카드 뒷면"
     >
       <div className="w-full h-full relative">
-        {card.isFaceUp && !inFan ? (
-          <Image src={card.imageUrl} alt={card.name} fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint={card.dataAiHint} />
-        ) : (
-          <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
-        )}
+        <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
       </div>
-      {card.isFaceUp && !inFan && <p className="p-1 text-xs bg-black/70 text-white absolute bottom-0 w-full text-center truncate">{card.name}</p>}
     </button>
   );
 };
 
 
 export default function TarotReadingPage() {
-  const [isLoading, setIsLoading] = useState(false); // For form submission or initial loading if any
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deck, setDeck] = useState<TarotCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
@@ -95,25 +82,27 @@ export default function TarotReadingPage() {
     setIsShuffling(true);
     setDeck(prevDeck => 
       [...prevDeck]
-        .map(card => ({ ...card, isFaceUp: false }))
+        .map(card => ({ ...card, isFaceUp: false })) // Ensure cards are face down when shuffling
         .sort(() => Math.random() - 0.5)
     );
-    setSelectedCards([]);
+    setSelectedCards([]); // Clear selections on shuffle
     setTimeout(() => setIsShuffling(false), 500);
   };
 
   const handleCardSelect = (card: TarotCard) => {
-    if (selectedCards.length < 3 && !selectedCards.find(c => c.id === card.id)) {
-      setSelectedCards(prev => [...prev, card]);
-    } else if (selectedCards.find(c => c.id === card.id)) {
+    if (isLoading) return;
+
+    if (selectedCards.some(sc => sc.id === card.id)) {
       setSelectedCards(prev => prev.filter(c => c.id !== card.id)); // Allow deselect
+    } else if (selectedCards.length < 3) {
+      setSelectedCards(prev => [...prev, card]);
     }
   };
 
   async function onQuestionSubmit(values: TarotReadingFormValues) {
     setQuestionSubmitted(true);
     setError(null);
-    if (selectedCards.length === 0) { // Only shuffle if no cards are selected yet or if it's the first submit
+    if (selectedCards.length === 0) { 
       shuffleDeck();
     }
   }
@@ -128,11 +117,16 @@ export default function TarotReadingPage() {
     router.push(`/tarot-reading/result?q=${encodeURIComponent(question)}&${cardParams}`);
   }
   
-  // Calculate rotation for fan display
-  const FAN_CARDS_DISPLAY_COUNT = 76; // Show all cards
-  const MAX_ROTATION_DEG = 2.5; // Max rotation for edge cards
-  const deckSlice = deck.slice(0, FAN_CARDS_DISPLAY_COUNT);
-
+  const numRows = 3;
+  const deckSlices: TarotCard[][] = [];
+  if (deck.length > 0) {
+    let startIndex = 0;
+    for (let i = 0; i < numRows; i++) {
+      const numCardsInRow = Math.ceil((deck.length - startIndex) / (numRows - i));
+      deckSlices.push(deck.slice(startIndex, startIndex + numCardsInRow));
+      startIndex += numCardsInRow;
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -199,34 +193,38 @@ export default function TarotReadingPage() {
           </CardHeader>
           <CardContent>
             {isShuffling ? (
-              <div className="flex justify-center items-center h-60"> {/* Increased height for visibility */}
+              <div className="flex justify-center items-center py-10 min-h-[200px]">
                 <LoadingSpinner size={32} />
                 <p className="ml-2 text-muted-foreground">카드를 섞고 있습니다...</p>
               </div>
             ) : (
-              <div className="w-full overflow-x-auto py-4 scrollbar-thin scrollbar-thumb-primary/50 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <div className="flex justify-center items-end h-56 whitespace-nowrap px-4"> {/* Centering and fixed height for fan */}
-                  {deckSlice.map((card, index) => {
-                    const totalCards = deckSlice.length;
-                    // Calculate rotation: 0 at center, max at edges
-                    const rotationFactor = (index - (totalCards -1) / 2) / ((totalCards -1) / 2);
-                    const rotation = rotationFactor * MAX_ROTATION_DEG * (totalCards / 10); // Amplify rotation for more cards
-                    return (
-                      <TarotCardDisplay
-                        key={card.id}
-                        card={card}
-                        onClick={() => handleCardSelect(card)}
-                        isSelected={selectedCards.some(sc => sc.id === card.id)}
-                        isDisabled={(selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading}
-                        rotation={rotation}
-                        inFan={true}
-                      />
-                    );
-                  })}
-                </div>
+              <div className="space-y-3 py-4">
+                {deckSlices.map((rowCards, rowIndex) => (
+                  <div key={rowIndex} className="flex justify-center w-full overflow-x-auto scrollbar-thin scrollbar-thumb-primary/50 scrollbar-track-transparent py-1">
+                    <div className="flex items-end h-auto whitespace-nowrap px-4">
+                      {rowCards.map((card, cardIndex) => (
+                        <div
+                          key={card.id}
+                          style={{ marginLeft: cardIndex > 0 ? '-64px' : '0' }} // Overlap amount: card width (96px) - visible part (32px) = 64px
+                          className={cn(
+                            "transition-transform duration-200",
+                            !selectedCards.some(sc => sc.id === card.id) && !((selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading) && "hover:translate-y-[-10px]"
+                          )}
+                        >
+                          <TarotCardDisplay
+                            card={card}
+                            onClick={() => handleCardSelect(card)}
+                            isSelected={selectedCards.some(sc => sc.id === card.id)}
+                            isDisabled={(selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            {selectedCards.length === 3 && (
+            {selectedCards.length === 3 && !isShuffling && (
               <Button onClick={goToInterpretationPage} disabled={isLoading} className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isLoading ? <LoadingSpinner size={20} /> : "내 리딩 받기"}
               </Button>
@@ -235,10 +233,10 @@ export default function TarotReadingPage() {
         </Card>
       )}
       
-      {isLoading && !isShuffling && ( // General loading state, not shuffle-specific
+      {isLoading && !isShuffling && questionSubmitted && selectedCards.length !==3 && ( 
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">처리 중...</p>
+          <p className="ml-2 text-muted-foreground">카드를 불러오는 중...</p>
         </div>
       )}
 
@@ -251,3 +249,4 @@ export default function TarotReadingPage() {
     </div>
   );
 }
+
