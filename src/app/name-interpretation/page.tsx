@@ -70,7 +70,7 @@ export default function NameInterpretationPage() {
     try {
       const interpretationResult = await interpretName(values);
       setResult(interpretationResult);
-    } catch (err)_ {
+    } catch (err) {
       console.error("이름 해석 오류:", err);
       setError(err instanceof Error ? err.message : "이름 해석 중 알 수 없는 오류가 발생했습니다.");
     } finally {
