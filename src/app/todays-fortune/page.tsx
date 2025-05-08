@@ -31,7 +31,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, CalendarIcon } from 'lucide-react';
+import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, CalendarIcon, Sparkles, Palmtree, VenetianMask } from 'lucide-react';
 import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
 import { cn } from "@/lib/utils";
 
@@ -139,6 +139,7 @@ export default function TodaysFortunePage() {
                             }
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
+                            captionLayout="dropdown-buttons"
                           />
                         </PopoverContent>
                       </Popover>
@@ -233,7 +234,10 @@ export default function TodaysFortunePage() {
       {result && (
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary">오늘의 운세</CardTitle>
+            <CardTitle className="text-2xl text-primary">오늘의 운세 ({form.getValues("name")}님)</CardTitle>
+            <CardDescription className="flex items-center gap-1 pt-1">
+              <Sparkles className="h-4 w-4 text-yellow-500"/> 당신의 {result.gapjaYearName} ({result.zodiacColor} {result.zodiacAnimal})
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -276,3 +280,4 @@ export default function TodaysFortunePage() {
     </div>
   );
 }
+

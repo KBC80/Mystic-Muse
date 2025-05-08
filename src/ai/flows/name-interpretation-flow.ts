@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview 사용자의 이름과 생년월일시를 바탕으로 성명학적 분석과 인생 조언을 제공합니다.
@@ -35,6 +36,9 @@ const InterpretNameOutputSchema = z.object({
     .array(z.number().int().min(1).max(45))
     .length(3)
     .describe('행운의 숫자 3개 (1-45 사이)입니다.'),
+  gapjaYearName: z.string().describe('태어난 해의 60갑자 간지 이름입니다 (예: 갑자년).'),
+  zodiacColor: z.string().describe('태어난 해의 띠 색깔입니다 (예: 청색).'),
+  zodiacAnimal: z.string().describe('태어난 해의 띠 동물입니다 (예: 쥐띠).'),
 });
 export type InterpretNameOutput = z.infer<typeof InterpretNameOutputSchema>;
 
@@ -64,6 +68,7 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   잘 맞는 띠 또는 좋은 궁합 (사람, 방향 등 상세 설명 포함).
     *   행운을 가져다주는 색상 3가지와 그 이유.
 4.  **행운의 숫자**: 1부터 45 사이의 행운의 숫자 3개를 추천하고, 그 숫자가 어떤 의미를 갖는지 간략히 설명합니다.
+5.  **사주 정보**: 생년월일을 바탕으로 태어난 해의 60갑자 간지(예: 갑자년), 띠 색깔(예: 청색), 그리고 띠 동물(예: 쥐띠)을 정확히 계산하여 알려주세요. 양력/음력 구분을 명확히 인지하여 계산해야 합니다.
 
 분석은 단순한 나열이 아닌, 각 요소들이 어떻게 상호작용하는지에 대한 통찰을 담아야 하며, 사용자가 자신의 삶을 긍정적으로 개척해 나갈 수 있도록 격려와 지혜를 전달해야 합니다.
 `,
@@ -80,3 +85,4 @@ const interpretNameFlow = ai.defineFlow(
     return output!;
   }
 );
+

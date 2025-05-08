@@ -32,7 +32,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, NAME_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PenTool, Palette, Users, TrendingUp, Gift, Home, CalendarIcon } from 'lucide-react';
+import { PenTool, Palette, Users, TrendingUp, Gift, Home, CalendarIcon, Sparkles, Palmtree, VenetianMask } from 'lucide-react';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
 import { cn } from "@/lib/utils";
 
@@ -70,7 +70,7 @@ export default function NameInterpretationPage() {
     try {
       const interpretationResult = await interpretName(values);
       setResult(interpretationResult);
-    } catch (err) {
+    } catch (err)_ {
       console.error("이름 해석 오류:", err);
       setError(err instanceof Error ? err.message : "이름 해석 중 알 수 없는 오류가 발생했습니다.");
     } finally {
@@ -141,6 +141,7 @@ export default function NameInterpretationPage() {
                             }
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
+                            captionLayout="dropdown-buttons"
                           />
                         </PopoverContent>
                       </Popover>
@@ -259,7 +260,10 @@ export default function NameInterpretationPage() {
       {result && (
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary">이름 풀이 결과</CardTitle>
+            <CardTitle className="text-2xl text-primary">이름 풀이 결과 ({form.getValues("name")}님)</CardTitle>
+             <CardDescription className="flex items-center gap-1 pt-1">
+                <Sparkles className="h-4 w-4 text-yellow-500"/> 당신의 {result.gapjaYearName} ({result.zodiacColor} {result.zodiacAnimal})
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -313,3 +317,4 @@ export default function NameInterpretationPage() {
     </div>
   );
 }
+

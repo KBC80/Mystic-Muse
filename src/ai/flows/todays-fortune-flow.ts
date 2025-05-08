@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview 사용자의 생년월일시와 이름을 바탕으로 오늘의 운세를 제공합니다.
@@ -28,6 +29,9 @@ const GetDailyFortuneOutputSchema = z.object({
     .array(z.number().int().min(1).max(45))
     .length(3)
     .describe('오늘의 행운의 숫자 3개 (1-45 사이)입니다.'),
+  gapjaYearName: z.string().describe('태어난 해의 60갑자 간지 이름입니다 (예: 갑자년).'),
+  zodiacColor: z.string().describe('태어난 해의 띠 색깔입니다 (예: 청색).'),
+  zodiacAnimal: z.string().describe('태어난 해의 띠 동물입니다 (예: 쥐띠).'),
 });
 export type GetDailyFortuneOutput = z.infer<typeof GetDailyFortuneOutputSchema>;
 
@@ -53,6 +57,7 @@ const dailyFortunePrompt = ai.definePrompt({
 4.  **직업운/학업운**: 업무나 학업에서 성과를 내기 위한 조언이나 주의할 점을 알려주세요.
 5.  **대인관계운**: 가족, 친구, 동료와의 관계에서 도움이 될 만한 조언을 해주세요.
 6.  **행운의 숫자**: 1부터 45 사이의 오늘의 행운의 숫자 3개를 추천해주세요.
+7.  **사주 정보**: 생년월일을 바탕으로 태어난 해의 60갑자 간지(예: 갑자년), 띠 색깔(예: 청색), 그리고 띠 동물(예: 쥐띠)을 정확히 계산하여 알려주세요. 양력/음력 구분을 명확히 인지하여 계산해야 합니다.
 
 운세는 구체적이고 긍정적인 방향으로 조언하며, 사용자에게 희망을 줄 수 있도록 작성해주세요.
 `,
@@ -69,3 +74,4 @@ const getDailyFortuneFlow = ai.defineFlow(
     return output!;
   }
 );
+
