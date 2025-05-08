@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: '미스틱 뮤즈',
+  title: 'Mystic Muse',
   description: '통합 운세 서비스: 사주, 작명, 타로, 꿈 해석을 제공합니다.',
 };
 

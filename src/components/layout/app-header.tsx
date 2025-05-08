@@ -18,7 +18,7 @@ export function AppHeader() {
   }, []);
   
   const currentPage = navItems.find(item => item.href === pathname || (item.href !== "/" && pathname.startsWith(item.href)));
-  const pageTitle = currentPage ? currentPage.title : "미스틱 뮤즈";
+  const pageTitle = currentPage ? currentPage.title : "Mystic Muse";
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
