@@ -44,7 +44,8 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: Tar
       disabled={isDisabled}
       className={cn(
         "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-accent relative",
-        "w-24 h-auto aspect-[2/3] inline-block", 
+        // Adjusted for mobile: w-16 for small screens, w-24 for medium and up
+        "w-16 md:w-24 h-auto aspect-[2/3] inline-block",
         (isDisabled && !isSelected) && "opacity-50 cursor-not-allowed",
       )}
       style={{ ...selectedStyle }}
@@ -197,7 +198,8 @@ export default function TarotReadingPage() {
                         <div
                           key={card.id}
                           style={{ marginLeft: cardIndex > 0 ? '-64px' : '0' }} // Overlap amount: card width (96px) - visible part (32px) = 64px
-                          className={cn(
+                          className={cn("transition-transform duration-200",
+                            cardIndex > 0 ? 'ml-[-48px] md:ml-[-64px]' : 'ml-0', // Responsive margin: smaller overlap on mobile
                             "transition-transform duration-200",
                             !selectedCards.some(sc => sc.id === card.id) && !((selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading) && "hover:translate-y-[-10px]"
                           )}

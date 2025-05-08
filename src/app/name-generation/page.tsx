@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -12,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -30,10 +30,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { GENDER_OPTIONS, CALENDAR_TYPES, EAST_ASIAN_BIRTH_TIMES } from "@/lib/constants";
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Baby, Sparkles, Parentheses, CalendarDays, Clock, Home, CalendarIcon } from 'lucide-react';
-import { generateAuspiciousName, type GenerateAuspiciousNameInput, type GenerateAuspiciousNameOutput } from '@/ai/flows/name-generation-flow';
+import { LoadingSpinner } from '@/components/ui/loading-spinner'; // 로딩 스피너 추가
+import { Baby, Parentheses, Home, CalendarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 
@@ -53,11 +51,10 @@ const formSchema = z.object({
 type NameGenerationFormValues = z.infer<typeof formSchema>;
 
 export default function NameGenerationPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GenerateAuspiciousNameOutput | null>(null);
+  const router = useRouter();
   const [isFatherCalendarOpen, setIsFatherCalendarOpen] = useState(false);
   const [isMotherCalendarOpen, setIsMotherCalendarOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   const form = useForm<NameGenerationFormValues>({
@@ -77,19 +74,21 @@ export default function NameGenerationPage() {
   });
 
   async function onSubmit(values: NameGenerationFormValues) {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const input: GenerateAuspiciousNameInput = { ...values };
-      const generationResult = await generateAuspiciousName(input);
-      setResult(generationResult);
-    } catch (err) {
-      console.error("이름 생성 오류:", err);
-      setError(err instanceof Error ? err.message : "이름 생성 중 알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    setIsSubmitting(true);
+    const queryParams = new URLSearchParams({
+      fatherName: values.fatherName,
+      fatherBirthDate: values.fatherBirthDate,
+      fatherCalendarType: values.fatherCalendarType,
+      fatherBirthTime: values.fatherBirthTime,
+      motherName: values.motherName,
+      motherBirthDate: values.motherBirthDate,
+      motherCalendarType: values.motherCalendarType,
+      motherBirthTime: values.motherBirthTime,
+      childLastName: values.childLastName,
+      childGender: values.childGender,
+    }).toString();
+    
+    router.push(`/name-generation/result?${queryParams}`);
   }
 
   return (
@@ -377,46 +376,15 @@ export default function NameGenerationPage() {
                   </div>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "길운 이름 생성하기"}
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                {isSubmitting ? <LoadingSpinner size={20} /> : "길운 이름 생성하기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
 
-      {isLoading && (
-        <div className="flex justify-center items-center p-6">
-          <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">완벽한 이름을 만들고 있습니다...</p>
-        </div>
-      )}
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {result && (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-primary flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" /> 추천 이름
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {result.recommendedNames.map((name, index) => (
-              <Card key={index} className="p-4 bg-secondary/30">
-                <h3 className="text-xl font-semibold text-primary">{name.name} {name.hanja && `(${name.hanja})`}</h3>
-                <p className="text-sm text-muted-foreground mt-1"><strong className="text-secondary-foreground">의미:</strong> {name.meaning}</p>
-                <p className="text-sm text-muted-foreground"><strong className="text-secondary-foreground">음양오행 및 사주 조화:</strong> {name.yinYangFiveElements}</p>
-              </Card>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* 결과 표시 로직 제거 */}
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>

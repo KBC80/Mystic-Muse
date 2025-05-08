@@ -3,6 +3,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // useRouter 임포트
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -12,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,14 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, NAME_TYPES } from "@/lib/constants";
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PenTool, Palette, Users, TrendingUp, Gift, Home, CalendarIcon, Sparkles, Palmtree, VenetianMask } from 'lucide-react';
-import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
+import { PenTool, Home, CalendarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -47,10 +44,10 @@ const formSchema = z.object({
 type NameInterpretationFormValues = z.infer<typeof formSchema>;
 
 export default function NameInterpretationPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<InterpretNameOutput | null>(null);
+  const router = useRouter(); // useRouter 훅 사용
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const form = useForm<NameInterpretationFormValues>({
     resolver: zodResolver(formSchema),
@@ -64,18 +61,18 @@ export default function NameInterpretationPage() {
   });
 
   async function onSubmit(values: NameInterpretationFormValues) {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const interpretationResult = await interpretName(values);
-      setResult(interpretationResult);
-    } catch (err) {
-      console.error("이름 해석 오류:", err);
-      setError(err instanceof Error ? err.message : "이름 해석 중 알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    setIsSubmitting(true); // 폼 제출 시작
+    const queryParams = new URLSearchParams({
+      name: values.name,
+      birthDate: values.birthDate,
+      calendarType: values.calendarType,
+      birthTime: values.birthTime,
+      nameType: values.nameType,
+    }).toString();
+    
+    router.push(`/name-interpretation/result?${queryParams}`);
+    //setIsSubmitting(false)는 페이지 이동 후에는 필요 없을 수 있으나, 오류 발생 시를 대비해 둘 수 있습니다.
+    // 실제로는 페이지가 이동하므로 이 상태는 크게 의미 없을 수 있습니다.
   }
 
   return (
@@ -133,7 +130,7 @@ export default function NameInterpretationPage() {
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
                             captionLayout="dropdown-buttons"
-                            defaultView="years"
+                            defaultView="years" // 초기 뷰를 'years'로 설정
                           />
                         </PopoverContent>
                       </Popover>
@@ -227,85 +224,15 @@ export default function NameInterpretationPage() {
                   )}
                 />
               </div>
-              <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "내 이름의 비밀 풀기"}
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                {isSubmitting ? "결과 페이지로 이동 중..." : "내 이름의 비밀 풀기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
 
-      {isLoading && (
-        <div className="flex justify-center items-center p-6">
-          <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">당신의 운명을 분석 중입니다...</p>
-        </div>
-      )}
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {result && (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-primary">이름 풀이 결과 ({form.getValues("name")}님)</CardTitle>
-             <CardDescription className="flex items-center gap-1 pt-1">
-                <Sparkles className="h-4 w-4 text-yellow-500"/> 당신의 {result.gapjaYearName} ({result.zodiacColor} {result.zodiacAnimal})
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold flex items-center gap-2"><PenTool className="h-5 w-5 text-secondary-foreground"/>이름 분석</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">{result.nameAnalysis}</p>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-secondary-foreground"/>생애 주기별 운세</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-lg">초년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.초년운}</p></CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-lg">중년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.중년운}</p></CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-lg">장년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.장년운}</p></CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2"><CardTitle className="text-lg">말년운</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages.말년운}</p></CardContent>
-                </Card>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-secondary-foreground"/>좋은 궁합</h3>
-                <p className="text-muted-foreground whitespace-pre-wrap">띠: {result.compatibility.zodiacSign}</p>
-                <p className="text-muted-foreground">색상: <span className="flex gap-1 items-center flex-wrap">{result.compatibility.colors.map(color => <span key={color} className="inline-block px-2 py-1 text-xs rounded bg-secondary text-secondary-foreground">{color}</span>)}</span></p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-secondary-foreground"/>행운의 숫자</h3>
-                <div className="flex space-x-2">
-                  {result.luckyNumbers.map((num) => (
-                    <span key={num} className="flex items-center justify-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-bold text-lg shadow-md">
-                      {num}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* 결과 표시 로직 제거 */}
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -31,8 +32,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Ticket, Home, Sparkles, MessageSquare, Hash, CalendarIcon, Newspaper, AlertTriangle, ExternalLink } from 'lucide-react';
-import { recommendLottoNumbers, type LottoNumberRecommendationInput, type LottoNumberRecommendationOutput } from '@/ai/flows/lotto-number-recommendation-flow';
+import { Ticket, Home, CalendarIcon, Newspaper, AlertTriangle, ExternalLink } from 'lucide-react';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions';
 import { cn } from "@/lib/utils";
 
@@ -64,9 +64,8 @@ const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small'
 };
 
 export default function SajuLottoRecommendationPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<LottoNumberRecommendationOutput | null>(null);
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const [latestDraw, setLatestDraw] = useState<LatestWinningNumber | null>(null);
@@ -105,18 +104,15 @@ export default function SajuLottoRecommendationPage() {
   });
 
   async function onSubmit(values: LottoRecommendationFormValues) {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const recommendationResult = await recommendLottoNumbers(values as LottoNumberRecommendationInput);
-      setResult(recommendationResult);
-    } catch (err) {
-      console.error("사주 로또 번호 추천 오류:", err);
-      setError(err instanceof Error ? err.message : "사주 로또 번호 추천 중 알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    setIsSubmitting(true);
+    const queryParams = new URLSearchParams({
+      name: values.name,
+      birthDate: values.birthDate,
+      calendarType: values.calendarType,
+      birthTime: values.birthTime,
+    }).toString();
+    
+    router.push(`/lotto-recommendation/saju/result?${queryParams}`);
   }
 
   return (
@@ -275,63 +271,15 @@ export default function SajuLottoRecommendationPage() {
                   )}
                 />
               </div>
-              <Button type="submit" disabled={isLoading || isLoadingLatestDraw} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "사주 행운 번호 받기"}
+              <Button type="submit" disabled={isSubmitting || isLoadingLatestDraw} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                {isSubmitting ? <LoadingSpinner size={20} /> : "사주 행운 번호 받기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
 
-      {isLoading && !isLoadingLatestDraw && (
-        <div className="flex justify-center items-center p-6">
-          <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">사주를 분석하여 번호를 생성 중입니다...</p>
-        </div>
-      )}
-
-      {error && !isLoading && (
-        <Alert variant="destructive">
-          <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {result && (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-primary flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" /> 당신의 사주에 맞는 행운의 로또 번호
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {result.lottoSets.map((set, index) => (
-              <Card key={index} className="p-4 bg-secondary/30">
-                <CardHeader className="p-2 pb-1">
-                  <CardTitle className="text-lg text-secondary-foreground flex items-center gap-2">
-                     <Hash className="h-5 w-5" /> 추천 번호 세트 {index + 1}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-2">
-                  <div className="flex space-x-2 mb-3 flex-wrap gap-y-2">
-                    {set.numbers.map((num) => (
-                       <LottoBall key={num} number={num} />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong className="text-secondary-foreground">해설:</strong> {set.reasoning}</p>
-                </CardContent>
-              </Card>
-            ))}
-            
-            <div className="pt-4 border-t">
-              <h3 className="text-xl font-semibold flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-secondary-foreground"/> 전반적인 행운 조언
-              </h3>
-              <p className="text-muted-foreground mt-2 whitespace-pre-wrap">{result.overallAdvice}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* 결과 표시 로직 제거 */}
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>

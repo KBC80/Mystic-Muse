@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -20,9 +21,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, Sparkles, Hash, HelpCircle, TrendingUp, Info, ExternalLink } from 'lucide-react';
-import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
-import { getInitialScientificLottoData, getLottoRecommendationsAction, type ProcessedWinningNumber, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
+import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, TrendingUp, Info, ExternalLink } from 'lucide-react';
+import { getInitialScientificLottoData, type ProcessedWinningNumber, type CalculatedAverages, getLottoRecommendationsAction } from '@/app/lotto-recommendation/scientific/actions';
 
 const formSchema = z.object({
   includeNumbers: z.string().optional().refine(val => {
@@ -61,11 +61,11 @@ const getLottoBallColorClass = (number: number): string => {
   if (number >= 21 && number <= 30) return 'bg-red-500 text-white';
   if (number >= 31 && number <= 40) return 'bg-gray-600 text-white';
   if (number >= 41 && number <= 45) return 'bg-green-500 text-white';
-  return 'bg-gray-300 text-black'; // Default/fallback
+  return 'bg-gray-300 text-black'; 
 };
 
 const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small' | 'medium' }) => {
-  const sizeClasses = size === 'small' ? 'h-9 w-9 text-sm' : 'h-10 w-10 text-lg'; // 'small' size updated: h-9 w-9 text-sm
+  const sizeClasses = size === 'small' ? 'h-9 w-9 text-sm' : 'h-10 w-10 text-lg';
   return (
     <div className={`flex items-center justify-center rounded-full font-bold shadow-md ${sizeClasses} ${getLottoBallColorClass(number)}`}>
       {number}
@@ -75,10 +75,10 @@ const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small'
 
 
 export default function ScientificLottoRecommendationPage() {
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [llmResult, setLlmResult] = useState<ScientificLottoRecommendationOutput | null>(null);
   const [recentDrawsForDisplay, setRecentDrawsForDisplay] = useState<ProcessedWinningNumber[]>([]);
   const [analysisAverages, setAnalysisAverages] = useState<CalculatedAverages | null>(null);
 
@@ -104,6 +104,7 @@ export default function ScientificLottoRecommendationPage() {
           setRecentDrawsForDisplay(data.recentDraws);
         }
         
+        // Fetch initial averages to display
         const initialAnalysis = await getLottoRecommendationsAction({}); 
         if (initialAnalysis.error && !data.error) { 
             setError(prev => prev ? `${prev}\n분석 데이터 로딩 실패: ${initialAnalysis.error}` : `초기 분석 데이터 로딩 실패: ${initialAnalysis.error}`);
@@ -122,28 +123,12 @@ export default function ScientificLottoRecommendationPage() {
   }, []);
 
   async function onSubmit(values: ScientificLottoFormValues) {
-    setIsLoading(true);
-    setError(null);
-    setLlmResult(null);
+    setIsSubmitting(true);
+    const queryParams = new URLSearchParams();
+    if (values.includeNumbers) queryParams.append('includeNumbers', values.includeNumbers);
+    if (values.excludeNumbers) queryParams.append('excludeNumbers', values.excludeNumbers);
     
-    try {
-      const result = await getLottoRecommendationsAction({
-        includeNumbersStr: values.includeNumbers,
-        excludeNumbersStr: values.excludeNumbers,
-      });
-
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setLlmResult(result.llmResponse || null);
-        setAnalysisAverages(result.averages || null);
-      }
-    } catch (err) {
-      console.error("과학적 로또 번호 추천 오류:", err);
-      setError(err instanceof Error ? err.message : "과학적 로otto 번호 추천 중 알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    router.push(`/lotto-recommendation/scientific/result?${queryParams.toString()}`);
   }
 
   return (
@@ -169,7 +154,7 @@ export default function ScientificLottoRecommendationPage() {
         </div>
       )}
       
-      {error && !isLoading && ( 
+      {error && !isSubmitting && ( 
         <Alert variant="destructive">
           <AlertTitle>오류 발생</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
@@ -274,68 +259,16 @@ export default function ScientificLottoRecommendationPage() {
                   )}
                 />
               </div>
-              <Button type="submit" disabled={isLoading || isInitialLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "AI 과학적 번호 추천 받기"}
+              <Button type="submit" disabled={isSubmitting || isInitialLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                {isSubmitting ? <LoadingSpinner size={20} /> : "AI 과학적 번호 추천 받기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
 
-      {isLoading && !isInitialLoading && ( 
-        <div className="flex justify-center items-center p-6">
-          <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">AI가 데이터를 분석하여 번호를 생성 중입니다...</p>
-        </div>
-      )}
-      
-      {llmResult && !isLoading && ( 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-primary flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" /> AI 분석 기반 추천 번호 (5세트)
-            </CardTitle>
-             <CardDescription>
-                AI가 과거 데이터 통계와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Card className="p-4 bg-secondary/30">
-                <CardHeader className="p-2 pb-1">
-                    <CardTitle className="text-lg text-secondary-foreground flex items-center gap-2">
-                        <HelpCircle className="h-5 w-5" /> AI 예측 (다음 회차)
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-2 space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                        <strong className="text-secondary-foreground">예상 당첨 번호 합계 범위:</strong> {llmResult.predictedSumRange}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        <strong className="text-secondary-foreground">예상 짝수:홀수 비율:</strong> {llmResult.predictedEvenOddRatio}
-                    </p>
-                </CardContent>
-            </Card>
+      {/* 결과 표시 로직 제거 */}
 
-            {llmResult.recommendedSets.map((set, index) => (
-              <Card key={index} className="p-4 bg-secondary/30 shadow">
-                 <CardHeader className="p-2 pb-1">
-                   <CardTitle className="text-lg text-secondary-foreground flex items-center gap-2">
-                    <Hash className="h-5 w-5" /> 추천 번호 세트 {index + 1}
-                   </CardTitle>
-                 </CardHeader>
-                <CardContent className="p-2">
-                  <div className="flex space-x-2 mb-3 flex-wrap gap-y-2">
-                    {set.numbers.map((num) => (
-                      <LottoBall key={num} number={num} />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong className="text-secondary-foreground">AI 추천 근거:</strong> {set.reasoning}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </CardContent>
-        </Card>
-      )}
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">

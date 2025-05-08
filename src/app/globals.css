@@ -138,3 +138,12 @@ body {
     background-color: hsl(var(--primary));
   }
 }
+
+/* Mobile specific styles for tarot cards */
+@media (max-width: 768px) {
+  .tarot-card-mobile {
+    width: 70px; /* Smaller width for mobile */
+    height: 105px; /* Smaller height for mobile (maintaining aspect ratio) */
+    margin: 2px; /* Reduced margin for mobile */
+  }
+}

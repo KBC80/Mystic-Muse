@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -30,9 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, CalendarIcon, Sparkles, Palmtree, VenetianMask } from 'lucide-react';
-import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
+import { CalendarHeart, Home, CalendarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 
@@ -46,10 +45,9 @@ const formSchema = z.object({
 type TodaysFortuneFormValues = z.infer<typeof formSchema>;
 
 export default function TodaysFortunePage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GetDailyFortuneOutput | null>(null);
+  const router = useRouter();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TodaysFortuneFormValues>({
     resolver: zodResolver(formSchema),
@@ -62,18 +60,15 @@ export default function TodaysFortunePage() {
   });
 
   async function onSubmit(values: TodaysFortuneFormValues) {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const fortuneResult = await getDailyFortune(values as GetDailyFortuneInput);
-      setResult(fortuneResult);
-    } catch (err) {
-      console.error("오늘의 운세 오류:", err);
-      setError(err instanceof Error ? err.message : "오늘의 운세 확인 중 알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    setIsSubmitting(true);
+    const queryParams = new URLSearchParams({
+      name: values.name,
+      birthDate: values.birthDate,
+      calendarType: values.calendarType,
+      birthTime: values.birthTime,
+    }).toString();
+    
+    router.push(`/todays-fortune/result?${queryParams}`);
   }
 
   return (
@@ -201,74 +196,16 @@ export default function TodaysFortunePage() {
                   )}
                 />
               </div>
-              <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "오늘의 운세 보기"}
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                {isSubmitting ? <LoadingSpinner size={20} /> : "오늘의 운세 보기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
 
-      {isLoading && (
-        <div className="flex justify-center items-center p-6">
-          <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">별의 기운을 읽고 있습니다...</p>
-        </div>
-      )}
+      {/* 결과 표시 로직 제거 */}
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {result && (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-primary">오늘의 운세 ({form.getValues("name")}님)</CardTitle>
-            <CardDescription className="flex items-center gap-1 pt-1">
-              <Sparkles className="h-4 w-4 text-yellow-500"/> 당신의 {result.gapjaYearName} ({result.zodiacColor} {result.zodiacAnimal})
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold flex items-center gap-2"><Star className="h-5 w-5 text-secondary-foreground"/>종합운</h3>
-              <p className="text-muted-foreground">{result.overallFortune}</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-secondary/20">
-                <CardHeader className="pb-2 flex flex-row items-center gap-2"><Heart className="h-5 w-5 text-pink-500"/><CardTitle className="text-lg">애정운</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-muted-foreground">{result.love}</p></CardContent>
-              </Card>
-              <Card className="bg-secondary/20">
-                <CardHeader className="pb-2 flex flex-row items-center gap-2"><Shield className="h-5 w-5 text-green-500"/><CardTitle className="text-lg">건강운</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-muted-foreground">{result.health}</p></CardContent>
-              </Card>
-              <Card className="bg-secondary/20">
-                <CardHeader className="pb-2 flex flex-row items-center gap-2"><Briefcase className="h-5 w-5 text-blue-500"/><CardTitle className="text-lg">직업운</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-muted-foreground">{result.work}</p></CardContent>
-              </Card>
-              <Card className="bg-secondary/20">
-                <CardHeader className="pb-2 flex flex-row items-center gap-2"><Users className="h-5 w-5 text-yellow-500"/><CardTitle className="text-lg">대인관계운</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-muted-foreground">{result.relationships}</p></CardContent>
-              </Card>
-            </div>
-            
-            <div>
-              <h3 className="text-xl font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-secondary-foreground"/>오늘의 행운의 숫자</h3>
-              <div className="flex space-x-2 mt-2">
-                {result.luckyNumbers.map((num) => (
-                  <span key={num} className="flex items-center justify-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-bold text-lg shadow-md">
-                    {num}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
