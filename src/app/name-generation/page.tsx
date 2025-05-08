@@ -56,6 +56,9 @@ export default function NameGenerationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateAuspiciousNameOutput | null>(null);
+  const [isFatherCalendarOpen, setIsFatherCalendarOpen] = useState(false);
+  const [isMotherCalendarOpen, setIsMotherCalendarOpen] = useState(false);
+
 
   const form = useForm<NameGenerationFormValues>({
     resolver: zodResolver(formSchema),
@@ -134,7 +137,7 @@ export default function NameGenerationPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>아버지 생년월일</FormLabel>
-                        <Popover>
+                        <Popover open={isFatherCalendarOpen} onOpenChange={setIsFatherCalendarOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
@@ -157,14 +160,14 @@ export default function NameGenerationPage() {
                             <Calendar
                               mode="single"
                               selected={field.value ? new Date(field.value) : undefined}
-                              onSelect={(date) =>
-                                field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                              onSelect={(date) => {
+                                  field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                                  setIsFatherCalendarOpen(false);
+                                }
                               }
                               disabled={(date) =>
                                 date > new Date() || date < new Date("1920-01-01")
                               }
-                              
-                              captionLayout="dropdown-buttons"
                               fromYear={1920}
                               toYear={new Date().getFullYear()}
                             />
@@ -247,7 +250,7 @@ export default function NameGenerationPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>어머니 생년월일</FormLabel>
-                        <Popover>
+                        <Popover open={isMotherCalendarOpen} onOpenChange={setIsMotherCalendarOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
@@ -270,14 +273,14 @@ export default function NameGenerationPage() {
                             <Calendar
                               mode="single"
                               selected={field.value ? new Date(field.value) : undefined}
-                              onSelect={(date) =>
-                                field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                              onSelect={(date) => {
+                                field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                                setIsMotherCalendarOpen(false);
+                               }
                               }
                               disabled={(date) =>
                                 date > new Date() || date < new Date("1920-01-01")
                               }
-                              
-                              captionLayout="dropdown-buttons"
                               fromYear={1920}
                               toYear={new Date().getFullYear()}
                             />

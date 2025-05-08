@@ -49,6 +49,7 @@ export default function TodaysFortunePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GetDailyFortuneOutput | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const form = useForm<TodaysFortuneFormValues>({
     resolver: zodResolver(formSchema),
@@ -105,7 +106,7 @@ export default function TodaysFortunePage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>생년월일</FormLabel>
-                      <Popover>
+                      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -128,14 +129,14 @@ export default function TodaysFortunePage() {
                           <Calendar
                             mode="single"
                             selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) =>
-                              field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                            onSelect={(date) => {
+                                field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                                setIsCalendarOpen(false);
+                              }
                             }
                             disabled={(date) =>
                               date > new Date() || date < new Date("1920-01-01")
                             }
-                            
-                            captionLayout="dropdown-buttons"
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
                           />
