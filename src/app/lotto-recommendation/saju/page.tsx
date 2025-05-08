@@ -39,6 +39,23 @@ const formSchema = z.object({
 
 type LottoRecommendationFormValues = z.infer<typeof formSchema>;
 
+const getLottoBallColorClass = (number: number): string => {
+  if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
+  if (number >= 11 && number <= 20) return 'bg-blue-500 text-white';
+  if (number >= 21 && number <= 30) return 'bg-red-500 text-white';
+  if (number >= 31 && number <= 40) return 'bg-gray-600 text-white';
+  if (number >= 41 && number <= 45) return 'bg-green-500 text-white';
+  return 'bg-gray-300 text-black'; // Default/fallback
+};
+
+const LottoBall = ({ number }: { number: number }) => {
+  return (
+    <div className={`flex items-center justify-center h-10 w-10 rounded-full font-bold text-lg shadow-md ${getLottoBallColorClass(number)}`}>
+      {number}
+    </div>
+  );
+};
+
 export default function SajuLottoRecommendationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -206,11 +223,9 @@ export default function SajuLottoRecommendationPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-2">
-                  <div className="flex space-x-2 mb-3">
+                  <div className="flex space-x-2 mb-3 flex-wrap gap-y-2">
                     {set.numbers.map((num) => (
-                      <span key={num} className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shadow-md">
-                        {num}
-                      </span>
+                       <LottoBall key={num} number={num} />
                     ))}
                   </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong className="text-secondary-foreground">해설:</strong> {set.reasoning}</p>

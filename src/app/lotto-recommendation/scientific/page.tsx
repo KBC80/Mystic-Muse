@@ -55,6 +55,25 @@ const formSchema = z.object({
 
 type ScientificLottoFormValues = z.infer<typeof formSchema>;
 
+const getLottoBallColorClass = (number: number): string => {
+  if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
+  if (number >= 11 && number <= 20) return 'bg-blue-500 text-white';
+  if (number >= 21 && number <= 30) return 'bg-red-500 text-white';
+  if (number >= 31 && number <= 40) return 'bg-gray-600 text-white';
+  if (number >= 41 && number <= 45) return 'bg-green-500 text-white';
+  return 'bg-gray-300 text-black'; // Default/fallback
+};
+
+const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small' | 'medium' }) => {
+  const sizeClasses = size === 'small' ? 'h-7 w-7 text-xs' : 'h-10 w-10 text-lg';
+  return (
+    <div className={`flex items-center justify-center rounded-full font-bold shadow-md ${sizeClasses} ${getLottoBallColorClass(number)}`}>
+      {number}
+    </div>
+  );
+};
+
+
 export default function ScientificLottoRecommendationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -76,7 +95,7 @@ export default function ScientificLottoRecommendationPage() {
     async function loadData() {
       setIsInitialLoading(true);
       setError(null);
-      setAnalysisAverages(null); // Clear previous analysis summary
+      setAnalysisAverages(null); 
       try {
         const data = await getInitialScientificLottoData();
         if (data.error) {
@@ -84,9 +103,9 @@ export default function ScientificLottoRecommendationPage() {
         } else if (data.recentDraws) {
           setRecentDrawsForDisplay(data.recentDraws);
         }
-         // Also fetch analysis for initial display if desired, or wait for form submit
-        const initialAnalysis = await getLottoRecommendationsAction({}); // Empty form to get base analysis
-        if (initialAnalysis.error && !data.error) { // Don't overwrite main error if initial load failed
+        
+        const initialAnalysis = await getLottoRecommendationsAction({}); 
+        if (initialAnalysis.error && !data.error) { 
             setError(prev => prev ? `${prev}\n분석 데이터 로딩 실패: ${initialAnalysis.error}` : `초기 분석 데이터 로딩 실패: ${initialAnalysis.error}`);
         } else if (initialAnalysis.averages) {
             setAnalysisAverages(initialAnalysis.averages);
@@ -106,7 +125,6 @@ export default function ScientificLottoRecommendationPage() {
     setIsLoading(true);
     setError(null);
     setLlmResult(null);
-    // analysisAverages will be updated by the action if successful
     
     try {
       const result = await getLottoRecommendationsAction({
@@ -160,8 +178,7 @@ export default function ScientificLottoRecommendationPage() {
         </div>
       )}
       
-      {/* Display error prominently if it occurs during initial load or submission */}
-      {error && !isLoading && ( // Show general error if not in loading state for a new request
+      {error && !isLoading && ( 
         <Alert variant="destructive">
           <AlertTitle>오류 발생</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
@@ -189,8 +206,16 @@ export default function ScientificLottoRecommendationPage() {
                   <TableRow key={win.drwNo}>
                     <TableCell>{win.drwNo}회</TableCell>
                     <TableCell>{win.drwNoDate}</TableCell>
-                    <TableCell>{[win.drwtNo1, win.drwtNo2, win.drwtNo3, win.drwtNo4, win.drwtNo5, win.drwtNo6].join(', ')}</TableCell>
-                    <TableCell>{win.bnusNo}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {[win.drwtNo1, win.drwtNo2, win.drwtNo3, win.drwtNo4, win.drwtNo5, win.drwtNo6].map(num => (
+                          <LottoBall key={num} number={num} size="small" />
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <LottoBall number={win.bnusNo} size="small" />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -266,16 +291,14 @@ export default function ScientificLottoRecommendationPage() {
         </CardContent>
       </Card>
 
-      {isLoading && !isInitialLoading && ( // Show this loading only for form submission
+      {isLoading && !isInitialLoading && ( 
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
           <p className="ml-2 text-muted-foreground">AI가 데이터를 분석하여 번호를 생성 중입니다...</p>
         </div>
       )}
       
-      {/* Error display for submission is handled by the general error block above */}
-
-      {llmResult && !isLoading && ( // Ensure not loading when showing results
+      {llmResult && !isLoading && ( 
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center gap-2">
@@ -312,9 +335,7 @@ export default function ScientificLottoRecommendationPage() {
                 <CardContent className="p-2">
                   <div className="flex space-x-2 mb-3 flex-wrap gap-y-2">
                     {set.numbers.map((num) => (
-                      <span key={num} className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground font-bold text-lg shadow-md">
-                        {num}
-                      </span>
+                      <LottoBall key={num} number={num} />
                     ))}
                   </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong className="text-secondary-foreground">AI 추천 근거:</strong> {set.reasoning}</p>
@@ -327,5 +348,3 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
-
-    
