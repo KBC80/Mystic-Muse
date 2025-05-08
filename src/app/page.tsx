@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { WandSparkles, PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid } from "lucide-react";
+import { WandSparkles, PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Ticket } from "lucide-react";
 
 export default function HomePage() {
   const features = [
@@ -12,6 +12,7 @@ export default function HomePage() {
     { title: "오늘의 운세", href: "/todays-fortune", icon: CalendarHeart, description: "오늘 하루, 당신의 삶 다양한 측면에서 어떤 일들이 펼쳐질지 알아보세요." },
     { title: "꿈 해몽", href: "/dream-interpretation", icon: CloudMoon, description: "당신의 꿈 속에 숨겨진 메시지와 상징들을 파헤쳐 보세요." },
     { title: "타로 리딩", href: "/tarot-reading", icon: LayoutGrid, description: "타로 카드를 통해 당신의 질문에 대한 통찰과 지침을 얻으세요." },
+    { title: "로또 번호 추천", href: "/lotto-recommendation", icon: Ticket, description: "특별한 기운을 담은 로또 번호를 추천받아 행운을 잡아보세요." },
   ];
 
   return (
@@ -24,7 +25,7 @@ export default function HomePage() {
           미스틱 뮤즈에 오신 것을 환영합니다
         </h1>
         <p className="text-lg text-muted-foreground">
-          보이는 것과 보이지 않는 것을 이해하기 위한 당신의 안내자. 운세, 이름, 꿈, 타로를 탐험하세요.
+          보이는 것과 보이지 않는 것을 이해하기 위한 당신의 안내자. 운세, 이름, 꿈, 타로, 그리고 행운의 번호까지 탐험하세요.
         </p>
       </header>
 
@@ -58,4 +59,3 @@ export default function HomePage() {
     </div>
   );
 }
-

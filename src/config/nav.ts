@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Home } from 'lucide-react';
+import { PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Home, Ticket } from 'lucide-react';
 
 export interface NavItem {
   title: string;
@@ -39,5 +39,10 @@ export const navItems: NavItem[] = [
     title: '타로 리딩',
     href: '/tarot-reading',
     icon: LayoutGrid,
+  },
+  {
+    title: '로또 번호 추천',
+    href: '/lotto-recommendation',
+    icon: Ticket,
   },
 ];
