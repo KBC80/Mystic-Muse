@@ -39,7 +39,7 @@ const formSchema = z.object({
 
 type LottoRecommendationFormValues = z.infer<typeof formSchema>;
 
-export default function LottoRecommendationPage() {
+export default function SajuLottoRecommendationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<LottoNumberRecommendationOutput | null>(null);
@@ -62,8 +62,8 @@ export default function LottoRecommendationPage() {
       const recommendationResult = await recommendLottoNumbers(values as LottoNumberRecommendationInput);
       setResult(recommendationResult);
     } catch (err) {
-      console.error("로또 번호 추천 오류:", err);
-      setError(err instanceof Error ? err.message : "로또 번호 추천 중 알 수 없는 오류가 발생했습니다.");
+      console.error("사주 로또 번호 추천 오류:", err);
+      setError(err instanceof Error ? err.message : "사주 로또 번호 추천 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -83,10 +83,10 @@ export default function LottoRecommendationPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <Ticket className="text-primary h-6 w-6" /> 로또 번호 추천
+            <Ticket className="text-primary h-6 w-6" /> 사주 로또 번호 추천
           </CardTitle>
           <CardDescription>
-            당신의 정보를 입력하시면 특별한 행운 번호를 추천해 드립니다.
+            당신의 사주 정보를 입력하시면 특별한 행운 번호를 추천해 드립니다.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -169,7 +169,7 @@ export default function LottoRecommendationPage() {
                 />
               </div>
               <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isLoading ? <LoadingSpinner size={20} /> : "행운 번호 받기"}
+                {isLoading ? <LoadingSpinner size={20} /> : "사주 행운 번호 받기"}
               </Button>
             </form>
           </Form>
@@ -179,7 +179,7 @@ export default function LottoRecommendationPage() {
       {isLoading && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">우주의 기운을 모아 번호를 생성 중입니다...</p>
+          <p className="ml-2 text-muted-foreground">사주를 분석하여 번호를 생성 중입니다...</p>
         </div>
       )}
 
@@ -194,7 +194,7 @@ export default function LottoRecommendationPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" /> 당신을 위한 행운의 로또 번호
+                <Sparkles className="h-6 w-6 text-primary" /> 당신의 사주에 맞는 행운의 로또 번호
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">

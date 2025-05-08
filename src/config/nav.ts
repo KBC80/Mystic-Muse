@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Home, Ticket } from 'lucide-react';
+import { PenTool, Baby, CalendarHeart, CloudMoon, LayoutGrid, Home, Ticket, TestTubeDiagonal } from 'lucide-react';
 
 export interface NavItem {
   title: string;
@@ -41,8 +41,13 @@ export const navItems: NavItem[] = [
     icon: LayoutGrid,
   },
   {
-    title: '로또 번호 추천',
-    href: '/lotto-recommendation',
-    icon: Ticket,
+    title: '사주 로또 추천',
+    href: '/lotto-recommendation/saju',
+    icon: Ticket, // Or a more Saju-related icon if available
+  },
+  {
+    title: '과학적 로또 추천',
+    href: '/lotto-recommendation/scientific',
+    icon: TestTubeDiagonal, // Or a BarChart icon
   },
 ];
