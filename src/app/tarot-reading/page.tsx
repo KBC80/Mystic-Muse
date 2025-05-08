@@ -49,9 +49,7 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: Tar
         {card.isFaceUp ? (
           <Image src={card.imageUrl} alt={card.name} layout="fill" objectFit="cover" data-ai-hint={card.dataAiHint} />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-indigo-700 to-purple-800 flex items-center justify-center" data-ai-hint="tarot card back">
-            <WandSparkles className="w-1/2 h-1/2 text-indigo-300 opacity-70" />
-          </div>
+          <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" layout="fill" objectFit="cover" data-ai-hint="tarot card back" />
         )}
       </div>
       {card.isFaceUp && <p className="p-1 text-xs bg-black/70 text-white absolute bottom-0 w-full text-center truncate">{card.name}</p>}
@@ -304,3 +302,4 @@ export default function TarotReadingPage() {
     </div>
   );
 }
+
