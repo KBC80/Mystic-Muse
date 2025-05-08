@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, Sparkles, Hash } from 'lucide-react';
+import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, Sparkles, Hash, HelpCircle, TrendingUp } from 'lucide-react';
 import { recommendScientificLottoNumbers, type ScientificLottoRecommendationInput, type ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
 
 const formSchema = z.object({
@@ -38,6 +38,12 @@ interface WinningNumber {
   bonus: number;
 }
 
+// --- 개발 참고 ---
+// 아래 MOCK_HISTORICAL_WINS와 MOCK_ANALYSIS는 실제 데이터가 아닌 예시 데이터입니다.
+// 실제 서비스에서는 동행복권 공식 API 또는 신뢰할 수 있는 데이터 소스를 통해
+// 최신 당첨 번호 데이터를 가져와서 분석 로직을 구현해야 합니다.
+// 현재는 프론트엔드에서 목업 데이터를 사용하고 있으며, Genkit 플로우는 이 목업 데이터의 요약을 전달받습니다.
+// -----------------
 const MOCK_HISTORICAL_WINS: WinningNumber[] = [
   { drawNumber: 1125, date: '2024-06-22', numbers: [5, 11, 13, 15, 30, 45], bonus: 4 },
   { drawNumber: 1124, date: '2024-06-15', numbers: [3, 8, 17, 30, 33, 34], bonus: 26 },
@@ -45,11 +51,8 @@ const MOCK_HISTORICAL_WINS: WinningNumber[] = [
   { drawNumber: 1122, date: '2024-06-01', numbers: [7, 12, 20, 27, 29, 37], bonus: 26 },
 ];
 
-const MOCK_ANALYSIS = {
-  last24DrawsSumAvg: 138,
-  last24DrawsEvenOddRatio: '평균 3:3 (짝:홀)',
-  summaryForAI: "최근 24회차 당첨 번호의 합계 평균은 약 138이며, 짝수와 홀수의 비율은 평균적으로 3:3으로 나타납니다. 최근 자주 등장한 숫자는 20, 27, 30 이며, 오랫동안 등장하지 않은 숫자는 9, 21 입니다."
-};
+// 이 요약은 LLM에 전달되어 번호 추천 및 예측에 사용됩니다.
+const MOCK_ANALYSIS_SUMMARY_FOR_AI = "최근 24회차 당첨 번호의 합계 평균은 약 138이며, 짝수와 홀수의 비율은 평균적으로 3:3으로 나타납니다. 최근 자주 등장한 숫자는 20, 27, 30 이며, 오랫동안 등장하지 않은 숫자는 9, 21 입니다. 최근 5회차 동안 연속으로 나온 번호는 없었습니다. 낮은 숫자(1-15)와 높은 숫자(31-45)의 출현 빈도도 고려할 만합니다.";
 
 export default function ScientificLottoRecommendationPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +80,6 @@ export default function ScientificLottoRecommendationPage() {
     const includeNumbers = parseNumbers(values.includeNumbers);
     const excludeNumbers = parseNumbers(values.excludeNumbers);
 
-    // Validate parsed numbers
     if (values.includeNumbers && (!includeNumbers || includeNumbers.some(n => n < 1 || n > 45))) {
       form.setError("includeNumbers", { type: "manual", message: "1과 45 사이의 숫자를 쉼표로 구분하여 입력해주세요." });
       setIsLoading(false);
@@ -89,7 +91,6 @@ export default function ScientificLottoRecommendationPage() {
       return;
     }
     
-    // Check for overlap between include and exclude numbers
     if (includeNumbers && excludeNumbers) {
         const overlap = includeNumbers.some(n => excludeNumbers.includes(n));
         if (overlap) {
@@ -99,10 +100,9 @@ export default function ScientificLottoRecommendationPage() {
         }
     }
 
-
     try {
       const input: ScientificLottoRecommendationInput = {
-        historicalDataSummary: MOCK_ANALYSIS.summaryForAI,
+        historicalDataSummary: MOCK_ANALYSIS_SUMMARY_FOR_AI, // 실제로는 서버에서 분석된 요약 정보를 전달
         includeNumbers: includeNumbers,
         excludeNumbers: excludeNumbers,
       };
@@ -132,15 +132,20 @@ export default function ScientificLottoRecommendationPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <TestTubeDiagonal className="text-primary h-6 w-6" /> 과학적 로또 번호 추천
           </CardTitle>
-          <CardDescription>
-            과거 당첨 데이터 및 통계 분석을 기반으로 로또 번호를 추천해 드립니다.
+          <CardDescription className="flex items-start gap-1">
+             <HelpCircle className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
+            <span>
+                과거 당첨 데이터 및 통계 분석을 기반으로 로또 번호를 추천해 드립니다.
+                <br/>
+                <strong className="text-destructive">참고: 현재 페이지에 표시되는 과거 당첨 번호 및 분석 데이터는 실제 데이터가 아닌 예시(목업) 데이터입니다.</strong>
+            </span>
           </CardDescription>
         </CardHeader>
       </Card>
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호 예시</CardTitle>
+          <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호 예시 (목업 데이터)</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -168,11 +173,10 @@ export default function ScientificLottoRecommendationPage() {
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 24회차 분석 (예시)</CardTitle>
+          <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />데이터 요약 (LLM 제공용 목업)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-muted-foreground"><strong>평균 당첨 번호 합계:</strong> {MOCK_ANALYSIS.last24DrawsSumAvg}</p>
-          <p className="text-muted-foreground"><strong>짝수:홀수 비율:</strong> {MOCK_ANALYSIS.last24DrawsEvenOddRatio}</p>
+          <p className="text-muted-foreground text-sm whitespace-pre-wrap">{MOCK_ANALYSIS_SUMMARY_FOR_AI}</p>
         </CardContent>
       </Card>
 
@@ -246,6 +250,22 @@ export default function ScientificLottoRecommendationPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            <Card className="p-4 bg-secondary/30">
+                <CardHeader className="p-2 pb-1">
+                    <CardTitle className="text-lg text-secondary-foreground flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" /> 다음 회차 예측 (AI 기반)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                        <strong className="text-secondary-foreground">예상 합계 범위:</strong> {result.predictedSumRange}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                        <strong className="text-secondary-foreground">예상 짝수:홀수 비율:</strong> {result.predictedEvenOddRatio}
+                    </p>
+                </CardContent>
+            </Card>
+
             {result.recommendedSets.map((set, index) => (
               <Card key={index} className="p-4 bg-secondary/30">
                  <CardHeader className="p-2 pb-1">
@@ -271,3 +291,4 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
+

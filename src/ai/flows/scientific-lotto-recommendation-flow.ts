@@ -22,12 +22,14 @@ const LottoSetSchema = z.object({
   numbers: z
     .array(z.number().int().min(1).max(45))
     .length(6)
-    .describe('추천된 로otto 번호 6개입니다 (1-45 사이).'),
+    .describe('추천된 로또 번호 6개입니다 (1-45 사이).'),
   reasoning: z.string().describe('이 번호 조합을 추천하는 통계적 근거나 논리입니다.'),
 });
 
 const ScientificLottoRecommendationOutputSchema = z.object({
   recommendedSets: z.array(LottoSetSchema).length(5).describe('추천된 로또 번호 조합 5세트입니다.'),
+  predictedSumRange: z.string().describe('다음 회차 예상 당첨 번호 합계 범위입니다. 예: "135-145"'),
+  predictedEvenOddRatio: z.string().describe('다음 회차 예상 짝수:홀수 비율입니다. 예: "3:3 또는 4:2"'),
 });
 export type ScientificLottoRecommendationOutput = z.infer<typeof ScientificLottoRecommendationOutputSchema>;
 
@@ -39,7 +41,7 @@ const scientificLottoNumberRecommendationPrompt = ai.definePrompt({
   name: 'scientificLottoNumberRecommendationPrompt',
   input: {schema: ScientificLottoRecommendationInputSchema},
   output: {schema: ScientificLottoRecommendationOutputSchema},
-  prompt: `당신은 데이터 분석가이자 통계 전문가입니다. 제공된 과거 로또 당첨 번호 데이터의 요약과 사용자가 지정한 포함/제외 숫자를 고려하여, 통계적 가능성을 높일 수 있는 로또 번호 조합 5세트를 추천해주세요. 
+  prompt: `당신은 데이터 분석가이자 통계 전문가입니다. 제공된 과거 로또 당첨 번호 데이터의 요약과 사용자가 지정한 포함/제외 숫자를 고려하여, 통계적 가능성을 높일 수 있는 로또 번호 조합 5세트를 추천해주세요. 또한, 과거 데이터 요약을 바탕으로 다음 회차의 예상 당첨 번호 합계 범위와 예상되는 짝수:홀수 비율을 예측해주세요.
 
 과거 데이터 요약:
 {{{historicalDataSummary}}}
@@ -50,6 +52,7 @@ const scientificLottoNumberRecommendationPrompt = ai.definePrompt({
 
 각 번호 조합은 1부터 45 사이의 중복되지 않는 숫자 6개로 구성되어야 합니다. 각 조합에 대한 간략한 통계적 근거나 추천 논리를 설명해주세요.
 모든 답변은 한국어로, 명확하고 분석적인 어조로 작성해주세요.
+예상 합계 범위와 짝홀 비율 예측도 반드시 포함해주세요.
 `,
 });
 
@@ -64,3 +67,4 @@ const scientificLottoRecommendationFlow = ai.defineFlow(
     return output!;
   }
 );
+
