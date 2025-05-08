@@ -3,9 +3,9 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker, type CaptionProps } from "react-day-picker"
+import { DayPicker, type CaptionProps, useNavigation } from "react-day-picker"
 import { ko } from "date-fns/locale";
-import { format, getYear, getMonth, setYear, setMonth, addYears, subYears } from "date-fns";
+import { format, getYear, getMonth, setYear, setMonth } from "date-fns";
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -28,28 +28,33 @@ function CustomCaption(props: CaptionProps & {
     onBackToMonthView, 
     onBackToYearView, 
     currentView,
-    showYearMonthPicker,
+    // showYearMonthPicker, // This prop seems unused in the CustomCaption logic itself
     onYearClick,
     onMonthClick
   } = props;
-  const { goToMonth, nextMonth, previousMonth } = DayPicker.useNavigation();
+  const { goToMonth, nextMonth, previousMonth } = useNavigation();
 
 
   if (currentView === 'years') {
+    // Year selection UI is handled by renderYearView, so CustomCaption for 'years' view is minimal.
+    // It primarily acts as a title placeholder if DayPicker were to render it directly.
+    // The actual navigation (prev/next decade) is in renderYearView.
     return (
       <div className="flex justify-center items-center pt-1 relative">
-        <h2 className="text-sm font-medium">연도 선택</h2>
+        {/* Title for year view is handled by renderYearView's header */}
       </div>
     );
   }
 
   if (currentView === 'months') {
+    // Month selection UI is handled by renderMonthView.
+    // CustomCaption for 'months' view shows the selected year and allows going back to year view.
     return (
       <div className="flex justify-center items-center pt-1 relative">
          <Button
             variant="ghost"
             size="sm"
-            onClick={onBackToYearView}
+            onClick={onBackToYearView} // This should navigate back to year view
             className="absolute left-1"
           >
           <ChevronLeft className="h-4 w-4" />
@@ -68,7 +73,7 @@ function CustomCaption(props: CaptionProps & {
        <Button
             variant="ghost"
             size="sm"
-            onClick={onBackToMonthView}
+            onClick={onBackToMonthView} // This should navigate back to month view
             className="absolute left-1 flex items-center"
           >
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -118,34 +123,40 @@ function Calendar({
   ...props
 }: CalendarProps) {
   const [currentView, setCurrentView] = React.useState<'years' | 'months' | 'days'>('years');
-  const [displayDate, setDisplayDate] = React.useState<Date>(selected || new Date());
+  // displayDate will hold the currently selected year/month for navigation purposes
+  // It's initialized to `selected` if provided, otherwise today.
+  // It's updated when year/month is selected in respective views.
+  const [displayDate, setDisplayDate] = React.useState<Date>(selected || new Date()); 
+  
+  // yearPage tracks the starting year of the current decade view in 'years' mode
   const [yearPage, setYearPage] = React.useState<number>(getYear(selected || new Date()));
 
   const fromYear = fromYearProp || getYear(new Date()) - 100;
-  const toYear = toYearProp || getYear(new Date()) + 0;
+  const toYear = toYearProp || getYear(new Date()) + 0; // Default to current year
 
   React.useEffect(() => {
     if (selected) {
-      setDisplayDate(selected);
-      // If a date is selected, we could start at 'days', but the prompt implies starting at year selection.
-      // For a better UX if a date is already selected, we could go to 'days':
-      // setCurrentView('days');
-      // setYearPage(getYear(selected));
+      setDisplayDate(selected); // Ensure displayDate reflects the selected date if it changes
+      // setCurrentView('days'); // Optionally switch to day view if a date is selected
+      setYearPage(getYear(selected)); // Center year view on selected year's decade
     } else {
-      // Start with year view if no date is selected
+      // If no date is selected, default to showing the decade of `toYear`
+      setDisplayDate(setYear(new Date(), toYear)); // Set displayDate to the `toYear`
+      setYearPage(toYear); 
       setCurrentView('years');
-      setYearPage(toYear); // Start at the most recent decade
     }
   }, [selected, toYear]);
 
 
   const handleYearSelect = (year: number) => {
-    setDisplayDate(setYear(displayDate, year));
+    setDisplayDate(setYear(displayDate, year)); // Update displayDate with the chosen year
     setCurrentView('months');
   };
 
   const handleMonthSelect = (monthIndex: number) => {
-    setDisplayDate(setMonth(displayDate, monthIndex));
+    // Create a new date object for displayDate to ensure re-render
+    // Use the year from the current displayDate and the new monthIndex
+    setDisplayDate(prev => setMonth(setYear(new Date(), getYear(prev)), monthIndex));
     setCurrentView('days');
   };
   
@@ -153,26 +164,29 @@ function Calendar({
     if (onSelect) {
       onSelect(date);
     }
-    // Optionally, reset to year view or close popover.
-    // For now, let the parent component handle popover close.
-    // setCurrentView('years'); 
+    // After selecting a day, the parent component (e.g., Popover) should handle closing.
+    // We don't reset the view here.
   };
 
   const renderYearView = () => {
-    const yearsPerPage = 12;
-    const startYearOfPage = Math.floor((yearPage - fromYear) / yearsPerPage) * yearsPerPage + fromYear;
+    const yearsPerPage = 12; // For a 3x4 grid
+    // Calculate the first year of the decade to display based on yearPage
+    // Ensure yearPage stays within [fromYear, toYear] bounds for calculations
+    const currentDecadeStartYear = Math.floor((Math.min(Math.max(yearPage, fromYear), toYear) - fromYear) / yearsPerPage) * yearsPerPage + fromYear;
     
     const years: number[] = [];
     for (let i = 0; i < yearsPerPage; i++) {
-      const year = startYearOfPage + i;
+      const year = currentDecadeStartYear + i;
       if (year >= fromYear && year <= toYear) {
         years.push(year);
       }
     }
-    if (years.length === 0 && startYearOfPage > fromYear) { // case where yearPage is past toYear
-        const lastValidStartYear = Math.max(fromYear, toYear - yearsPerPage + 1);
+
+    // If years array is empty (e.g., yearPage is beyond `toYear`), adjust to show the last valid page
+    if (years.length === 0 && currentDecadeStartYear > fromYear) {
+        const lastPageStartYear = Math.max(fromYear, toYear - yearsPerPage + 1);
          for (let i = 0; i < yearsPerPage; i++) {
-            const year = lastValidStartYear + i;
+            const year = lastPageStartYear + i;
             if (year >= fromYear && year <= toYear) {
                 years.push(year);
             }
@@ -182,23 +196,23 @@ function Calendar({
 
     return (
       <div className="p-3">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-4">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setYearPage(Math.max(fromYear, yearPage - yearsPerPage))}
-            disabled={startYearOfPage <= fromYear}
+            disabled={currentDecadeStartYear <= fromYear}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div className="text-sm font-medium">
-            {years.length > 0 ? `${years[0]} - ${years[years.length - 1]}` : `${startYearOfPage} - ${startYearOfPage + yearsPerPage -1}`}
+          <div className="text-sm font-semibold">
+            연도 선택 ({years.length > 0 ? `${years[0]} - ${years[years.length - 1]}` : `${currentDecadeStartYear} - ${currentDecadeStartYear + yearsPerPage -1}`})
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setYearPage(Math.min(toYear, yearPage + yearsPerPage))}
-            disabled={startYearOfPage + yearsPerPage > toYear}
+            disabled={currentDecadeStartYear + yearsPerPage > toYear}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -207,12 +221,12 @@ function Calendar({
           {years.map((year) => (
             <Button
               key={year}
-              variant={getYear(displayDate) === year ? "default" : "outline"}
+              variant={getYear(displayDate) === year && currentView !== 'days' ? "default" : "outline"}
               size="sm"
               onClick={() => handleYearSelect(year)}
               className="w-full"
             >
-              {year}
+              {year}년
             </Button>
           ))}
         </div>
@@ -221,19 +235,29 @@ function Calendar({
   };
 
   const renderMonthView = () => {
-    const months = Array.from({ length: 12 }, (_, i) => i);
+    const months = Array.from({ length: 12 }, (_, i) => i); // 0 for January, 11 for December
     return (
       <div className="p-3">
-         <div className="grid grid-cols-3 gap-2">
+         {/* Header for Month View, showing selected year and back button */}
+         <div className="flex justify-between items-center mb-4">
+            <Button variant="outline" size="sm" onClick={() => setCurrentView('years')}>
+                <ChevronLeft className="h-4 w-4 mr-1" /> 연도 선택
+            </Button>
+            <div className="text-sm font-semibold">
+                {format(displayDate, "yyyy년", { locale: ko })} - 월 선택
+            </div>
+            <div className="w-[calc(2rem+8px)]"></div> {/* Placeholder for alignment */}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
           {months.map((monthIndex) => (
             <Button
               key={monthIndex}
-              variant={getMonth(displayDate) === monthIndex && getYear(displayDate) === getYear(setMonth(new Date(), monthIndex)) ? "default" : "outline"}
+              variant={getMonth(displayDate) === monthIndex && currentView !== 'days' ? "default" : "outline"}
               size="sm"
               onClick={() => handleMonthSelect(monthIndex)}
               className="w-full"
             >
-              {format(setMonth(new Date(), monthIndex), "MMM", { locale: ko })}
+              {format(setMonth(new Date(), monthIndex), "MMMM", { locale: ko })}
             </Button>
           ))}
         </div>
@@ -250,13 +274,13 @@ function Calendar({
           months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
           month: "space-y-4",
           caption_label: "hidden", // We use CustomCaption
-          nav: "space-x-1 flex items-center",
+          nav: "space-x-1 flex items-center", // Default nav buttons, hidden by CustomCaption essentially
           nav_button: cn(
             buttonVariants({ variant: "outline" }),
             "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
           ),
-          nav_button_previous: "absolute left-1", // Handled by CustomCaption
-          nav_button_next: "absolute right-1", // Handled by CustomCaption
+          nav_button_previous: "absolute left-1", // These are for default nav, overridden by CustomCaption
+          nav_button_next: "absolute right-1", // These are for default nav, overridden by CustomCaption
           table: "w-full border-collapse space-y-1",
           head_row: "flex",
           head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
@@ -276,43 +300,44 @@ function Calendar({
           ...classNames,
         }}
         locale={ko}
-        month={displayDate} // Control the displayed month
+        month={displayDate} // Crucial: DayPicker's month is controlled by displayDate
         selected={selected}
-        onSelect={handleDaySelect}
+        onSelect={handleDaySelect} // This is DayPicker's onSelect for days
         components={{
           Caption: (captionProps) => <CustomCaption 
             {...captionProps} 
+            displayMonth={displayDate} // Pass the controlled displayDate to CustomCaption
             currentView="days" 
             onBackToMonthView={() => setCurrentView('months')}
-            showYearMonthPicker={true}
-            onYearClick={() => setCurrentView('years')}
-            onMonthClick={() => setCurrentView('months')}
+            onYearClick={() => setCurrentView('years')} // Allow jumping to year view from day caption
+            onMonthClick={() => setCurrentView('months')} // Allow jumping to month view from day caption
            />,
-          // IconLeft and IconRight are handled within CustomCaption for day view
         }}
         fromYear={fromYear}
         toYear={toYear}
-        disabled={props.disabled}
+        captionLayout="dropdown-buttons" // Enable built-in year/month dropdowns if preferred for day view
+        fromMonth={fromYear ? new Date(fromYear, 0) : undefined}
+        toMonth={toYear ? new Date(toYear, 11) : undefined}
+        disabled={props.disabled} // Pass through other DayPicker props
+        // onMonthChange={setDisplayDate} // Update displayDate if user changes month via DayPicker's internal nav (if any)
+        // onYearChange={(year) => setDisplayDate(setYear(displayDate, year))} // Update displayDate for year changes
         {...props}
       />
     );
   };
 
-  return (
-    <div>
-      <CustomCaption 
-        displayMonth={displayDate} 
-        currentView={currentView} 
-        onBackToYearView={() => setCurrentView('years')}
-        onYearClick={() => setCurrentView('years')}
-        onMonthClick={() => setCurrentView('months')}
-      />
-      {currentView === 'years' && renderYearView()}
-      {currentView === 'months' && renderMonthView()}
-      {currentView === 'days' && renderDayView()}
-    </div>
-  );
+
+  // Main render logic based on currentView
+  if (currentView === 'years') {
+    return renderYearView();
+  }
+  if (currentView === 'months') {
+    return renderMonthView();
+  }
+  // Default to day view
+  return renderDayView();
 }
 Calendar.displayName = "Calendar"
 
 export { Calendar }
+
