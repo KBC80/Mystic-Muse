@@ -9,13 +9,13 @@ interface WinningNumberApiData {
   returnValue: string;
   totSellamnt?: number;
   drwNoDate?: string;
-  firstWinamnt?: number;
+  firstWinamnt?: number; // 1등 당첨금액 (1인당)
   drwtNo6?: number;
   drwtNo4?: number;
-  firstPrzwnerCo?: number;
+  firstPrzwnerCo?: number; // 1등 당첨인원
   drwtNo5?: number;
   bnusNo?: number;
-  firstAccumamnt?: number;
+  firstAccumamnt?: number; // 1등 총 당첨금액 (모든 1등 당첨자 합산)
   drwNo?: number;
   drwtNo2?: number;
   drwtNo3?: number;
@@ -28,7 +28,7 @@ export interface HistoricalDrawData {
   numbers: number[];
   bnusNo: number;
   firstPrzwnerCo: number;
-  secondPrzwnerCo: number; // API에서 제공하지 않으므로 0 또는 "정보 없음"으로 처리
+  firstWinamnt: number; // 1등 당첨금 (1인당)
 }
 
 // Helper to fetch a single lotto draw with caching
@@ -94,7 +94,8 @@ export async function fetchHistoricalDraw(drwNo: number): Promise<{ drawDetails?
         data.drwNo && data.drwNoDate &&
         data.drwtNo1 && data.drwtNo2 && data.drwtNo3 &&
         data.drwtNo4 && data.drwtNo5 && data.drwtNo6 && data.bnusNo &&
-        data.firstPrzwnerCo !== undefined // 0일 수도 있으므로 undefined 체크
+        data.firstPrzwnerCo !== undefined &&
+        data.firstWinamnt !== undefined 
     ) {
       const numbers = [
         data.drwtNo1, data.drwtNo2, data.drwtNo3,
@@ -108,7 +109,7 @@ export async function fetchHistoricalDraw(drwNo: number): Promise<{ drawDetails?
           numbers: numbers,
           bnusNo: data.bnusNo,
           firstPrzwnerCo: data.firstPrzwnerCo,
-          secondPrzwnerCo: 0, // API에서 2등 당첨자 수 미제공
+          firstWinamnt: data.firstWinamnt, // 1등 당첨금 (1인당)
         }
       };
     } else {
@@ -155,3 +156,4 @@ export async function getRecentHistoricalDraws(count: number): Promise<{ recentD
     return { error: err instanceof Error ? err.message : "최근 당첨 번호 로딩 중 알 수 없는 오류 발생" };
   }
 }
+

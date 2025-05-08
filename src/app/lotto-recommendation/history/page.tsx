@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Home, Archive, Search, AlertTriangle, User, Users } from 'lucide-react';
+import { Home, Archive, Search, AlertTriangle, User, Gift } from 'lucide-react'; // Users icon removed, Gift icon added
 import { fetchHistoricalDraw, getRecentHistoricalDraws, type HistoricalDrawData } from './actions';
 
 const getLottoBallColorClass = (number: number): string => {
@@ -28,6 +28,11 @@ const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small'
       {number}
     </div>
   );
+};
+
+const formatCurrency = (amount: number) => {
+  if (amount === 0) return '0원';
+  return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
 };
 
 export default function LottoHistoryPage() {
@@ -94,7 +99,7 @@ export default function LottoHistoryPage() {
             <Archive className="text-primary h-6 w-6" /> 역대 당첨번호 조회
           </CardTitle>
           <CardDescription>
-            과거 로또 당첨 번호와 1등 당첨자 수를 회차별로 조회합니다.
+            과거 로또 당첨 번호, 1등 당첨자 수 및 1인당 당첨금을 회차별로 조회합니다.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -126,7 +131,7 @@ export default function LottoHistoryPage() {
                   <TableHead>회차</TableHead>
                   <TableHead>추첨일</TableHead>
                   <TableHead>당첨번호 + 보너스</TableHead>
-                  <TableHead>1등 당첨자수</TableHead>
+                  <TableHead className="text-center">1등 당첨자/금액</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,6 +149,9 @@ export default function LottoHistoryPage() {
                     <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
                             <User className="h-4 w-4 text-muted-foreground"/> {draw.firstPrzwnerCo}명
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            {draw.firstPrzwnerCo > 0 ? `(각 ${formatCurrency(draw.firstWinamnt)})` : '(당첨자 없음)'}
                         </div>
                     </TableCell>
                   </TableRow>
@@ -200,7 +208,7 @@ export default function LottoHistoryPage() {
                 <CardTitle className="text-xl text-primary">{selectedDraw.drwNo}회 당첨 정보</CardTitle>
                 <CardDescription>추첨일: {selectedDraw.drwNoDate}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-md text-foreground">당첨 번호</h4>
                   <div className="flex flex-wrap gap-2 mt-1">
@@ -216,9 +224,11 @@ export default function LottoHistoryPage() {
                   <p className="text-muted-foreground flex items-center gap-1"><User className="h-5 w-5"/> {selectedDraw.firstPrzwnerCo}명</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-md text-foreground">2등 당첨자 수</h4>
-                  <p className="text-muted-foreground flex items-center gap-1"><Users className="h-5 w-5"/> {selectedDraw.secondPrzwnerCo === 0 ? "정보 없음" : `${selectedDraw.secondPrzwnerCo}명`}</p>
-                  <p className="text-xs text-muted-foreground">(동행복권 API는 2등 당첨자 수를 직접 제공하지 않습니다.)</p>
+                  <h4 className="font-semibold text-md text-foreground">1등 당첨금 (1인당)</h4>
+                  <p className="text-muted-foreground flex items-center gap-1">
+                    <Gift className="h-5 w-5 text-yellow-500"/> 
+                    {selectedDraw.firstPrzwnerCo > 0 ? formatCurrency(selectedDraw.firstWinamnt) : '당첨자 없음'}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -228,3 +238,4 @@ export default function LottoHistoryPage() {
     </div>
   );
 }
+
