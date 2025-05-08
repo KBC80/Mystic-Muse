@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -27,7 +28,7 @@ export function AppSidebar() {
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
             <WandSparkles className="h-6 w-6" />
           </Button>
-          <h1 className="text-xl font-semibold text-primary group-data-[collapsible=icon]:hidden">
+          <h1 className="text-xl font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
             Mystic Muse
           </h1>
         </Link>
@@ -62,3 +63,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
