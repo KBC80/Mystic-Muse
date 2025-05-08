@@ -47,9 +47,9 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: Tar
     >
       <div className="aspect-[2/3] relative">
         {card.isFaceUp ? (
-          <Image src={card.imageUrl} alt={card.name} layout="fill" objectFit="cover" data-ai-hint={card.dataAiHint} />
+          <Image src={card.imageUrl} alt={card.name} fill style={{ objectFit: 'cover' }} data-ai-hint={card.dataAiHint} />
         ) : (
-          <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" layout="fill" objectFit="cover" data-ai-hint="tarot card back" />
+          <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" fill style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
         )}
       </div>
       {card.isFaceUp && <p className="p-1 text-xs bg-black/70 text-white absolute bottom-0 w-full text-center truncate">{card.name}</p>}
@@ -213,7 +213,7 @@ export default function TarotReadingPage() {
               </div>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 md:gap-4">
-                {deck.slice(0, 21).map((card) => ( // 선택을 위해 덱의 일부 표시
+                {deck.slice(0, 76).map((card) => ( // 선택을 위해 덱의 일부 표시
                   <TarotCardDisplay
                     key={card.id}
                     card={card}
