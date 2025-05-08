@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -17,13 +18,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { tarotCardReading, type TarotCardReadingOutput, type TarotCardReadingInput } from '@/ai/flows/tarot-card-reading';
 import { generateDeck, type TarotCard } from '@/lib/tarot-cards';
 import Image from 'next/image';
-import { LayoutGrid, WandSparkles, Shuffle, CheckCircle2, Home } from 'lucide-react';
+import { LayoutGrid, Shuffle, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
@@ -32,40 +32,53 @@ const formSchema = z.object({
 
 type TarotReadingFormValues = z.infer<typeof formSchema>;
 
-const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: TarotCard; onClick: () => void; isSelected?: boolean; isDisabled?: boolean }) => {
+const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled, rotation, inFan }: { card: TarotCard; onClick: () => void; isSelected?: boolean; isDisabled?: boolean; rotation?: number; inFan?: boolean; }) => {
+  const fanStyle = inFan ? {
+    transform: `rotate(${rotation}deg) translateY(-${Math.abs(rotation || 0) * 0.5}px)`,
+    marginLeft: rotation !== undefined && rotation !== 0 ? '-40px' : '0', // Overlap cards
+    zIndex: isSelected ? 100 : Math.floor(Math.abs(rotation || 0)),
+  } : {};
+
+  const selectedStyle = isSelected ? {
+    transform: 'translateY(-20px) scale(1.1)',
+    zIndex: 100,
+    boxShadow: '0 0 15px 5px hsl(var(--primary))',
+  } : {};
+  
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled || card.isFaceUp}
+      disabled={isDisabled || (inFan && card.isFaceUp)}
       className={cn(
-        "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent",
-        isSelected && "ring-4 ring-primary scale-105",
+        "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-accent relative",
+        "w-24 h-auto aspect-[2/3] inline-block", // Standard card size for the fan
         (isDisabled && !isSelected) && "opacity-50 cursor-not-allowed",
-        card.isFaceUp && "scale-100"
+        card.isFaceUp && !inFan && "scale-100" // Keep face up cards in results normal
       )}
+      style={{ ...fanStyle, ...selectedStyle }}
       aria-label={card.isFaceUp ? card.name : "타로 카드 뒷면"}
     >
-      <div className="aspect-[2/3] relative">
-        {card.isFaceUp ? (
-          <Image src={card.imageUrl} alt={card.name} fill style={{ objectFit: 'cover' }} data-ai-hint={card.dataAiHint} />
+      <div className="w-full h-full relative">
+        {card.isFaceUp && !inFan ? (
+          <Image src={card.imageUrl} alt={card.name} fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint={card.dataAiHint} />
         ) : (
-          <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" fill style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
+          <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
         )}
       </div>
-      {card.isFaceUp && <p className="p-1 text-xs bg-black/70 text-white absolute bottom-0 w-full text-center truncate">{card.name}</p>}
+      {card.isFaceUp && !inFan && <p className="p-1 text-xs bg-black/70 text-white absolute bottom-0 w-full text-center truncate">{card.name}</p>}
     </button>
   );
 };
 
 
 export default function TarotReadingPage() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // For form submission or initial loading if any
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TarotCardReadingOutput | null>(null);
   const [deck, setDeck] = useState<TarotCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
+  const router = useRouter();
   
   useEffect(() => {
     setDeck(generateDeck());
@@ -80,67 +93,46 @@ export default function TarotReadingPage() {
 
   const shuffleDeck = () => {
     setIsShuffling(true);
-    // 간단한 셔플 애니메이션: 순서 변경 및 앞면 상태 재설정
     setDeck(prevDeck => 
       [...prevDeck]
-        .map(card => ({ ...card, isFaceUp: false })) // 모든 카드를 뒷면으로 설정
+        .map(card => ({ ...card, isFaceUp: false }))
         .sort(() => Math.random() - 0.5)
     );
     setSelectedCards([]);
-    setResult(null); // 이전 결과 지우기
-    setTimeout(() => setIsShuffling(false), 500); // 애니메이션 지속 시간
+    setTimeout(() => setIsShuffling(false), 500);
   };
 
   const handleCardSelect = (card: TarotCard) => {
     if (selectedCards.length < 3 && !selectedCards.find(c => c.id === card.id)) {
       setSelectedCards(prev => [...prev, card]);
+    } else if (selectedCards.find(c => c.id === card.id)) {
+      setSelectedCards(prev => prev.filter(c => c.id !== card.id)); // Allow deselect
     }
   };
 
   async function onQuestionSubmit(values: TarotReadingFormValues) {
     setQuestionSubmitted(true);
     setError(null);
-    setResult(null);
-    // 질문이 처음 제출되거나 아직 카드를 선택하지 않은 경우 덱 셔플
-    if (selectedCards.length === 0) {
+    if (selectedCards.length === 0) { // Only shuffle if no cards are selected yet or if it's the first submit
       shuffleDeck();
     }
   }
 
-  async function getInterpretation() {
+  async function goToInterpretationPage() {
     if (selectedCards.length !== 3 || !form.getValues("question")) {
       setError("질문을 입력하고 카드 3장을 선택해주세요.");
       return;
     }
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-
-    // 선택한 카드 공개
-    setDeck(prevDeck => prevDeck.map(dCard => {
-      const selectedCard = selectedCards.find(sCard => sCard.id === dCard.id);
-      return selectedCard ? { ...dCard, isFaceUp: true } : dCard;
-    }));
-    
-    const input: TarotCardReadingInput = {
-      question: form.getValues("question"),
-      card1: selectedCards[0].name,
-      card2: selectedCards[1].name,
-      card3: selectedCards[2].name,
-    };
-
-    try {
-      const interpretationResult = await tarotCardReading(input);
-      setResult(interpretationResult);
-    } catch (err) {
-      console.error("타로 리딩 오류:", err);
-      setError(err instanceof Error ? err.message : "타로 리딩 중 알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
+    const question = form.getValues("question");
+    const cardParams = selectedCards.map((card, index) => `c${index + 1}=${encodeURIComponent(card.name)}`).join('&');
+    router.push(`/tarot-reading/result?q=${encodeURIComponent(question)}&${cardParams}`);
   }
+  
+  // Calculate rotation for fan display
+  const FAN_CARDS_DISPLAY_COUNT = 76; // Show all cards
+  const MAX_ROTATION_DEG = 2.5; // Max rotation for edge cards
+  const deckSlice = deck.slice(0, FAN_CARDS_DISPLAY_COUNT);
 
-  const revealedSelectedCards = selectedCards.map(sc => deck.find(dc => dc.id === sc.id && dc.isFaceUp) || sc);
 
   return (
     <div className="space-y-8">
@@ -175,7 +167,7 @@ export default function TarotReadingPage() {
                       <Input
                         placeholder="예) 이번 달에 무엇에 집중해야 할까요?"
                         {...field}
-                        disabled={questionSubmitted && selectedCards.length > 0}
+                        disabled={questionSubmitted && selectedCards.length > 0 && !isLoading}
                       />
                     </FormControl>
                     <FormMessage />
@@ -183,7 +175,7 @@ export default function TarotReadingPage() {
                 )}
               />
               {!questionSubmitted || selectedCards.length === 0 ? (
-                <Button type="submit" disabled={isLoading} className="w-full md:w-auto bg-primary hover:bg-primary/90">
+                <Button type="submit" disabled={isLoading || isShuffling} className="w-full md:w-auto bg-primary hover:bg-primary/90">
                   질문 제출 및 덱 준비
                 </Button>
               ) : null}
@@ -200,106 +192,62 @@ export default function TarotReadingPage() {
               <CardDescription>
                 {selectedCards.length < 3 ? `${3 - selectedCards.length}장 더 선택해주세요.` : "모든 카드를 선택했습니다. 해석 준비 완료."}
               </CardDescription>
-              <Button onClick={shuffleDeck} variant="outline" size="sm" disabled={isShuffling || isLoading || selectedCards.length === 3}>
+              <Button onClick={shuffleDeck} variant="outline" size="sm" disabled={isShuffling || isLoading || (selectedCards.length >= 3 && !isLoading) }>
                 <Shuffle className={cn("mr-2 h-4 w-4", isShuffling && "animate-spin")} /> 덱 섞기
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             {isShuffling ? (
-              <div className="flex justify-center items-center h-40">
+              <div className="flex justify-center items-center h-60"> {/* Increased height for visibility */}
                 <LoadingSpinner size={32} />
                 <p className="ml-2 text-muted-foreground">카드를 섞고 있습니다...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 md:gap-4">
-                {deck.slice(0, 76).map((card) => ( // 선택을 위해 덱의 일부 표시
-                  <TarotCardDisplay
-                    key={card.id}
-                    card={card}
-                    onClick={() => handleCardSelect(card)}
-                    isSelected={selectedCards.some(sc => sc.id === card.id)}
-                    isDisabled={selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)}
-                  />
-                ))}
+              <div className="w-full overflow-x-auto py-4 scrollbar-thin scrollbar-thumb-primary/50 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex justify-center items-end h-56 whitespace-nowrap px-4"> {/* Centering and fixed height for fan */}
+                  {deckSlice.map((card, index) => {
+                    const totalCards = deckSlice.length;
+                    // Calculate rotation: 0 at center, max at edges
+                    const rotationFactor = (index - (totalCards -1) / 2) / ((totalCards -1) / 2);
+                    const rotation = rotationFactor * MAX_ROTATION_DEG * (totalCards / 10); // Amplify rotation for more cards
+                    return (
+                      <TarotCardDisplay
+                        key={card.id}
+                        card={card}
+                        onClick={() => handleCardSelect(card)}
+                        isSelected={selectedCards.some(sc => sc.id === card.id)}
+                        isDisabled={(selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading}
+                        rotation={rotation}
+                        inFan={true}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             )}
-            {selectedCards.length === 3 && !result && (
-              <Button onClick={getInterpretation} disabled={isLoading} className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground">
+            {selectedCards.length === 3 && (
+              <Button onClick={goToInterpretationPage} disabled={isLoading} className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground">
                 {isLoading ? <LoadingSpinner size={20} /> : "내 리딩 받기"}
               </Button>
             )}
           </CardContent>
         </Card>
       )}
-
-      {isLoading && (
+      
+      {isLoading && !isShuffling && ( // General loading state, not shuffle-specific
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">당신을 위해 카드를 해석하고 있습니다...</p>
+          <p className="ml-2 text-muted-foreground">처리 중...</p>
         </div>
       )}
 
       {error && (
-        <Alert variant="destructive">
-          <AlertTitle>리딩 오류</AlertTitle>
+        <Alert variant="destructive" className="mt-4">
+          <AlertTitle>오류</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
-
-      {result && (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-primary flex items-center gap-2">
-              <WandSparkles className="h-6 w-6 text-primary" /> 당신의 타로 리딩
-            </CardTitle>
-            <CardDescription>질문: "{form.getValues("question")}"</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              {revealedSelectedCards.map((card, index) => (
-                <Card key={card.id} className="flex flex-col items-center p-2">
-                   <div className="w-32 h-auto mb-2"> {/* 카드 이미지 고정 크기 컨테이너 */}
-                     <TarotCardDisplay card={{...card, isFaceUp: true}} onClick={() => {}} />
-                   </div>
-                   <p className="font-semibold text-center">{card.name}</p>
-                </Card>
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-secondary-foreground">카드 1: {revealedSelectedCards[0]?.name}</h3>
-                <p className="text-muted-foreground">{result.card1Interpretation}</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-secondary-foreground">카드 2: {revealedSelectedCards[1]?.name}</h3>
-                <p className="text-muted-foreground">{result.card2Interpretation}</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-secondary-foreground">카드 3: {revealedSelectedCards[2]?.name}</h3>
-                <p className="text-muted-foreground">{result.card3Interpretation}</p>
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t">
-              <h3 className="text-xl font-semibold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-green-500"/> 전반적인 조언</h3>
-              <p className="text-muted-foreground mt-2">{result.overallAdvice}</p>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => {
-              setQuestionSubmitted(false);
-              setSelectedCards([]);
-              setResult(null);
-              setError(null);
-              form.reset();
-              shuffleDeck();
-            }} variant="outline">새 리딩 시작</Button>
-          </CardFooter>
-        </Card>
       )}
     </div>
   );
 }
-

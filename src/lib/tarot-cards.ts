@@ -1,6 +1,5 @@
-// Based on a standard 78-card Rider-Waite deck, slightly modified to 76 as per request.
-// Two cards will be omitted for this example, e.g., two minor arcana cards.
-// In a real scenario, clarification on which 76 cards would be needed.
+// Based on a standard 78-card Rider-Waite deck, with 2 cards omitted to meet the 76 card total.
+// The Two of Pentacles and Three of Pentacles are omitted as an example.
 
 export const tarotCardNames: string[] = [
   // Major Arcana (22 cards)
@@ -25,15 +24,14 @@ export const tarotCardNames: string[] = [
   "검 6", "검 7", "검 8", "검 9", "검 10",
   "검 시종", "검 기사", "검 여왕", "검 왕",
 
-  // Minor Arcana - Pentacles (12 cards - reduced by 2 to meet 76 card total)
-  // Omitting Two of Pentacles and Three of Pentacles for this example
-  "펜타클 에이스", /*"펜타클 2", "펜타클 3",*/ "펜타클 4", "펜타클 5",
+  // Minor Arcana - Pentacles (12 cards - Pentacles 2 and Pentacles 3 omitted)
+  "펜타클 에이스", "펜타클 4", "펜타클 5",
   "펜타클 6", "펜타클 7", "펜타클 8", "펜타클 9", "펜타클 10",
   "펜타클 시종", "펜타클 기사", "펜타클 여왕", "펜타클 왕",
 ];
 
 if (tarotCardNames.length !== 76) { 
-  console.warn(`76개의 타로 카드가 필요하지만 ${tarotCardNames.length}개를 찾았습니다. 제공된 목록은 이 예제를 위해 74개의 고유한 카드로 조정되었습니다. 전체 76개를 사용하려면 정확한 목록을 제공하거나 펜타클 또는 다른 슈트에서 어떤 두 개의 마이너 아르카나 카드를 다시 추가할지 지정하십시오.`);
+  console.warn(`경고: ${tarotCardNames.length}개의 타로 카드 이름이 정의되었습니다. 76개가 필요합니다. tarot-cards.ts 파일을 확인해주세요.`);
 }
 
 
@@ -77,16 +75,17 @@ const cardImageMap: { [key: string]: string } = {
   "검 6": "Swords06.jpg", "검 7": "Swords07.jpg", "검 8": "Swords08.jpg", "검 9": "Swords09.jpg", "검 10": "Swords10.jpg",
   "검 시종": "Swords11.jpg", "검 기사": "Swords12.jpg", "검 여왕": "Swords13.jpg", "검 왕": "Swords14.jpg",
 
-  // Minor Arcana - Pentacles
-  "펜타클 에이스": "Pentacles01.jpg",
+  // Minor Arcana - Pentacles (12 cards - Pentacles 2 and Pentacles 3 omitted)
+  "펜타클 에이스": "Pentacles01.jpg", // "펜타클 2": "Pentacles02.jpg", "펜타클 3": "Pentacles03.jpg", (omitted)
   "펜타클 4": "Pentacles04.jpg", "펜타클 5": "Pentacles05.jpg",
   "펜타클 6": "Pentacles06.jpg", "펜타클 7": "Pentacles07.jpg", "펜타클 8": "Pentacles08.jpg", "펜타클 9": "Pentacles09.jpg", "펜타클 10": "Pentacles10.jpg",
   "펜타클 시종": "Pentacles11.jpg", "펜타클 기사": "Pentacles12.jpg", "펜타클 여왕": "Pentacles13.jpg", "펜타클 왕": "Pentacles14.jpg",
 };
 
 // Check if all tarotCardNames have a corresponding image in the map
-if (tarotCardNames.some(name => !cardImageMap[name])) {
-  console.error("Error: Some tarotCardNames do not have a corresponding entry in cardImageMap.");
+const missingImages = tarotCardNames.filter(name => !cardImageMap[name]);
+if (missingImages.length > 0) {
+  console.error(`오류: 다음 타로 카드 이름에 대한 이미지가 cardImageMap에 없습니다: ${missingImages.join(', ')}`);
 }
 
 export interface TarotCard {
@@ -99,12 +98,18 @@ export interface TarotCard {
 
 // Generate a deck of 76 cards
 export function generateDeck(): TarotCard[] {
-  return tarotCardNames.map((name, index) => ({
-    id: `card-${index}-${name.toLowerCase().replace(/\s+/g, '-')}`,
-    name,
-    // Using picsum for placeholder images. In a real app, these would be actual card images.
-    imageUrl: `/image/${cardImageMap[name]}`, // Use local images from public/image based on the map
-    dataAiHint: `타로 ${name.toLowerCase()}`,
-    isFaceUp: false,
-  }));
+  return tarotCardNames.map((name, index) => {
+    const imageName = cardImageMap[name];
+    const imageUrl = imageName ? `/image/${imageName}` : `https://picsum.photos/200/300?random=${index}`; // Fallback placeholder
+    if (!imageName) {
+      console.warn(`경고: 카드 "${name}"에 대한 이미지를 찾을 수 없습니다. 플레이스홀더 이미지를 사용합니다.`);
+    }
+    return {
+      id: `card-${index}-${name.toLowerCase().replace(/\s+/g, '-')}`,
+      name,
+      imageUrl: imageUrl,
+      dataAiHint: `타로 ${name.toLowerCase().replace(" ", "")}`, // data-ai-hint: one or two keywords
+      isFaceUp: false,
+    };
+  });
 }
