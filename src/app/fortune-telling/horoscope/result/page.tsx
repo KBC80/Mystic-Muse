@@ -8,24 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
-import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, VenetianMask } from 'lucide-react';
+import { getWeeklyHoroscope, type GetWeeklyHoroscopeInput, type GetWeeklyHoroscopeOutput } from '@/ai/flows/horoscope-flow';
+import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw } from 'lucide-react'; // Renamed Star to StarIcon
 
-function TodaysFortuneResultContent() {
+function HoroscopeResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GetDailyFortuneOutput | null>(null);
+  const [result, setResult] = useState<GetWeeklyHoroscopeOutput | null>(null);
   const [inputName, setInputName] = useState<string>("");
 
   useEffect(() => {
     const name = searchParams.get('name');
     const birthDate = searchParams.get('birthDate');
-    const calendarType = searchParams.get('calendarType') as GetDailyFortuneInput['calendarType'];
-    const birthTime = searchParams.get('birthTime');
 
-    if (!name || !birthDate || !calendarType || !birthTime) {
+    if (!name || !birthDate) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
@@ -33,20 +31,18 @@ function TodaysFortuneResultContent() {
     
     setInputName(name);
 
-    const input: GetDailyFortuneInput = {
+    const input: GetWeeklyHoroscopeInput = {
       name,
       birthDate,
-      calendarType,
-      birthTime,
     };
 
-    getDailyFortune(input)
-      .then(fortuneResult => {
-        setResult(fortuneResult);
+    getWeeklyHoroscope(input)
+      .then(horoscopeResult => {
+        setResult(horoscopeResult);
       })
       .catch(err => {
-        console.error("오늘의 운세 결과 오류:", err);
-        setError(err instanceof Error ? err.message : "오늘의 운세 결과를 가져오는 중 알 수 없는 오류가 발생했습니다.");
+        console.error("별자리 운세 결과 오류:", err);
+        setError(err instanceof Error ? err.message : "별자리 운세 결과를 가져오는 중 알 수 없는 오류가 발생했습니다.");
       })
       .finally(() => {
         setIsLoading(false);
@@ -58,7 +54,7 @@ function TodaysFortuneResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">별의 기운을 읽고 있습니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground">별들의 메시지를 해독 중입니다...</p>
       </div>
     );
   }
@@ -70,8 +66,8 @@ function TodaysFortuneResultContent() {
           <AlertTitle>오류</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-        <Button onClick={() => router.push('/todays-fortune')} variant="outline" className="mt-4">
-          다른 날짜 운세 보기
+        <Button onClick={() => router.push('/fortune-telling/horoscope')} variant="outline" className="mt-4">
+          다른 정보로 운세 보기
         </Button>
       </div>
     );
@@ -81,8 +77,8 @@ function TodaysFortuneResultContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
-         <Button onClick={() => router.push('/todays-fortune')} variant="outline" className="mt-4">
-          다른 날짜 운세 보기
+         <Button onClick={() => router.push('/fortune-telling/horoscope')} variant="outline" className="mt-4">
+          다른 정보로 운세 보기
         </Button>
       </div>
     );
@@ -93,72 +89,73 @@ function TodaysFortuneResultContent() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <CalendarHeart className="h-8 w-8 text-primary" /> 오늘의 운세 ({inputName}님)
+            <StarIcon className="h-8 w-8 text-primary" /> {result.zodiacSign} 주간 운세 ({inputName}님)
           </CardTitle>
-          <CardDescription className="text-md pt-1 flex items-center gap-1">
-            <Sparkles className="h-4 w-4 text-yellow-500"/> 당신의 {result.gapjaYearName} ({result.zodiacColor} {result.zodiacAnimal})
+          <CardDescription className="text-md pt-1">
+            이번 주 당신의 별자리가 알려주는 메시지입니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
             <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
-              <Star className="h-6 w-6 text-yellow-400"/> 종합운
+              <Sparkles className="h-6 w-6 text-yellow-400"/> 종합운
             </h3>
-            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.overallFortune}</p>
+            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.weeklyOverall}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="bg-secondary/30">
               <CardHeader className="pb-2 pt-4 flex flex-row items-center gap-2">
                 <Heart className="h-6 w-6 text-pink-500"/>
                 <CardTitle className="text-xl text-primary">애정운</CardTitle>
               </CardHeader>
-              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.love}</p></CardContent>
-            </Card>
-            <Card className="bg-secondary/30">
-              <CardHeader className="pb-2 pt-4 flex flex-row items-center gap-2">
-                <Shield className="h-6 w-6 text-green-500"/>
-                <CardTitle className="text-xl text-primary">건강운</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.health}</p></CardContent>
+              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.weeklyLove}</p></CardContent>
             </Card>
             <Card className="bg-secondary/30">
               <CardHeader className="pb-2 pt-4 flex flex-row items-center gap-2">
                 <Briefcase className="h-6 w-6 text-blue-500"/>
                 <CardTitle className="text-xl text-primary">직업운/학업운</CardTitle>
               </CardHeader>
-              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.work}</p></CardContent>
+              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.weeklyCareer}</p></CardContent>
             </Card>
             <Card className="bg-secondary/30">
               <CardHeader className="pb-2 pt-4 flex flex-row items-center gap-2">
-                <Users className="h-6 w-6 text-purple-500"/>
-                <CardTitle className="text-xl text-primary">대인관계운</CardTitle>
+                <ShieldCheck className="h-6 w-6 text-green-500"/>
+                <CardTitle className="text-xl text-primary">건강운</CardTitle>
               </CardHeader>
-              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.relationships}</p></CardContent>
+              <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.weeklyHealth}</p></CardContent>
             </Card>
           </div>
             
-          <div className="pt-6 border-t">
-            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
-              <Gift className="h-6 w-6 text-red-500"/> 오늘의 행운의 숫자
-            </h3>
-            <div className="flex space-x-3 mt-2">
-              {result.luckyNumbers.map((num) => (
-                <span key={num} className="flex items-center justify-center h-12 w-12 rounded-full bg-accent text-accent-foreground font-bold text-xl shadow-md">
-                  {num}
-                </span>
-              ))}
+          <div className="pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
+                <ShoppingBag className="h-6 w-6 text-purple-500"/> 행운 아이템
+              </h3>
+              <p className="text-muted-foreground text-lg">{result.luckyItem}</p>
+            </div>
+            <div>
+              <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
+                <CalendarCheck className="h-6 w-6 text-teal-500"/> 행운의 요일
+              </h3>
+              <p className="text-muted-foreground text-lg">{result.luckyDayOfWeek}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-        <Link href="/todays-fortune" passHref>
+        <Link href="/fortune-telling/horoscope" passHref>
             <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
-                <CalendarHeart className="mr-2 h-4 w-4" />
+                <RotateCcw className="mr-2 h-4 w-4" />
                 다른 정보로 운세 보기
             </Button>
+        </Link>
+        <Link href="/fortune-telling" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+            <Sparkles className="mr-2 h-4 w-4" />
+            다른 운세보기
+          </Button>
         </Link>
         <Link href="/" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
@@ -171,7 +168,7 @@ function TodaysFortuneResultContent() {
   );
 }
 
-export default function TodaysFortuneResultPage() {
+export default function HoroscopeResultPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
@@ -179,7 +176,7 @@ export default function TodaysFortuneResultPage() {
         <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
       </div>
     }>
-      <TodaysFortuneResultContent />
+      <HoroscopeResultContent />
     </Suspense>
   );
 }

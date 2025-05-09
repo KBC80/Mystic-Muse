@@ -68,7 +68,7 @@ export default function TodaysFortunePage() {
       birthTime: values.birthTime,
     }).toString();
     
-    router.push(`/todays-fortune/result?${queryParams}`);
+    router.push(`/fortune-telling/today/result?${queryParams}`);
   }
 
   return (
@@ -204,9 +204,13 @@ export default function TodaysFortunePage() {
         </CardContent>
       </Card>
 
-      {/* 결과 표시 로직 제거 */}
-
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <Link href="/fortune-telling" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+            <Sparkles className="mr-2 h-4 w-4" />
+            다른 운세보기
+          </Button>
+        </Link>
         <Link href="/" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
             <Home className="mr-2 h-4 w-4" />
