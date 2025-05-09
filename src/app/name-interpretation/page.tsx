@@ -3,7 +3,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // useRouter 임포트
+import { useRouter } from 'next/navigation'; 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -29,7 +29,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, NAME_TYPES } from "@/lib/constants";
+import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, GENDER_OPTIONS } from "@/lib/constants";
 import { PenTool, Home, CalendarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -38,13 +38,13 @@ const formSchema = z.object({
   calendarType: z.enum(["solar", "lunar"], { errorMap: () => ({ message: "달력 유형을 선택해주세요."}) }),
   birthTime: z.string().min(1, "태어난 시간을 선택해주세요."),
   name: z.string().min(1, "이름을 입력해주세요."),
-  nameType: z.enum(["korean", "chinese", "english"], { errorMap: () => ({ message: "이름 유형을 선택해주세요."}) }),
+  gender: z.enum(["male", "female"], { errorMap: () => ({ message: "성별을 선택해주세요."}) }),
 });
 
 type NameInterpretationFormValues = z.infer<typeof formSchema>;
 
 export default function NameInterpretationPage() {
-  const router = useRouter(); // useRouter 훅 사용
+  const router = useRouter(); 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,23 +56,21 @@ export default function NameInterpretationPage() {
       calendarType: "solar",
       birthTime: "모름",
       name: "",
-      nameType: "korean",
+      gender: "male",
     },
   });
 
   async function onSubmit(values: NameInterpretationFormValues) {
-    setIsSubmitting(true); // 폼 제출 시작
+    setIsSubmitting(true); 
     const queryParams = new URLSearchParams({
       name: values.name,
       birthDate: values.birthDate,
       calendarType: values.calendarType,
       birthTime: values.birthTime,
-      nameType: values.nameType,
+      gender: values.gender,
     }).toString();
     
     router.push(`/name-interpretation/result?${queryParams}`);
-    //setIsSubmitting(false)는 페이지 이동 후에는 필요 없을 수 있으나, 오류 발생 시를 대비해 둘 수 있습니다.
-    // 실제로는 페이지가 이동하므로 이 상태는 크게 의미 없을 수 있습니다.
   }
 
   return (
@@ -83,7 +81,7 @@ export default function NameInterpretationPage() {
             <PenTool className="text-primary h-6 w-6" /> 이름 뜻 풀이 (성명학)
           </CardTitle>
           <CardDescription>
-            생년월일시와 이름을 입력하여 이름에 담긴 깊은 의미와 인생 경로를 알아보세요.
+            생년월일시, 이름, 성별을 입력하여 이름에 담긴 깊은 의미와 인생 경로를 알아보세요.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -130,7 +128,7 @@ export default function NameInterpretationPage() {
                             fromYear={1920}
                             toYear={new Date().getFullYear()}
                             captionLayout="dropdown-buttons"
-                            defaultView="years" // 초기 뷰를 'years'로 설정
+                            defaultView="years" 
                           />
                         </PopoverContent>
                       </Popover>
@@ -201,20 +199,20 @@ export default function NameInterpretationPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="nameType"
+                  name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>이름 유형</FormLabel>
+                      <FormLabel>성별</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="이름 유형을 선택하세요" />
+                            <SelectValue placeholder="성별을 선택하세요" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {NAME_TYPES.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
+                          {GENDER_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -232,8 +230,6 @@ export default function NameInterpretationPage() {
         </CardContent>
       </Card>
 
-      {/* 결과 표시 로직 제거 */}
-
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
@@ -245,3 +241,5 @@ export default function NameInterpretationPage() {
     </div>
   );
 }
+
+    

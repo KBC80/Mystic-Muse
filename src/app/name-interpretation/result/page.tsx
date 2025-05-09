@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
-import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap, RotateCcw } from 'lucide-react';
+import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap, RotateCcw, Heart, UserCircle2, BabyIcon } from 'lucide-react';
 
 const LifeStageIcon = ({ stage }: { stage: string }) => {
   switch (stage) {
@@ -34,9 +34,9 @@ function NameInterpretationResultContent() {
     const birthDate = searchParams.get('birthDate');
     const calendarType = searchParams.get('calendarType') as InterpretNameInput['calendarType'];
     const birthTime = searchParams.get('birthTime');
-    const nameType = searchParams.get('nameType') as InterpretNameInput['nameType'];
+    const gender = searchParams.get('gender') as InterpretNameInput['gender'];
 
-    if (!name || !birthDate || !calendarType || !birthTime || !nameType) {
+    if (!name || !birthDate || !calendarType || !birthTime || !gender) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
@@ -49,7 +49,7 @@ function NameInterpretationResultContent() {
       birthDate,
       calendarType,
       birthTime,
-      nameType,
+      gender,
     };
 
     interpretName(input)
@@ -122,13 +122,6 @@ function NameInterpretationResultContent() {
             <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.nameAnalysis}</p>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
-              <Brain className="h-6 w-6"/> 주역 팔괘 분석
-            </h3>
-            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.eightTrigramsAnalysis}</p>
-          </div>
-
           <div className="space-y-4">
             <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
               <TrendingUp className="h-6 w-6"/> 생애 주기별 운세
@@ -145,11 +138,32 @@ function NameInterpretationResultContent() {
               ))}
             </div>
           </div>
+
+           <div className="space-y-3">
+            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
+              <Heart className="h-6 w-6 text-pink-500"/> 배우자운
+            </h3>
+            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.spouseLuck}</p>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
+              <BabyIcon className="h-6 w-6 text-sky-500"/> 자녀운
+            </h3>
+            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.childLuck}</p>
+          </div>
+          
+          <div className="space-y-3">
+            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
+              <Brain className="h-6 w-6"/> 주역 팔괘 분석
+            </h3>
+            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.eightTrigramsAnalysis}</p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t">
             <div className="space-y-3">
               <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
-                <Users className="h-6 w-6"/> 좋은 궁합
+                <UserCircle2 className="h-6 w-6"/> 좋은 궁합
               </h3>
               <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">
                 <strong className="text-foreground">잘 맞는 띠/방향:</strong> {result.compatibility.zodiacSign}
@@ -202,7 +216,6 @@ function NameInterpretationResultContent() {
 
 export default function NameInterpretationResultPage() {
   return (
-    // Suspense fallback은 로딩 상태를 더 부드럽게 만듭니다.
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
@@ -213,3 +226,5 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
+
+    

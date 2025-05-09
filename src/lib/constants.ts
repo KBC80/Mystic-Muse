@@ -14,11 +14,12 @@ export const EAST_ASIAN_BIRTH_TIMES = [
   { value: "모름", label: "모름" },
 ];
 
-export const NAME_TYPES = [
-  { value: "korean", label: "한글" },
-  { value: "chinese", label: "한자" },
-  { value: "english", label: "영문" },
-];
+// NAME_TYPES is no longer directly used in the form for name interpretation
+// export const NAME_TYPES = [
+//   { value: "korean", label: "한글" },
+//   { value: "chinese", label: "한자" },
+//   { value: "english", label: "영문" },
+// ];
 
 export const CALENDAR_TYPES = [
   { value: "solar", label: "양력" },
@@ -29,3 +30,5 @@ export const GENDER_OPTIONS = [
   { value: "male", label: "남성" },
   { value: "female", label: "여성" },
 ];
+
+    
