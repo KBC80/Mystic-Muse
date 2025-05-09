@@ -21,6 +21,13 @@ const LifeStageIcon = ({ stage }: { stage: string }) => {
   }
 };
 
+const lifeStageAgeRanges: Record<keyof InterpretNameOutput['lifeStages'], string> = {
+  "초년운": "(0-25세)",
+  "중년운": "(26-50세)",
+  "장년운": "(51-75세)",
+  "말년운": "(76세 이후)",
+};
+
 function NameInterpretationResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -131,7 +138,7 @@ function NameInterpretationResultContent() {
                 <Card key={stage} className="bg-secondary/30">
                   <CardHeader className="pb-2 pt-4 flex flex-row items-center gap-2">
                     <LifeStageIcon stage={stage} />
-                    <CardTitle className="text-xl text-primary">{stage}</CardTitle>
+                    <CardTitle className="text-xl text-primary">{stage} {lifeStageAgeRanges[stage]}</CardTitle>
                   </CardHeader>
                   <CardContent className="pb-4"><p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{result.lifeStages[stage]}</p></CardContent>
                 </Card>
