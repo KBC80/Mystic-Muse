@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getWeeklyHoroscope, type GetWeeklyHoroscopeInput, type GetWeeklyHoroscopeOutput } from '@/ai/flows/horoscope-flow';
-import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw } from 'lucide-react'; // Renamed Star to StarIcon, Import Sparkles
+import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw, Gift } from 'lucide-react'; // Renamed Star to StarIcon, Import Sparkles, Gift
 
 function HoroscopeResultContent() {
   const searchParams = useSearchParams();
@@ -141,6 +141,20 @@ function HoroscopeResultContent() {
               <p className="text-muted-foreground text-lg">{result.luckyDayOfWeek}</p>
             </div>
           </div>
+
+          <div className="pt-6 border-t">
+            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
+              <Gift className="h-6 w-6 text-red-500"/> 이번 주 행운의 숫자
+            </h3>
+            <div className="flex space-x-3 mt-2">
+              {result.luckyNumbers.map((num) => (
+                <span key={num} className="flex items-center justify-center h-12 w-12 rounded-full bg-accent text-accent-foreground font-bold text-xl shadow-md">
+                  {num}
+                </span>
+              ))}
+            </div>
+          </div>
+
         </CardContent>
       </Card>
 

@@ -25,6 +25,10 @@ const GetWeeklyHoroscopeOutputSchema = z.object({
   weeklyHealth: z.string().describe('이번 주 건강운입니다.'),
   luckyItem: z.string().describe('이번 주 행운을 가져다 줄 아이템입니다.'),
   luckyDayOfWeek: z.string().describe('이번 주 행운의 요일입니다 (예: 월요일, 화요일 등).'),
+  luckyNumbers: z
+    .array(z.number().int().min(1).max(45))
+    .length(3)
+    .describe('1에서 45 사이의 이번 주 행운의 숫자 세 개입니다.'),
 });
 export type GetWeeklyHoroscopeOutput = z.infer<typeof GetWeeklyHoroscopeOutputSchema>;
 
@@ -50,6 +54,7 @@ const weeklyHoroscopePrompt = ai.definePrompt({
 5.  **주간 건강운 (weeklyHealth)**: 이번 주 건강 관리에 도움이 될 만한 조언을 제공해주세요.
 6.  **행운 아이템 (luckyItem)**: 이번 주 행운을 가져다 줄 수 있는 특정 아이템을 추천해주세요.
 7.  **행운의 요일 (luckyDayOfWeek)**: 이번 주 특별히 운이 좋은 요일을 알려주세요.
+8.  **행운의 숫자 (luckyNumbers)**: 1부터 45 사이의 이번 주 행운의 숫자 3개를 추천해주세요.
 
 각 항목에 대해 구체적이고 긍정적인 메시지를 전달하여 사용자에게 영감을 주세요.
 `,
