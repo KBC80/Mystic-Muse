@@ -54,7 +54,7 @@ export default function DreamInterpretationPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <CloudMoon className="text-primary h-6 w-6" /> 꿈 해석
+            <CloudMoon className="text-primary h-6 w-6" /> 꿈 해몽
           </CardTitle>
           <CardDescription>
             당신의 꿈을 설명해주시면 숨겨진 의미와 상징을 찾는 데 도움을 드립니다.
@@ -84,7 +84,7 @@ export default function DreamInterpretationPage() {
                 )}
               />
               <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isSubmitting ? <LoadingSpinner size={20} /> : "내 꿈 해석하기"}
+                {isSubmitting ? <LoadingSpinner size={20} /> : "내 꿈 해몽하기"}
               </Button>
             </form>
           </Form>
