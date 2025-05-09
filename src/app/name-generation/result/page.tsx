@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { generateAuspiciousName, type GenerateAuspiciousNameInput, type GenerateAuspiciousNameOutput } from '@/ai/flows/name-generation-flow';
 import { Baby, Sparkles, Home } from 'lucide-react';
-import KakaoShareButton from '@/components/features/kakao-share-button';
+import ShareButton from '@/components/features/share-button';
 
 function NameGenerationResultContent() {
   const searchParams = useSearchParams();
@@ -128,10 +128,9 @@ function NameGenerationResultContent() {
           ))}
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <KakaoShareButton
+           <ShareButton
               shareTitle={`${childLastName}씨 ${childGender}를 위한 추천 이름: ${firstRecommendedName} 등`}
               shareDescription={shareDescription}
-              buttonText="카톡으로 결과 공유"
             />
         </CardFooter>
       </Card>

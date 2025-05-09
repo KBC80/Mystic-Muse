@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
 import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap, RotateCcw, Heart, UserCircle2, BabyIcon, Coins } from 'lucide-react';
-import KakaoShareButton from '@/components/features/kakao-share-button';
+import ShareButton from '@/components/features/share-button';
 
 const LifeStageIcon = ({ stage }: { stage: string }) => {
   switch (stage) {
@@ -210,10 +210,9 @@ function NameInterpretationResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <KakaoShareButton
+           <ShareButton
               shareTitle={`${inputName}님의 이름 풀이 결과`}
               shareDescription={shareDescription}
-              buttonText="카톡으로 결과 공유"
             />
         </CardFooter>
       </Card>

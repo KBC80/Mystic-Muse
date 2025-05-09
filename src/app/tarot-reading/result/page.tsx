@@ -12,7 +12,7 @@ import { generateDeck, type TarotCard as TarotCardType } from '@/lib/tarot-cards
 import Image from 'next/image';
 import { WandSparkles, CheckCircle2, Gift, Home, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import KakaoShareButton from '@/components/features/kakao-share-button';
+import ShareButton from '@/components/features/share-button';
 
 const TarotCardDisplay = ({ card }: { card: TarotCardType }) => {
   return (
@@ -168,10 +168,9 @@ function TarotResultContent() {
           <Button onClick={() => router.push('/tarot-reading')} variant="default" size="lg" className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
             <RotateCcw className="mr-2 h-5 w-5"/> 새 리딩 시작
           </Button>
-           <KakaoShareButton
+           <ShareButton
               shareTitle={`나의 타로 운세 결과: ${question}`}
               shareDescription={shareDescription}
-              buttonText="카톡으로 결과 공유"
             />
         </CardFooter>
       </Card>

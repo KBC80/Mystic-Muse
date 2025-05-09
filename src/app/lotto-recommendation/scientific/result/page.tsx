@@ -11,7 +11,7 @@ import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-
 import { getLottoRecommendationsAction, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; 
 import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
-import KakaoShareButton from '@/components/features/kakao-share-button';
+import ShareButton from '@/components/features/share-button';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -214,10 +214,9 @@ function ScientificLottoResultContent() {
           ))}
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <KakaoShareButton
+           <ShareButton
               shareTitle="AI 과학적 로또 번호 추천 결과"
               shareDescription={shareDescription}
-              buttonText="카톡으로 결과 공유"
             />
         </CardFooter>
       </Card>

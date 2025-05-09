@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { dreamInterpretation, type DreamInterpretationOutput, type DreamInterpretationInput } from '@/ai/flows/dream-interpretation';
 import { CloudMoon, Sparkles, AlertTriangle, Gift, WandSparkles, Home, MessageCircle, RotateCcw } from 'lucide-react';
-import KakaoShareButton from '@/components/features/kakao-share-button';
+import ShareButton from '@/components/features/share-button';
 
 function DreamInterpretationResultContent() {
   const searchParams = useSearchParams();
@@ -172,10 +172,9 @@ function DreamInterpretationResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <KakaoShareButton
+           <ShareButton
               shareTitle={`나의 꿈 해몽 결과: ${dreamContent.substring(0, 20)}...`}
               shareDescription={shareDescription}
-              buttonText="카톡으로 결과 공유"
             />
         </CardFooter>
       </Card>

@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getYearlyFortune, type GetYearlyFortuneInput, type GetYearlyFortuneOutput } from '@/ai/flows/yearly-fortune-flow';
 import { TrendingUp, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, Coins, CalendarDays, RotateCcw } from 'lucide-react';
-import KakaoShareButton from '@/components/features/kakao-share-button';
+import ShareButton from '@/components/features/share-button';
 
 const MONTH_NAMES = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 
@@ -187,10 +187,9 @@ function YearlyFortuneResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <KakaoShareButton
+           <ShareButton
               shareTitle={`${inputName}님의 ${currentYear}년 운세`}
               shareDescription={shareDescription}
-              buttonText="카톡으로 결과 공유"
             />
         </CardFooter>
       </Card>
