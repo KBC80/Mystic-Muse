@@ -30,7 +30,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { GENDER_OPTIONS, CALENDAR_TYPES, EAST_ASIAN_BIRTH_TIMES } from "@/lib/constants";
-import { LoadingSpinner } from '@/components/ui/loading-spinner'; // 로딩 스피너 추가
+import { LoadingSpinner } from '@/components/ui/loading-spinner'; 
 import { Baby, Parentheses, Home, CalendarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -96,7 +96,7 @@ export default function NameGenerationPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <Baby className="text-primary h-6 w-6" /> 길운 작명
+            <Baby className="text-primary h-6 w-6" /> 작명 도우미
           </CardTitle>
           <CardDescription>
             부모님과 자녀 정보를 입력하시면 아이를 위한 아름답고 의미 있는 이름 다섯 개를 추천해 드립니다.
@@ -160,6 +160,7 @@ export default function NameGenerationPage() {
                               }
                               fromYear={1920}
                               toYear={new Date().getFullYear()}
+                              captionLayout="dropdown-buttons"
                               defaultView="years"
                             />
                           </PopoverContent>
@@ -274,6 +275,7 @@ export default function NameGenerationPage() {
                               }
                               fromYear={1920}
                               toYear={new Date().getFullYear()}
+                              captionLayout="dropdown-buttons"
                               defaultView="years"
                             />
                           </PopoverContent>
@@ -397,3 +399,4 @@ export default function NameGenerationPage() {
     </div>
   );
 }
+

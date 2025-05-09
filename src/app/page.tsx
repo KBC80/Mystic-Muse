@@ -8,7 +8,7 @@ import { WandSparkles, PenTool, Baby, CloudMoon, LayoutGrid, Home, Ticket, Spark
 export default function HomePage() {
   const features = [
     { title: "이름 풀이", href: "/name-interpretation", icon: PenTool, description: "고대의 지혜를 바탕으로 당신의 이름이 가진 의미를 분석합니다." },
-    { title: "작명 서비스", href: "/name-generation", icon: Baby, description: "길운의 원리에 맞춰 아이에게 완벽한 이름을 찾아드립니다." },
+    { title: "작명 도우미", href: "/name-generation", icon: Baby, description: "길운의 원리에 맞춰 아이에게 완벽한 이름을 찾아드립니다." },
     { title: "운세보기", href: "/fortune-telling", icon: Sparkles, description: "오늘, 올해, 별자리 등 다양한 운세를 확인하고 미래를 준비하세요." },
     { title: "꿈 해몽", href: "/dream-interpretation", icon: CloudMoon, description: "당신의 꿈 속에 숨겨진 메시지와 상징들을 파헤쳐 보세요." },
     { title: "타로 리딩", href: "/tarot-reading", icon: LayoutGrid, description: "타로 카드를 통해 당신의 질문에 대한 통찰과 지침을 얻으세요." },
@@ -59,3 +59,4 @@ export default function HomePage() {
     </div>
   );
 }
+

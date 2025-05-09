@@ -22,14 +22,14 @@ export const navItems: NavItem[] = [
     icon: PenTool,
   },
   {
-    title: '작명 서비스',
+    title: '작명 도우미',
     href: '/name-generation',
     icon: Baby,
   },
   {
-    title: '운세보기', // Changed from "오늘의 운세"
-    href: '/fortune-telling', // New landing page for all fortune services
-    icon: Sparkles, // Changed icon
+    title: '운세보기', 
+    href: '/fortune-telling', 
+    icon: Sparkles, 
   },
   {
     title: '꿈 해몽',
@@ -47,3 +47,4 @@ export const navItems: NavItem[] = [
     icon: Ticket, 
   },
 ];
+
