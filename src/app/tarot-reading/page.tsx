@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -44,7 +43,6 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: Tar
       disabled={isDisabled}
       className={cn(
         "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-accent relative",
-        // Adjusted for mobile: w-16 for small screens, w-24 for medium and up
         "w-16 md:w-24 h-auto aspect-[2/3] inline-block",
         (isDisabled && !isSelected) && "opacity-50 cursor-not-allowed",
       )}
@@ -83,10 +81,10 @@ export default function TarotReadingPage() {
     setIsShuffling(true);
     setDeck(prevDeck => 
       [...prevDeck]
-        .map(card => ({ ...card, isFaceUp: false })) // Ensure cards are face down when shuffling
+        .map(card => ({ ...card, isFaceUp: false })) 
         .sort(() => Math.random() - 0.5)
     );
-    setSelectedCards([]); // Clear selections on shuffle
+    setSelectedCards([]); 
     setTimeout(() => setIsShuffling(false), 500);
   };
 
@@ -94,7 +92,7 @@ export default function TarotReadingPage() {
     if (isLoading) return;
 
     if (selectedCards.some(sc => sc.id === card.id)) {
-      setSelectedCards(prev => prev.filter(c => c.id !== card.id)); // Allow deselect
+      setSelectedCards(prev => prev.filter(c => c.id !== card.id)); 
     } else if (selectedCards.length < 3) {
       setSelectedCards(prev => [...prev, card]);
     }
@@ -134,7 +132,7 @@ export default function TarotReadingPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <LayoutGrid className="text-primary h-6 w-6" /> 타로 카드 리딩
+            <LayoutGrid className="text-primary h-6 w-6" /> 타로 운세
           </CardTitle>
           <CardDescription>
             질문을 하고, 카드를 섞고, 세 장을 선택하여 당신의 지침을 받으세요.
@@ -197,9 +195,9 @@ export default function TarotReadingPage() {
                       {rowCards.map((card, cardIndex) => (
                         <div
                           key={card.id}
-                          style={{ marginLeft: cardIndex > 0 ? '-64px' : '0' }} // Overlap amount: card width (96px) - visible part (32px) = 64px
+                          style={{ marginLeft: cardIndex > 0 ? '-64px' : '0' }} 
                           className={cn("transition-transform duration-200",
-                            cardIndex > 0 ? 'ml-[-48px] md:ml-[-64px]' : 'ml-0', // Responsive margin: smaller overlap on mobile
+                            cardIndex > 0 ? 'ml-[-48px] md:ml-[-64px]' : 'ml-0', 
                             "transition-transform duration-200",
                             !selectedCards.some(sc => sc.id === card.id) && !((selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading) && "hover:translate-y-[-10px]"
                           )}
@@ -251,3 +249,4 @@ export default function TarotReadingPage() {
     </div>
   );
 }
+

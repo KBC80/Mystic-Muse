@@ -1,15 +1,15 @@
-
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { generateAuspiciousName, type GenerateAuspiciousNameInput, type GenerateAuspiciousNameOutput } from '@/ai/flows/name-generation-flow';
 import { Baby, Sparkles, Home } from 'lucide-react';
+import KakaoShareButton from '@/components/features/kakao-share-button';
 
 function NameGenerationResultContent() {
   const searchParams = useSearchParams();
@@ -98,6 +98,12 @@ function NameGenerationResultContent() {
       </div>
     );
   }
+  
+  const firstRecommendedName = result.recommendedNames.length > 0 ? result.recommendedNames[0].name : "추천 이름";
+  const shareDescription = result.recommendedNames.length > 0 
+    ? `${result.recommendedNames[0].name}: ${result.recommendedNames[0].meaning.substring(0,50)}... 더 많은 추천 이름을 확인하세요!`
+    : "AI가 추천하는 길운의 이름들을 확인해보세요!";
+
 
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
@@ -121,6 +127,13 @@ function NameGenerationResultContent() {
             </Card>
           ))}
         </CardContent>
+         <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
+           <KakaoShareButton
+              shareTitle={`${childLastName}씨 ${childGender}를 위한 추천 이름: ${firstRecommendedName} 등`}
+              shareDescription={shareDescription}
+              buttonText="카톡으로 결과 공유"
+            />
+        </CardFooter>
       </Card>
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -154,3 +167,4 @@ export default function NameGenerationResultPage() {
     </Suspense>
   );
 }
+

@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -7,6 +6,7 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppHeader } from '@/components/layout/app-header';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import KakaoScriptLoader from '@/components/features/kakao-script-loader';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,11 +31,12 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased font-sans")}>
+        <KakaoScriptLoader />
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
-          <div className="flex flex-1 flex-col min-h-screen"> {/* Ensure this div takes full height */}
+          <div className="flex flex-1 flex-col min-h-screen"> 
             <AppHeader />
-            <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8"> {/* Ensure main content can grow */}
+            <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8"> 
               {children}
             </main>
           </div>
@@ -45,3 +46,4 @@ export default function RootLayout({
     </html>
   );
 }
+

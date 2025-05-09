@@ -1,17 +1,17 @@
-
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
 import { getLottoRecommendationsAction, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
-import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; // Re-use from saju actions
+import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; 
 import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
+import KakaoShareButton from '@/components/features/kakao-share-button';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -23,7 +23,7 @@ const getLottoBallColorClass = (number: number): string => {
 };
 
 const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small' | 'medium' }) => {
-  const sizeClasses = size === 'small' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-lg'; // Adjusted small size
+  const sizeClasses = size === 'small' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-lg'; 
   return (
     <div className={`flex items-center justify-center rounded-full font-bold shadow-md ${sizeClasses} ${getLottoBallColorClass(number)}`}>
       {number}
@@ -129,6 +129,9 @@ function ScientificLottoResultContent() {
       </div>
     );
   }
+  
+  const shareDescription = `AI 예측 합계: ${llmResult.predictedSumRange}, 짝홀: ${llmResult.predictedEvenOddRatio}. 추천 번호를 확인하세요!`;
+
 
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
@@ -210,6 +213,13 @@ function ScientificLottoResultContent() {
             </Card>
           ))}
         </CardContent>
+         <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
+           <KakaoShareButton
+              shareTitle="AI 과학적 로또 번호 추천 결과"
+              shareDescription={shareDescription}
+              buttonText="카톡으로 결과 공유"
+            />
+        </CardFooter>
       </Card>
       
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -248,3 +258,4 @@ export default function ScientificLottoResultPage() {
     </Suspense>
   );
 }
+

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -9,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { tarotCardReading, type TarotCardReadingOutput, type TarotCardReadingInput } from '@/ai/flows/tarot-card-reading';
-import { generateDeck, type TarotCard as TarotCardType } from '@/lib/tarot-cards'; // Renamed to avoid conflict
+import { generateDeck, type TarotCard as TarotCardType } from '@/lib/tarot-cards'; 
 import Image from 'next/image';
 import { WandSparkles, CheckCircle2, Gift, Home, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import KakaoShareButton from '@/components/features/kakao-share-button';
 
 const TarotCardDisplay = ({ card }: { card: TarotCardType }) => {
   return (
@@ -119,12 +119,14 @@ function TarotResultContent() {
     );
   }
 
+  const shareDescription = result.overallAdvice.length > 80 ? `${result.overallAdvice.substring(0, 77)}...` : result.overallAdvice;
+
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <WandSparkles className="h-8 w-8 text-primary" /> 당신의 타로 리딩 결과
+            <WandSparkles className="h-8 w-8 text-primary" /> 당신의 타로 운세 결과
           </CardTitle>
           <CardDescription className="text-md pt-1">질문: "{question}"</CardDescription>
         </CardHeader>
@@ -162,10 +164,15 @@ function TarotResultContent() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="pt-8">
-          <Button onClick={() => router.push('/tarot-reading')} variant="default" size="lg" className="bg-primary hover:bg-primary/90">
+        <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
+          <Button onClick={() => router.push('/tarot-reading')} variant="default" size="lg" className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
             <RotateCcw className="mr-2 h-5 w-5"/> 새 리딩 시작
           </Button>
+           <KakaoShareButton
+              shareTitle={`나의 타로 운세 결과: ${question}`}
+              shareDescription={shareDescription}
+              buttonText="카톡으로 결과 공유"
+            />
         </CardFooter>
       </Card>
 
@@ -194,3 +201,4 @@ export default function TarotResultPage() {
     </Suspense>
   );
 }
+

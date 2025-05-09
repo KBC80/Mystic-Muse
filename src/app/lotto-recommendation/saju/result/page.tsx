@@ -1,16 +1,16 @@
-
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { recommendLottoNumbers, type LottoNumberRecommendationInput, type LottoNumberRecommendationOutput } from '@/ai/flows/lotto-number-recommendation-flow';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions';
 import { Ticket, Home, Sparkles, MessageSquare, Hash, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
+import KakaoShareButton from '@/components/features/kakao-share-button';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -130,6 +130,8 @@ function SajuLottoResultContent() {
       </div>
     );
   }
+  
+  const shareDescription = result.overallAdvice.length > 80 ? `${result.overallAdvice.substring(0, 77)}...` : result.overallAdvice;
 
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
@@ -195,6 +197,13 @@ function SajuLottoResultContent() {
             <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.overallAdvice}</p>
           </div>
         </CardContent>
+         <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
+           <KakaoShareButton
+              shareTitle={`${inputName}님의 사주 로또 번호 추천`}
+              shareDescription={shareDescription}
+              buttonText="카톡으로 결과 공유"
+            />
+        </CardFooter>
       </Card>
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -233,3 +242,4 @@ export default function SajuLottoResultPage() {
     </Suspense>
   );
 }
+

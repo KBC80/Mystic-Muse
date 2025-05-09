@@ -22,7 +22,7 @@ export const navItems: NavItem[] = [
     icon: PenTool,
   },
   {
-    title: '작명 도우미', // Ensured this is "작명 도우미"
+    title: '작명 도우미',
     href: '/name-generation',
     icon: Baby,
   },
@@ -37,8 +37,8 @@ export const navItems: NavItem[] = [
     icon: CloudMoon,
   },
   {
-    title: '타로 리딩',
-    href: '/tarot-reading',
+    title: '타로 운세', // Changed from "타로 리딩"
+    href: '/tarot-reading', // Path remains the same
     icon: LayoutGrid,
   },
   {
@@ -47,4 +47,5 @@ export const navItems: NavItem[] = [
     icon: Ticket, 
   },
 ];
+
 

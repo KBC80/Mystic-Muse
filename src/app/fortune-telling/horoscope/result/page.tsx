@@ -1,15 +1,15 @@
-
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getWeeklyHoroscope, type GetWeeklyHoroscopeInput, type GetWeeklyHoroscopeOutput } from '@/ai/flows/horoscope-flow';
 import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw, Gift, Info } from 'lucide-react';
+import KakaoShareButton from '@/components/features/kakao-share-button';
 
 function HoroscopeResultContent() {
   const searchParams = useSearchParams();
@@ -96,6 +96,8 @@ function HoroscopeResultContent() {
     );
   }
 
+  const shareDescription = result.weeklyOverall.length > 80 ? `${result.weeklyOverall.substring(0, 77)}...` : result.weeklyOverall;
+
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -169,6 +171,13 @@ function HoroscopeResultContent() {
           </div>
 
         </CardContent>
+        <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
+           <KakaoShareButton
+              shareTitle={`${inputName}님의 ${result.zodiacSign} 주간 운세`}
+              shareDescription={shareDescription}
+              buttonText="카톡으로 결과 공유"
+            />
+        </CardFooter>
       </Card>
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -207,3 +216,4 @@ export default function HoroscopeResultPage() {
     </Suspense>
   );
 }
+
