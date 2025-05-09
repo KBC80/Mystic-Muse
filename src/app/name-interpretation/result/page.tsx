@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
-import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap, RotateCcw, Heart, UserCircle2, BabyIcon } from 'lucide-react';
+import { PenTool, Palette, Users, TrendingUp, Gift, Home, Sparkles, Palmtree, VenetianMask, Brain, Zap, RotateCcw, Heart, UserCircle2, BabyIcon, Coins } from 'lucide-react';
 
 const LifeStageIcon = ({ stage }: { stage: string }) => {
   switch (stage) {
@@ -141,6 +141,13 @@ function NameInterpretationResultContent() {
 
            <div className="space-y-3">
             <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
+              <Coins className="h-6 w-6 text-yellow-500"/> 재물운
+            </h3>
+            <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.financialLuck}</p>
+          </div>
+
+           <div className="space-y-3">
+            <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground">
               <Heart className="h-6 w-6 text-pink-500"/> 배우자운
             </h3>
             <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">{result.spouseLuck}</p>
@@ -226,5 +233,3 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
-
-    
