@@ -44,7 +44,7 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: Tar
       disabled={isDisabled}
       className={cn(
         "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-accent relative",
-        "w-16 md:w-24 h-auto aspect-[2/3] inline-block",
+        "w-16 md:w-24 h-auto aspect-[2/3] inline-block", // 카드 크기: 모바일 w-16, md부터 w-24
         (isDisabled && !isSelected) && "opacity-50 cursor-not-allowed",
       )}
       style={{ ...selectedStyle }}
@@ -198,7 +198,13 @@ export default function TarotReadingPage() {
                           key={card.id}
                           className={cn(
                             "transition-transform duration-200",
-                            cardIndex > 0 ? 'ml-[-32px] sm:ml-[-40px] md:ml-[-48px] lg:ml-[-56px]' : 'ml-0', 
+                            // 모바일: ml-[-42px], sm: ml-[-40px], md: ml-[-48px], lg: ml-[-56px]
+                            // 기본 카드 폭: w-16 (64px), md부터: w-24 (96px)
+                            // 모바일에서 겹침 증가 (42px 겹침 -> 22px 노출)
+                            // sm에서는 40px 겹침 -> 24px 노출
+                            // md에서는 48px 겹침 -> 48px 노출 (절반)
+                            // lg에서는 56px 겹침 -> 40px 노출
+                            cardIndex > 0 ? 'ml-[-42px] sm:ml-[-40px] md:ml-[-48px] lg:ml-[-56px]' : 'ml-0', 
                             !selectedCards.some(sc => sc.id === card.id) && !((selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading) && "hover:translate-y-[-10px]"
                           )}
                         >
@@ -249,3 +255,4 @@ export default function TarotReadingPage() {
     </div>
   );
 }
+
