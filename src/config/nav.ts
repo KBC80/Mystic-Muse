@@ -22,7 +22,7 @@ export const navItems: NavItem[] = [
     icon: PenTool,
   },
   {
-    title: '작명 도우미',
+    title: '작명 도우미', // Ensured this is "작명 도우미"
     href: '/name-generation',
     icon: Baby,
   },
