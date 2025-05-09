@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -41,23 +42,36 @@ const formSchema = z.object({
 
 type RuneReadingFormValues = z.infer<typeof formSchema>;
 
-const RuneDisplay = ({ rune, isReversed, reveal = false }: { rune: Rune; isReversed?: boolean; reveal?: boolean }) => {
+const RuneDisplay = ({ rune, isReversed, reveal = false, size = 'small' }: { rune: Rune; isReversed?: boolean; reveal?: boolean; size?: 'small' | 'medium' }) => {
+  const baseSizeClasses = size === 'small' ? "w-14 md:w-20" : "w-24"; 
+  const symbolSizeClass = size === 'small' ? "text-2xl md:text-3xl" : "text-4xl";
+  const nameSizeClass = size === 'small' ? "text-[9px] md:text-[10px]" : "text-sm";
+  const directionSizeClass = size === 'small' ? "text-[8px] md:text-[9px]" : "text-xs";
+
+  if (!reveal) {
+    return (
+      <div className={cn(baseSizeClasses, "aspect-[2/3] bg-secondary rounded-lg flex items-center justify-center relative shadow-md overflow-hidden")}>
+        <Image src="/image/rune-back.png" alt="룬 뒷면" fill style={{ objectFit: 'cover' }} className="rounded-lg" data-ai-hint="rune back"/>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center space-y-1 p-2 m-1 border border-border rounded-lg shadow-sm bg-card w-24 h-40 justify-center">
-      {reveal ? (
-        <>
-          <div className={cn("text-4xl font-bold text-primary", isReversed && "transform rotate-180")}>
-            {rune.symbol}
-          </div>
-          <p className="text-xs text-center font-medium text-foreground">{rune.koreanName}</p>
-          {isReversed !== undefined && (
-            <p className="text-xs text-muted-foreground">{isReversed ? "역방향" : "정방향"}</p>
-          )}
-        </>
-      ) : (
-        <div className="w-16 h-24 bg-secondary rounded-md flex items-center justify-center">
-          <Image src="https://picsum.photos/80/120?random=rune_back" alt="룬 뒷면" width={80} height={120} className="rounded-md" data-ai-hint="rune stone back"/>
-        </div>
+    <div
+      className={cn(baseSizeClasses, "aspect-[2/3] rounded-lg shadow-xl flex flex-col items-center justify-center text-center p-1 relative bg-cover bg-center border border-black/20")}
+      style={{ backgroundImage: "url('/image/rune-front.png')" }}
+      data-ai-hint="rune front"
+    >
+      <div className={cn(symbolSizeClass, "font-bold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)]", isReversed && "transform rotate-180")}>
+        {rune.symbol}
+      </div>
+      <p className={cn(nameSizeClass, "font-medium text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_70%)] mt-1")}>
+        {rune.koreanName}
+      </p>
+      {isReversed !== undefined && (
+        <p className={cn(directionSizeClass, "text-gray-200 [text-shadow:_0_1px_1px_rgb(0_0_0_/_70%)]")}>
+          {isReversed ? "역방향" : "정방향"}
+        </p>
       )}
     </div>
   );
@@ -127,7 +141,7 @@ export default function RuneReadingPage() {
     } catch (err) {
       console.error("룬 해석 오류:", err);
       setError(err instanceof Error ? err.message : "룬 해석 중 알 수 없는 오류가 발생했습니다.");
-      setStep('drawing'); // Go back to drawing if error
+      setStep('drawing'); 
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +156,11 @@ export default function RuneReadingPage() {
     setError(null);
     setIsLoading(false);
   };
+
+  const halfIndex = Math.ceil(shuffledRunes.length / 2);
+  const firstRowRunes = shuffledRunes.slice(0, halfIndex);
+  const secondRowRunes = shuffledRunes.slice(halfIndex);
+
 
   return (
     <div className="space-y-8 flex flex-col flex-1">
@@ -214,28 +233,37 @@ export default function RuneReadingPage() {
                 <h3 className="text-lg font-semibold">룬을 선택하세요 ({drawnRunesWithStatus.length}/{numToDraw})</h3>
                 <p className="text-sm text-muted-foreground">마음이 이끄는 대로 {numToDraw}개의 룬을 선택해주세요.</p>
               </div>
-              <div className="flex flex-wrap justify-center gap-2 max-h-96 overflow-y-auto p-2 border rounded-md bg-secondary/30">
-                {shuffledRunes.map((rune) => (
-                  <button
-                    key={rune.id}
-                    onClick={() => handleDrawRune(rune)}
-                    disabled={drawnRunesWithStatus.length >= numToDraw || drawnRunesWithStatus.some(dr => dr.rune.id === rune.id)}
-                    className={cn(
-                        "transition-all duration-200",
-                        drawnRunesWithStatus.some(dr => dr.rune.id === rune.id) && "opacity-30 cursor-not-allowed"
-                    )}
-                    aria-label={`룬 ${rune.koreanName} 선택`}
-                  >
-                    <RuneDisplay rune={rune} reveal={false} />
-                  </button>
+              <div className="space-y-2">
+                {[firstRowRunes, secondRowRunes].map((rowRunes, rowIndex) => (
+                  <div key={rowIndex} className="flex justify-center w-full overflow-x-auto scrollbar-thin scrollbar-thumb-primary/50 scrollbar-track-transparent py-1">
+                    <div className="flex items-end h-auto whitespace-nowrap px-4">
+                      {rowRunes.map((rune, cardIndex) => (
+                        <button
+                          key={rune.id}
+                          onClick={() => handleDrawRune(rune)}
+                          disabled={drawnRunesWithStatus.length >= numToDraw || drawnRunesWithStatus.some(dr => dr.rune.id === rune.id)}
+                          className={cn(
+                              "transition-all duration-200 transform",
+                              cardIndex > 0 ? 'ml-[-28px] md:ml-[-40px]' : 'ml-0', // Overlap for w-14/md:w-20
+                              drawnRunesWithStatus.some(dr => dr.rune.id === rune.id) && "opacity-30 cursor-not-allowed",
+                              !drawnRunesWithStatus.some(dr => dr.rune.id === rune.id) && !(drawnRunesWithStatus.length >= numToDraw) && "hover:scale-105 hover:-translate-y-2"
+                          )}
+                          aria-label={`룬 ${rune.koreanName} 선택`}
+                        >
+                          <RuneDisplay rune={rune} reveal={false} size="small" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
+
               {drawnRunesWithStatus.length > 0 && (
                 <div className="mt-4">
                   <h4 className="text-md font-semibold text-center mb-2">선택한 룬:</h4>
                   <div className="flex flex-wrap justify-center gap-2 p-2 border rounded-md bg-card">
                     {drawnRunesWithStatus.map(({ rune, isReversed }) => (
-                      <RuneDisplay key={`drawn-${rune.id}`} rune={rune} isReversed={isReversed} reveal={true}/>
+                      <RuneDisplay key={`drawn-${rune.id}`} rune={rune} isReversed={isReversed} reveal={true} size="small"/>
                     ))}
                   </div>
                 </div>
@@ -270,7 +298,7 @@ export default function RuneReadingPage() {
                     <div className="flex flex-wrap justify-center gap-4 p-2 border rounded-md bg-secondary/20">
                         {interpretation.runeInterpretations.map(interp => {
                              const runeDetail = elderFutharkRunes.find(r => r.name === interp.name);
-                             return runeDetail ? <RuneDisplay key={`res-${interp.name}`} rune={runeDetail} isReversed={interp.isReversed} reveal={true} /> : null;
+                             return runeDetail ? <RuneDisplay key={`res-${interp.name}`} rune={runeDetail} isReversed={interp.isReversed} reveal={true} size="medium" /> : null;
                         })}
                     </div>
                   </div>
@@ -364,3 +392,4 @@ export default function RuneReadingPage() {
     </div>
   );
 }
+
