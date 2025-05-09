@@ -11,7 +11,7 @@ export default function HomePage() {
     { title: "작명 도우미", href: "/name-generation", icon: Baby, description: "길운의 원리에 맞춰 아이에게 완벽한 이름을 찾아드립니다." },
     { title: "운세보기", href: "/fortune-telling", icon: Sparkles, description: "오늘, 올해, 별자리 등 다양한 운세를 확인하고 미래를 준비하세요." },
     { title: "꿈 해몽", href: "/dream-interpretation", icon: CloudMoon, description: "당신의 꿈 속에 숨겨진 메시지와 상징들을 파헤쳐 보세요." },
-    { title: "타로 리딩", href: "/tarot-reading", icon: LayoutGrid, description: "타로 카드를 통해 당신의 질문에 대한 통찰과 지침을 얻으세요." },
+    // { title: "타로 리딩", href: "/tarot-reading", icon: LayoutGrid, description: "타로 카드를 통해 당신의 질문에 대한 통찰과 지침을 얻으세요." }, // Removed as per user request
     { title: "로또 정보", href: "/lotto-recommendation", icon: Ticket, description: "다양한 방식으로 행운의 로또 번호를 추천받아 보세요." },
   ];
 
@@ -25,7 +25,7 @@ export default function HomePage() {
           Mystic Muse에 오신 것을 환영합니다
         </h1>
         <p className="text-lg text-muted-foreground">
-          보이는 것과 보이지 않는 것을 이해하기 위한 당신의 안내자. 운세, 이름, 꿈, 타로, 그리고 행운의 번호까지 탐험하세요.
+          보이는 것과 보이지 않는 것을 이해하기 위한 당신의 안내자. 운세, 이름, 꿈, 그리고 행운의 번호까지 탐험하세요.
         </p>
       </header>
 
@@ -59,4 +59,5 @@ export default function HomePage() {
     </div>
   );
 }
+
 

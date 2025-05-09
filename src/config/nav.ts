@@ -36,16 +36,17 @@ export const navItems: NavItem[] = [
     href: '/dream-interpretation',
     icon: CloudMoon,
   },
-  {
-    title: '타로 운세', // Changed from "타로 리딩"
-    href: '/tarot-reading', // Path remains the same
-    icon: LayoutGrid,
-  },
+  // {
+  //   title: '타로 운세', 
+  //   href: '/tarot-reading', 
+  //   icon: LayoutGrid,
+  // }, // Removed as per user request
   {
     title: '로또 정보',
     href: '/lotto-recommendation',
     icon: Ticket, 
   },
 ];
+
 
 
