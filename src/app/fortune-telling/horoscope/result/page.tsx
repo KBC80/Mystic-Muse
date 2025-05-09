@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getWeeklyHoroscope, type GetWeeklyHoroscopeInput, type GetWeeklyHoroscopeOutput } from '@/ai/flows/horoscope-flow';
-import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw, Gift } from 'lucide-react'; // Renamed Star to StarIcon, Import Sparkles, Gift
+import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw, Gift, Info } from 'lucide-react';
 
 function HoroscopeResultContent() {
   const searchParams = useSearchParams();
@@ -18,22 +18,30 @@ function HoroscopeResultContent() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GetWeeklyHoroscopeOutput | null>(null);
   const [inputName, setInputName] = useState<string>("");
+  const [inputBirthDate, setInputBirthDate] = useState<string>("");
+  const [inputCalendarType, setInputCalendarType] = useState<string>("");
+
 
   useEffect(() => {
     const name = searchParams.get('name');
     const birthDate = searchParams.get('birthDate');
+    const calendarType = searchParams.get('calendarType') as GetWeeklyHoroscopeInput['calendarType'];
 
-    if (!name || !birthDate) {
+    if (!name || !birthDate || !calendarType) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
     }
     
     setInputName(name);
+    setInputBirthDate(birthDate);
+    setInputCalendarType(calendarType);
+
 
     const input: GetWeeklyHoroscopeInput = {
       name,
       birthDate,
+      calendarType,
     };
 
     getWeeklyHoroscope(input)
@@ -89,10 +97,11 @@ function HoroscopeResultContent() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <StarIcon className="h-8 w-8 text-primary" /> {result.zodiacSign} 주간 운세 ({inputName}님)
+            <StarIcon className="h-8 w-8 text-primary" /> {result.zodiacSign} 주간 운세
           </CardTitle>
-          <CardDescription className="text-md pt-1">
-            이번 주 당신의 별자리가 알려주는 메시지입니다.
+          <CardDescription className="text-md pt-1 flex items-center gap-1">
+           <Info className="h-4 w-4 text-muted-foreground shrink-0"/>
+            {inputName}님 ({inputBirthDate}, {inputCalendarType === 'solar' ? '양력' : '음력'})의 이번 주 별자리 메시지입니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">

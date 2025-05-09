@@ -19,16 +19,25 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Star, Home, CalendarIcon, Sparkles } from 'lucide-react'; // Import Sparkles
+import { Star, Home, CalendarIcon, Sparkles } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { CALENDAR_TYPES } from '@/lib/constants';
 
 
 const formSchema = z.object({
   birthDate: z.string().min(1, "생년월일을 입력해주세요."),
+  calendarType: z.enum(["solar", "lunar"], { errorMap: () => ({ message: "달력 유형을 선택해주세요."}) }),
   name: z.string().min(1, "이름을 입력해주세요."),
 });
 
@@ -43,6 +52,7 @@ export default function HoroscopePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       birthDate: "",
+      calendarType: "solar",
       name: "",
     },
   });
@@ -52,6 +62,7 @@ export default function HoroscopePage() {
     const queryParams = new URLSearchParams({
       name: values.name,
       birthDate: values.birthDate,
+      calendarType: values.calendarType,
     }).toString();
     
     router.push(`/fortune-telling/horoscope/result?${queryParams}`);
@@ -107,15 +118,39 @@ export default function HoroscopePage() {
                               }
                             }
                             disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01") // Adjusted min date for horoscope
+                              date > new Date() || date < new Date("1900-01-01")
                             }
-                            fromYear={1900} // Adjusted for horoscope
+                            fromYear={1900}
                             toYear={new Date().getFullYear()}
                             captionLayout="dropdown-buttons"
                             defaultView="years"
                           />
                         </PopoverContent>
                       </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="calendarType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>달력 유형</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="달력 유형을 선택하세요" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CALENDAR_TYPES.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
