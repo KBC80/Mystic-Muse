@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -195,10 +196,9 @@ export default function TarotReadingPage() {
                       {rowCards.map((card, cardIndex) => (
                         <div
                           key={card.id}
-                          style={{ marginLeft: cardIndex > 0 ? '-64px' : '0' }} 
-                          className={cn("transition-transform duration-200",
-                            cardIndex > 0 ? 'ml-[-48px] md:ml-[-64px]' : 'ml-0', 
+                          className={cn(
                             "transition-transform duration-200",
+                            cardIndex > 0 ? 'ml-[-32px] sm:ml-[-40px] md:ml-[-48px] lg:ml-[-56px]' : 'ml-0', 
                             !selectedCards.some(sc => sc.id === card.id) && !((selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading) && "hover:translate-y-[-10px]"
                           )}
                         >
@@ -249,4 +249,3 @@ export default function TarotReadingPage() {
     </div>
   );
 }
-

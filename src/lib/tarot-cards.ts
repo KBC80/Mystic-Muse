@@ -1,5 +1,4 @@
-// Based on a standard 78-card Rider-Waite deck, with 2 cards omitted to meet the 76 card total.
-// The Two of Pentacles and Three of Pentacles are omitted as an example.
+// Based on a standard 78-card Rider-Waite deck.
 
 export const tarotCardNames: string[] = [
   // Major Arcana (22 cards)
@@ -24,14 +23,14 @@ export const tarotCardNames: string[] = [
   "검 6", "검 7", "검 8", "검 9", "검 10",
   "검 시종", "검 기사", "검 여왕", "검 왕",
 
-  // Minor Arcana - Pentacles (12 cards - Pentacles 2 and Pentacles 3 omitted)
-  "펜타클 에이스", "펜타클 4", "펜타클 5",
+  // Minor Arcana - Pentacles (14 cards)
+  "펜타클 에이스", "펜타클 2", "펜타클 3", "펜타클 4", "펜타클 5",
   "펜타클 6", "펜타클 7", "펜타클 8", "펜타클 9", "펜타클 10",
   "펜타클 시종", "펜타클 기사", "펜타클 여왕", "펜타클 왕",
 ];
 
-if (tarotCardNames.length !== 76) { 
-  console.warn(`경고: ${tarotCardNames.length}개의 타로 카드 이름이 정의되었습니다. 76개가 필요합니다. tarot-cards.ts 파일을 확인해주세요.`);
+if (tarotCardNames.length !== 78) { 
+  console.warn(`경고: ${tarotCardNames.length}개의 타로 카드 이름이 정의되었습니다. 78개가 필요합니다. tarot-cards.ts 파일을 확인해주세요.`);
 }
 
 
@@ -75,8 +74,8 @@ const cardImageMap: { [key: string]: string } = {
   "검 6": "Swords06.jpg", "검 7": "Swords07.jpg", "검 8": "Swords08.jpg", "검 9": "Swords09.jpg", "검 10": "Swords10.jpg",
   "검 시종": "Swords11.jpg", "검 기사": "Swords12.jpg", "검 여왕": "Swords13.jpg", "검 왕": "Swords14.jpg",
 
-  // Minor Arcana - Pentacles (12 cards - Pentacles 2 and Pentacles 3 omitted)
-  "펜타클 에이스": "Pentacles01.jpg", // "펜타클 2": "Pentacles02.jpg", "펜타클 3": "Pentacles03.jpg", (omitted)
+  // Minor Arcana - Pentacles (14 cards)
+  "펜타클 에이스": "Pentacles01.jpg", "펜타클 2": "Pentacles02.jpg", "펜타클 3": "Pentacles03.jpg",
   "펜타클 4": "Pentacles04.jpg", "펜타클 5": "Pentacles05.jpg",
   "펜타클 6": "Pentacles06.jpg", "펜타클 7": "Pentacles07.jpg", "펜타클 8": "Pentacles08.jpg", "펜타클 9": "Pentacles09.jpg", "펜타클 10": "Pentacles10.jpg",
   "펜타클 시종": "Pentacles11.jpg", "펜타클 기사": "Pentacles12.jpg", "펜타클 여왕": "Pentacles13.jpg", "펜타클 왕": "Pentacles14.jpg",
@@ -96,7 +95,7 @@ export interface TarotCard {
   isFaceUp: boolean;
 }
 
-// Generate a deck of 76 cards
+// Generate a deck of 78 cards
 export function generateDeck(): TarotCard[] {
   return tarotCardNames.map((name, index) => {
     const imageName = cardImageMap[name];
@@ -104,11 +103,16 @@ export function generateDeck(): TarotCard[] {
     if (!imageName) {
       console.warn(`경고: 카드 "${name}"에 대한 이미지를 찾을 수 없습니다. 플레이스홀더 이미지를 사용합니다.`);
     }
+    const hintName = name.toLowerCase().replace(/\s+/g, ''); // e.g., "고위여사제"
+    const hintParts = hintName.match(/.{1,4}/g) || []; // Split into parts of up to 4 chars for two words
+    const dataAiHint = `타로 ${hintParts.slice(0,2).join(" ")}`.trim();
+
+
     return {
       id: `card-${index}-${name.toLowerCase().replace(/\s+/g, '-')}`,
       name,
       imageUrl: imageUrl,
-      dataAiHint: `타로 ${name.toLowerCase().replace(" ", "")}`, // data-ai-hint: one or two keywords
+      dataAiHint: dataAiHint, 
       isFaceUp: false,
     };
   });
