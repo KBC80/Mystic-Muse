@@ -11,7 +11,6 @@ import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-
 import { getLottoRecommendationsAction, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; 
 import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -130,9 +129,6 @@ function ScientificLottoResultContent() {
     );
   }
   
-  const shareDescription = `AI 예측 합계: ${llmResult.predictedSumRange}, 짝홀: ${llmResult.predictedEvenOddRatio}. 추천 번호를 확인하세요!`;
-
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -214,10 +210,7 @@ function ScientificLottoResultContent() {
           ))}
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle="AI 과학적 로또 번호 추천 결과"
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
       
@@ -257,4 +250,3 @@ export default function ScientificLottoResultPage() {
     </Suspense>
   );
 }
-

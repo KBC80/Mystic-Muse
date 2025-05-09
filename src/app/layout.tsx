@@ -6,7 +6,6 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppHeader } from '@/components/layout/app-header';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import KakaoScriptLoader from '@/components/features/kakao-script-loader';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={cn(geistSans.variable, geistMono.variable, "antialiased font-sans")}>
-        <KakaoScriptLoader />
+        {/* KakaoScriptLoader removed */}
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
           <div className="flex flex-1 flex-col min-h-screen"> 
@@ -46,4 +45,3 @@ export default function RootLayout({
     </html>
   );
 }
-

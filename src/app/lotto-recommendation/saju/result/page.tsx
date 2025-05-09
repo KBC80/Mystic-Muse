@@ -10,7 +10,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { recommendLottoNumbers, type LottoNumberRecommendationInput, type LottoNumberRecommendationOutput } from '@/ai/flows/lotto-number-recommendation-flow';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions';
 import { Ticket, Home, Sparkles, MessageSquare, Hash, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -131,8 +130,6 @@ function SajuLottoResultContent() {
     );
   }
   
-  const shareDescription = result.overallAdvice.length > 80 ? `${result.overallAdvice.substring(0, 77)}...` : result.overallAdvice;
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -198,10 +195,7 @@ function SajuLottoResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle={`${inputName}님의 사주 로또 번호 추천`}
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -241,4 +235,3 @@ export default function SajuLottoResultPage() {
     </Suspense>
   );
 }
-

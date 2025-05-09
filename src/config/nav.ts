@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { PenTool, Baby, CloudMoon, LayoutGrid, Home, Ticket, Sparkles, Star, TrendingUp, CalendarHeart } from 'lucide-react';
+import { PenTool, Baby, CloudMoon, LayoutGrid, Home, Ticket, Sparkles, Star, TrendingUp, CalendarHeart, WandSparkles as WandIcon } from 'lucide-react';
 
 export interface NavItem {
   title: string;
@@ -30,23 +30,18 @@ export const navItems: NavItem[] = [
     title: '운세보기', 
     href: '/fortune-telling', 
     icon: Sparkles, 
+    // Sub-items for fortune telling can be listed on the /fortune-telling page itself as cards.
+    // If direct sidebar navigation to sub-items is needed, define them here.
+    // For now, /fortune-telling acts as a landing page for various fortune types.
   },
   {
     title: '꿈 해몽',
     href: '/dream-interpretation',
     icon: CloudMoon,
   },
-  // {
-  //   title: '타로 운세', 
-  //   href: '/tarot-reading', 
-  //   icon: LayoutGrid,
-  // }, // Removed as per user request
   {
     title: '로또 정보',
     href: '/lotto-recommendation',
     icon: Ticket, 
   },
 ];
-
-
-

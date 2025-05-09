@@ -9,7 +9,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getYearlyFortune, type GetYearlyFortuneInput, type GetYearlyFortuneOutput } from '@/ai/flows/yearly-fortune-flow';
 import { TrendingUp, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, Coins, CalendarDays, RotateCcw } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 const MONTH_NAMES = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 
@@ -95,8 +94,6 @@ function YearlyFortuneResultContent() {
       </div>
     );
   }
-
-  const shareDescription = result.overallFortune.length > 80 ? `${result.overallFortune.substring(0, 77)}...` : result.overallFortune;
 
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
@@ -187,10 +184,7 @@ function YearlyFortuneResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle={`${inputName}님의 ${currentYear}년 운세`}
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -230,4 +224,3 @@ export default function YearlyFortuneResultPage() {
     </Suspense>
   );
 }
-

@@ -9,7 +9,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
 import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, RotateCcw } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 function TodaysFortuneResultContent() {
   const searchParams = useSearchParams();
@@ -90,8 +89,6 @@ function TodaysFortuneResultContent() {
     );
   }
 
-  const shareDescription = result.overallFortune.length > 80 ? `${result.overallFortune.substring(0, 77)}...` : result.overallFortune;
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -156,10 +153,7 @@ function TodaysFortuneResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle={`${inputName}님의 오늘의 운세`}
-              shareDescription={shareDescription}
-            />
+            {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -199,4 +193,3 @@ export default function TodaysFortuneResultPage() {
     </Suspense>
   );
 }
-

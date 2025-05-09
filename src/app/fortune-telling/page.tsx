@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarHeart, TrendingUp, Star, Sparkles, LayoutGrid } from 'lucide-react'; // Import LayoutGrid for Tarot
+import { Home, CalendarHeart, TrendingUp, Star, Sparkles, LayoutGrid, WandSparkles as WandIcon } from 'lucide-react'; // Used WandSparkles as WandIcon
 
 export default function FortuneTellingLandingPage() {
   const fortuneTypes = [
@@ -27,9 +27,15 @@ export default function FortuneTellingLandingPage() {
     },
     {
       title: "타로 운세",
-      href: "/tarot-reading", // Links to the existing tarot page
-      icon: LayoutGrid, // Icon for Tarot
+      href: "/tarot-reading", 
+      icon: LayoutGrid, 
       description: "타로 카드를 통해 당신의 질문에 대한 통찰과 지침을 얻으세요."
+    },
+    {
+      title: "룬 문자 점",
+      href: "/fortune-telling/rune-reading",
+      icon: WandIcon, // Using WandSparkles as WandIcon
+      description: "고대 룬 문자의 지혜를 통해 현재 상황에 대한 통찰과 조언을 얻으세요."
     }
   ];
 
@@ -41,7 +47,7 @@ export default function FortuneTellingLandingPage() {
             <Sparkles className="text-primary h-6 w-6" /> 운세보기
           </CardTitle>
           <CardDescription>
-            다양한 운세 서비스를 통해 당신의 오늘, 올해, 별자리, 타로의 기운을 확인해보세요.
+            다양한 운세 서비스를 통해 당신의 오늘, 올해, 별자리, 타로, 룬 문자의 기운을 확인해보세요.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -74,4 +80,3 @@ export default function FortuneTellingLandingPage() {
     </div>
   );
 }
-

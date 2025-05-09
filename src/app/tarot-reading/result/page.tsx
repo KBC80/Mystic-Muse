@@ -12,7 +12,6 @@ import { generateDeck, type TarotCard as TarotCardType } from '@/lib/tarot-cards
 import Image from 'next/image';
 import { WandSparkles, CheckCircle2, Gift, Home, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import ShareButton from '@/components/features/share-button';
 
 const TarotCardDisplay = ({ card }: { card: TarotCardType }) => {
   return (
@@ -119,8 +118,6 @@ function TarotResultContent() {
     );
   }
 
-  const shareDescription = result.overallAdvice.length > 80 ? `${result.overallAdvice.substring(0, 77)}...` : result.overallAdvice;
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -168,10 +165,7 @@ function TarotResultContent() {
           <Button onClick={() => router.push('/tarot-reading')} variant="default" size="lg" className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
             <RotateCcw className="mr-2 h-5 w-5"/> 새 리딩 시작
           </Button>
-           <ShareButton
-              shareTitle={`나의 타로 운세 결과: ${question}`}
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -200,4 +194,3 @@ export default function TarotResultPage() {
     </Suspense>
   );
 }
-

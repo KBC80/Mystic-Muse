@@ -9,7 +9,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { generateAuspiciousName, type GenerateAuspiciousNameInput, type GenerateAuspiciousNameOutput } from '@/ai/flows/name-generation-flow';
 import { Baby, Sparkles, Home } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 function NameGenerationResultContent() {
   const searchParams = useSearchParams();
@@ -99,12 +98,6 @@ function NameGenerationResultContent() {
     );
   }
   
-  const firstRecommendedName = result.recommendedNames.length > 0 ? result.recommendedNames[0].name : "추천 이름";
-  const shareDescription = result.recommendedNames.length > 0 
-    ? `${result.recommendedNames[0].name}: ${result.recommendedNames[0].meaning.substring(0,50)}... 더 많은 추천 이름을 확인하세요!`
-    : "AI가 추천하는 길운의 이름들을 확인해보세요!";
-
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -128,10 +121,7 @@ function NameGenerationResultContent() {
           ))}
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle={`${childLastName}씨 ${childGender}를 위한 추천 이름: ${firstRecommendedName} 등`}
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -166,4 +156,3 @@ export default function NameGenerationResultPage() {
     </Suspense>
   );
 }
-

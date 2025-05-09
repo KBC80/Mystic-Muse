@@ -9,7 +9,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getWeeklyHoroscope, type GetWeeklyHoroscopeInput, type GetWeeklyHoroscopeOutput } from '@/ai/flows/horoscope-flow';
 import { Star as StarIcon, Heart, Briefcase, ShieldCheck, ShoppingBag, CalendarCheck, Home, Sparkles, RotateCcw, Gift, Info } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 function HoroscopeResultContent() {
   const searchParams = useSearchParams();
@@ -96,8 +95,6 @@ function HoroscopeResultContent() {
     );
   }
 
-  const shareDescription = result.weeklyOverall.length > 80 ? `${result.weeklyOverall.substring(0, 77)}...` : result.weeklyOverall;
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -172,10 +169,7 @@ function HoroscopeResultContent() {
 
         </CardContent>
         <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle={`${inputName}님의 ${result.zodiacSign} 주간 운세`}
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -215,4 +209,3 @@ export default function HoroscopeResultPage() {
     </Suspense>
   );
 }
-

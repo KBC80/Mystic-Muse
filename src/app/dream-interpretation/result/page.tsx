@@ -9,7 +9,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { dreamInterpretation, type DreamInterpretationOutput, type DreamInterpretationInput } from '@/ai/flows/dream-interpretation';
 import { CloudMoon, Sparkles, AlertTriangle, Gift, WandSparkles, Home, MessageCircle, RotateCcw } from 'lucide-react';
-import ShareButton from '@/components/features/share-button';
 
 function DreamInterpretationResultContent() {
   const searchParams = useSearchParams();
@@ -104,9 +103,6 @@ function DreamInterpretationResultContent() {
     );
   }
   
-  const shareDescription = result.summary.length > 80 ? `${result.summary.substring(0, 77)}...` : result.summary;
-
-
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -172,10 +168,7 @@ function DreamInterpretationResultContent() {
           </div>
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           <ShareButton
-              shareTitle={`나의 꿈 해몽 결과: ${dreamContent.substring(0, 20)}...`}
-              shareDescription={shareDescription}
-            />
+           {/* ShareButton removed */}
         </CardFooter>
       </Card>
 
@@ -209,4 +202,3 @@ export default function DreamInterpretationResultPage() {
     </Suspense>
   );
 }
-
