@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getYearlyFortune, type GetYearlyFortuneInput, type GetYearlyFortuneOutput } from '@/ai/flows/yearly-fortune-flow';
-import { TrendingUp, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, Coins, CalendarDays, RotateCcw } from 'lucide-react';
+import { TrendingUp, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, Coins, CalendarDays, RotateCcw } from 'lucide-react'; // Import Sparkles
 
 const MONTH_NAMES = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 

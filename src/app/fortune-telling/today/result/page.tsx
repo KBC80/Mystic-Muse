@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
-import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, RotateCcw } from 'lucide-react';
+import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, RotateCcw } from 'lucide-react'; // Import Sparkles
 
 function TodaysFortuneResultContent() {
   const searchParams = useSearchParams();

@@ -31,7 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { TrendingUp, Home, CalendarIcon, Sparkles } from 'lucide-react';
+import { TrendingUp, Home, CalendarIcon, Sparkles } from 'lucide-react'; // Import Sparkles
 import { cn } from "@/lib/utils";
 
 

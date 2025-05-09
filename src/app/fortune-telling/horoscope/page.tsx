@@ -23,7 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Star, Home, CalendarIcon, Sparkles } from 'lucide-react';
+import { Star, Home, CalendarIcon, Sparkles } from 'lucide-react'; // Import Sparkles
 import { cn } from "@/lib/utils";
 
 

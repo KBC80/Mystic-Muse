@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarHeart, TrendingUp, Star, Sparkles } from 'lucide-react';
+import { Home, CalendarHeart, TrendingUp, Star, Sparkles } from 'lucide-react'; // Import Sparkles
 
 export default function FortuneTellingLandingPage() {
   const fortuneTypes = [
