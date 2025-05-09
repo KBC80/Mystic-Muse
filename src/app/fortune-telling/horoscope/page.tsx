@@ -32,13 +32,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Star, Home, CalendarIcon, Sparkles } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { CALENDAR_TYPES } from '@/lib/constants';
+import { CALENDAR_TYPES, GENDER_OPTIONS } from '@/lib/constants';
 
 
 const formSchema = z.object({
   birthDate: z.string().min(1, "생년월일을 입력해주세요."),
   calendarType: z.enum(["solar", "lunar"], { errorMap: () => ({ message: "달력 유형을 선택해주세요."}) }),
   name: z.string().min(1, "이름을 입력해주세요."),
+  gender: z.enum(["male", "female"], { errorMap: () => ({ message: "성별을 선택해주세요."}) }),
 });
 
 type HoroscopeFormValues = z.infer<typeof formSchema>;
@@ -54,6 +55,7 @@ export default function HoroscopePage() {
       birthDate: "",
       calendarType: "solar",
       name: "",
+      gender: "male",
     },
   });
 
@@ -63,6 +65,7 @@ export default function HoroscopePage() {
       name: values.name,
       birthDate: values.birthDate,
       calendarType: values.calendarType,
+      gender: values.gender,
     }).toString();
     
     router.push(`/fortune-telling/horoscope/result?${queryParams}`);
@@ -164,6 +167,30 @@ export default function HoroscopePage() {
                       <FormControl>
                         <Input placeholder="이름을 입력하세요" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>성별</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="성별을 선택하세요" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {GENDER_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

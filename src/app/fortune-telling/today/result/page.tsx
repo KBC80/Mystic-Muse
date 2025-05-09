@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getDailyFortune, type GetDailyFortuneInput, type GetDailyFortuneOutput } from '@/ai/flows/todays-fortune-flow';
-import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, RotateCcw } from 'lucide-react'; // Import Sparkles
+import { CalendarHeart, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, RotateCcw } from 'lucide-react';
 
 function TodaysFortuneResultContent() {
   const searchParams = useSearchParams();
@@ -24,8 +24,9 @@ function TodaysFortuneResultContent() {
     const birthDate = searchParams.get('birthDate');
     const calendarType = searchParams.get('calendarType') as GetDailyFortuneInput['calendarType'];
     const birthTime = searchParams.get('birthTime');
+    const gender = searchParams.get('gender') as GetDailyFortuneInput['gender'];
 
-    if (!name || !birthDate || !calendarType || !birthTime) {
+    if (!name || !birthDate || !calendarType || !birthTime || !gender) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
@@ -38,6 +39,7 @@ function TodaysFortuneResultContent() {
       birthDate,
       calendarType,
       birthTime,
+      gender,
     };
 
     getDailyFortune(input)

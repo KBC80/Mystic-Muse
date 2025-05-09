@@ -20,14 +20,16 @@ function HoroscopeResultContent() {
   const [inputName, setInputName] = useState<string>("");
   const [inputBirthDate, setInputBirthDate] = useState<string>("");
   const [inputCalendarType, setInputCalendarType] = useState<string>("");
+  const [inputGender, setInputGender] = useState<string>("");
 
 
   useEffect(() => {
     const name = searchParams.get('name');
     const birthDate = searchParams.get('birthDate');
     const calendarType = searchParams.get('calendarType') as GetWeeklyHoroscopeInput['calendarType'];
+    const gender = searchParams.get('gender') as GetWeeklyHoroscopeInput['gender'];
 
-    if (!name || !birthDate || !calendarType) {
+    if (!name || !birthDate || !calendarType || !gender) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
@@ -36,12 +38,14 @@ function HoroscopeResultContent() {
     setInputName(name);
     setInputBirthDate(birthDate);
     setInputCalendarType(calendarType);
+    setInputGender(gender === 'male' ? '남성' : '여성');
 
 
     const input: GetWeeklyHoroscopeInput = {
       name,
       birthDate,
       calendarType,
+      gender,
     };
 
     getWeeklyHoroscope(input)
@@ -101,7 +105,7 @@ function HoroscopeResultContent() {
           </CardTitle>
           <CardDescription className="text-md pt-1 flex items-center gap-1">
            <Info className="h-4 w-4 text-muted-foreground shrink-0"/>
-            {inputName}님 ({inputBirthDate}, {inputCalendarType === 'solar' ? '양력' : '음력'})의 이번 주 별자리 메시지입니다.
+            {inputName}님 ({inputBirthDate}, {inputCalendarType === 'solar' ? '양력' : '음력'}, {inputGender})의 이번 주 별자리 메시지입니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">

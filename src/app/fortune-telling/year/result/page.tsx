@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getYearlyFortune, type GetYearlyFortuneInput, type GetYearlyFortuneOutput } from '@/ai/flows/yearly-fortune-flow';
-import { TrendingUp, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, Coins, CalendarDays, RotateCcw } from 'lucide-react'; // Import Sparkles
+import { TrendingUp, Heart, Shield, Briefcase, Users, Star, Gift, Home, Sparkles, Palmtree, Coins, CalendarDays, RotateCcw } from 'lucide-react';
 
 const MONTH_NAMES = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 
@@ -28,8 +28,9 @@ function YearlyFortuneResultContent() {
     const birthDate = searchParams.get('birthDate');
     const calendarType = searchParams.get('calendarType') as GetYearlyFortuneInput['calendarType'];
     const birthTime = searchParams.get('birthTime');
+    const gender = searchParams.get('gender') as GetYearlyFortuneInput['gender'];
 
-    if (!name || !birthDate || !calendarType || !birthTime) {
+    if (!name || !birthDate || !calendarType || !birthTime || !gender) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
@@ -44,6 +45,7 @@ function YearlyFortuneResultContent() {
       birthDate,
       calendarType,
       birthTime,
+      gender,
     };
 
     getYearlyFortune(input)

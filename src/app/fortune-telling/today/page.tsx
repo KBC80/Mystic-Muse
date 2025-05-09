@@ -29,9 +29,9 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
+import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, GENDER_OPTIONS } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { CalendarHeart, Home, CalendarIcon, Sparkles } from 'lucide-react'; // Import Sparkles
+import { CalendarHeart, Home, CalendarIcon, Sparkles } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 
@@ -40,6 +40,7 @@ const formSchema = z.object({
   calendarType: z.enum(["solar", "lunar"], { errorMap: () => ({ message: "달력 유형을 선택해주세요."}) }),
   birthTime: z.string().min(1, "태어난 시간을 선택해주세요."),
   name: z.string().min(1, "이름을 입력해주세요."),
+  gender: z.enum(["male", "female"], { errorMap: () => ({ message: "성별을 선택해주세요."}) }),
 });
 
 type TodaysFortuneFormValues = z.infer<typeof formSchema>;
@@ -56,6 +57,7 @@ export default function TodaysFortunePage() {
       calendarType: "solar",
       birthTime: "모름",
       name: "",
+      gender: "male",
     },
   });
 
@@ -66,6 +68,7 @@ export default function TodaysFortunePage() {
       birthDate: values.birthDate,
       calendarType: values.calendarType,
       birthTime: values.birthTime,
+      gender: values.gender,
     }).toString();
     
     router.push(`/fortune-telling/today/result?${queryParams}`);
@@ -191,6 +194,30 @@ export default function TodaysFortunePage() {
                       <FormControl>
                         <Input placeholder="이름을 입력하세요" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>성별</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="성별을 선택하세요" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {GENDER_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

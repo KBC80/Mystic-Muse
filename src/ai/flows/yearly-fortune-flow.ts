@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview 사용자의 생년월일시와 이름을 바탕으로 올해의 운세를 제공합니다.
+ * @fileOverview 사용자의 생년월일시, 이름, 성별을 바탕으로 올해의 운세를 제공합니다.
  *
  * - getYearlyFortune - 올해 운세 제공 과정을 처리하는 함수입니다.
  * - GetYearlyFortuneInput - getYearlyFortune 함수의 입력 타입입니다.
@@ -16,6 +16,7 @@ const GetYearlyFortuneInputSchema = z.object({
   calendarType: z.enum(['solar', 'lunar']).describe('달력 유형입니다 (solar: 양력, lunar: 음력).'),
   birthTime: z.string().describe('태어난 시간입니다 (예: 자시, 축시 등 12지신 시간 또는 "모름").'),
   name: z.string().describe('운세를 볼 사람의 이름입니다.'),
+  gender: z.enum(['male', 'female']).describe('운세를 볼 사람의 성별입니다 (male: 남자, female: 여자).'),
 });
 export type GetYearlyFortuneInput = z.infer<typeof GetYearlyFortuneInputSchema>;
 
@@ -46,12 +47,13 @@ const yearlyFortunePrompt = ai.definePrompt({
   name: 'yearlyFortunePrompt',
   input: {schema: GetYearlyFortuneInputSchema.extend({ currentYear: z.number() })},
   output: {schema: GetYearlyFortuneOutputSchema},
-  prompt: `당신은 한국 전통 사주, 오행, 팔괘, 성명학에 능통한 운세 전문가입니다. 다음 정보를 바탕으로 {{{name}}}님의 {{{currentYear}}}년 전체 운세를 알려주세요. 모든 답변은 한국어로 상세하고 현실적으로 분석해야 합니다. 각 운세 항목은 긍정적인 측면과 함께 사주 및 운의 흐름에 따른 잠재적인 어려움이나 주의해야 할 점도 명확히 언급하여 균형 잡힌 조언을 제공해야 합니다. 각 월별 운세 (1월부터 12월까지)는 반드시 포함되어야 하며, 이 역시 균형 잡힌 내용을 담아야 합니다.
+  prompt: `당신은 한국 전통 사주, 오행, 팔괘, 성명학에 능통한 운세 전문가입니다. 다음 정보를 바탕으로 {{{name}}}님의 {{{currentYear}}}년 전체 운세를 알려주세요. 모든 답변은 한국어로 상세하고 현실적으로 분석해야 합니다. 각 운세 항목은 긍정적인 측면과 함께 사주 및 운의 흐름에 따른 잠재적인 어려움이나 주의해야 할 점도 명확히 언급하여 균형 잡힌 조언을 제공해야 합니다. 사용자의 성별을 고려하여 더욱 개인화된 조언을 제공해주세요. 각 월별 운세 (1월부터 12월까지)는 반드시 포함되어야 하며, 이 역시 균형 잡힌 내용을 담아야 합니다.
 
 사용자 정보:
 - 이름: {{{name}}}
 - 생년월일: {{{birthDate}}} ({{{calendarType}}})
 - 태어난 시간: {{{birthTime}}}
+- 성별: {{{gender}}}
 
 {{{currentYear}}}년 운세 항목 (각 항목은 긍정적인 부분과 함께 현실적인 조언, 주의사항을 포함해야 합니다):
 1.  **총운 (overallFortune)**: {{{currentYear}}}년 한 해 전반적인 흐름, 주요 기회, 그리고 특별히 조심해야 할 점이나 맞닥뜨릴 수 있는 도전 과제를 구체적으로 설명해주세요.

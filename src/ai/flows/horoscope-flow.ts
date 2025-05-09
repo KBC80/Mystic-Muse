@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview 사용자의 생년월일과 달력 유형을 바탕으로 별자리를 판단하고 주간 운세를 제공합니다.
+ * @fileOverview 사용자의 생년월일, 달력 유형, 성별을 바탕으로 별자리를 판단하고 주간 운세를 제공합니다.
  *
  * - getWeeklyHoroscope - 주간 별자리 운세 제공 과정을 처리하는 함수입니다.
  * - GetWeeklyHoroscopeInput - getWeeklyHoroscope 함수의 입력 타입입니다.
@@ -15,6 +15,7 @@ const GetWeeklyHoroscopeInputSchema = z.object({
   birthDate: z.string().describe('생년월일입니다 (YYYY-MM-DD 형식).'),
   calendarType: z.enum(['solar', 'lunar']).describe('달력 유형입니다 (solar: 양력, lunar: 음력).'),
   name: z.string().describe('운세를 볼 사람의 이름입니다.'),
+  gender: z.enum(['male', 'female']).describe('운세를 볼 사람의 성별입니다 (male: 남자, female: 여자).'),
 });
 export type GetWeeklyHoroscopeInput = z.infer<typeof GetWeeklyHoroscopeInputSchema>;
 
@@ -41,11 +42,12 @@ const weeklyHoroscopePrompt = ai.definePrompt({
   name: 'weeklyHoroscopePrompt',
   input: {schema: GetWeeklyHoroscopeInputSchema},
   output: {schema: GetWeeklyHoroscopeOutputSchema},
-  prompt: `당신은 수십 년 경력의 저명한 서양 점성술사입니다. 사용자의 생년월일과 달력 유형(양력/음력) 정보를 바탕으로 해당 사용자의 정확한 서양 별자리를 판단해주세요. 만약 음력으로 입력되었다면, 서양 별자리 판단 시 양력으로 변환하여 고려해주세요. 그 후, {{{name}}}님의 이번 주 (오늘부터 7일간) 별자리 운세를 상세하고 현실적인 어조로 제공해주세요. 단순히 좋은 말만 하는 것이 아니라, 별의 흐름에 따라 발생할 수 있는 잠재적인 어려움이나 주의해야 할 점도 명확히 언급하여 균형 잡힌 조언을 제공해야 합니다. 모든 답변은 한국어로 작성합니다.
+  prompt: `당신은 수십 년 경력의 저명한 서양 점성술사입니다. 사용자의 생년월일, 달력 유형(양력/음력), 성별 정보를 바탕으로 해당 사용자의 정확한 서양 별자리를 판단해주세요. 만약 음력으로 입력되었다면, 서양 별자리 판단 시 양력으로 변환하여 고려해주세요. 그 후, {{{name}}}님의 이번 주 (오늘부터 7일간) 별자리 운세를 상세하고 현실적인 어조로 제공해주세요. 단순히 좋은 말만 하는 것이 아니라, 별의 흐름에 따라 발생할 수 있는 잠재적인 어려움이나 주의해야 할 점도 명확히 언급하여 균형 잡힌 조언을 제공해야 합니다. 사용자의 성별을 고려하여 더욱 개인화된 조언을 제공해주세요. 특히 애정운, 직업운, 건강운 등에서 성별에 따른 미묘한 차이를 반영할 수 있다면 좋습니다. 모든 답변은 한국어로 작성합니다.
 
 사용자 정보:
 - 이름: {{{name}}}
 - 생년월일: {{{birthDate}}} ({{{calendarType}}})
+- 성별: {{{gender}}}
 
 별자리 운세 항목 (각 항목은 긍정적인 부분과 함께 현실적인 조언, 주의사항을 포함해야 합니다):
 1.  **별자리 (zodiacSign)**: 사용자의 생년월일을 바탕으로 정확한 한국어 별자리 이름을 판단하여 명시해주세요. (예: 양자리, 황소자리, 쌍둥이자리, 게자리, 사자자리, 처녀자리, 천칭자리, 전갈자리, 사수자리, 염소자리, 물병자리, 물고기자리)
