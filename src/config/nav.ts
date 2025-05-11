@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { PenTool, Baby, CloudMoon, LayoutGrid, Home, Ticket, Sparkles, Star, TrendingUp, CalendarHeart, WandSparkles as WandIcon } from 'lucide-react';
+import { PenTool, Baby, CloudMoon, LayoutGrid, Home, Ticket, Sparkles, Star, TrendingUp, CalendarHeart, WandSparkles as WandIcon, Heart, Users } from 'lucide-react';
 
 export interface NavItem {
   title: string;
@@ -20,6 +20,11 @@ export const navItems: NavItem[] = [
     title: '이름 풀이',
     href: '/name-interpretation',
     icon: PenTool,
+  },
+  {
+    title: '궁합',
+    href: '/relationship-compatibility',
+    icon: Heart,
   },
   {
     title: '작명 도우미',

@@ -11,3 +11,4 @@ import '@/ai/flows/scientific-lotto-recommendation-flow.ts';
 import '@/ai/flows/yearly-fortune-flow.ts'; // Added yearly fortune flow
 import '@/ai/flows/horoscope-flow.ts'; // Added horoscope flow
 import '@/ai/flows/rune-reading-flow.ts'; // Added rune reading flow
+import '@/ai/flows/relationship-compatibility-flow.ts'; // Added relationship compatibility flow
