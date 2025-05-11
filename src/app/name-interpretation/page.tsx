@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { findHanjaForSyllable, splitKoreanName, type HanjaDetail } from '@/lib/hanja-utils';
 import { useToast } from "@/hooks/use-toast";
+import { Label } from '@/components/ui/label';
 
 
 const formSchema = z.object({
@@ -121,7 +122,7 @@ export default function NameInterpretationPage() {
       hanjaPart += selectedHanjaPerSyllable[index] || ''; // 선택된 한자만 추가
     });
     
-    if (hanjaPart.length !== syllables.length) {
+    if (hanjaPart.length !== syllables.length && hanjaPart.length > 0) { // Only show error if some Hanja were selected but not all
          toast({
             title: "오류",
             description: "모든 글자에 해당하는 한자를 선택해주세요.",
@@ -129,8 +130,8 @@ export default function NameInterpretationPage() {
         });
         return;
     }
-
-    const newName = `${koreanOnlyName} (${hanjaPart})`;
+    
+    const newName = hanjaPart.length > 0 ? `${koreanOnlyName} (${hanjaPart})` : koreanOnlyName;
     form.setValue(currentConvertingNameField as any, newName, { shouldValidate: true });
     setIsHanjaModalOpen(false);
   };
@@ -339,17 +340,15 @@ export default function NameInterpretationPage() {
                     value={selectedHanjaPerSyllable[sylIndex]}
                     className="space-y-1"
                   >
-                    {suggestion.options.slice(0, 20).map((opt, optIndex) => ( // Limit to 20 options per syllable for performance
-                      <FormItem key={optIndex} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-md">
-                        <FormControl>
-                          <RadioGroupItem value={opt.hanja} id={`syl-${sylIndex}-opt-${optIndex}`} />
-                        </FormControl>
-                        <FormLabel htmlFor={`syl-${sylIndex}-opt-${optIndex}`} className="font-normal text-sm cursor-pointer w-full">
+                    {suggestion.options.slice(0, 20).map((opt, optIndex) => (
+                      <div key={optIndex} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-md">
+                        <RadioGroupItem value={opt.hanja} id={`syl-${sylIndex}-opt-${optIndex}`} />
+                        <Label htmlFor={`syl-${sylIndex}-opt-${optIndex}`} className="font-normal text-sm cursor-pointer w-full">
                            <span className="text-lg font-semibold text-primary">{opt.hanja}</span> ({opt.reading}) - {opt.description} ({opt.strokeCount}획)
-                        </FormLabel>
-                      </FormItem>
+                        </Label>
+                      </div>
                     ))}
-                    {suggestion.options.length > 20 && <p className="text-xs text-muted-foreground mt-1">더 많은 한자가 있지만, 상위 20개만 표시됩니다.</p>}
+                     {suggestion.options.length > 20 && <p className="text-xs text-muted-foreground mt-1">더 많은 한자가 있지만, 상위 20개만 표시됩니다.</p>}
                   </RadioGroup>
                 ) : (
                   <p className="text-sm text-muted-foreground">추천 한자가 없습니다.</p>
@@ -358,7 +357,7 @@ export default function NameInterpretationPage() {
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsHanjaModalOpen(false)}>취소</Button>
+             <Button variant="outline" onClick={() => setIsHanjaModalOpen(false)}>취소</Button>
             <Button onClick={updateNameWithHanja}>선택 완료 및 이름 업데이트</Button>
           </DialogFooter>
         </DialogContent>

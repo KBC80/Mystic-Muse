@@ -37,6 +37,7 @@ import { Heart, Home, CalendarIcon, User, Sparkles, Wand2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { findHanjaForSyllable, splitKoreanName, type HanjaDetail } from '@/lib/hanja-utils';
 import { useToast } from "@/hooks/use-toast";
+import { Label } from '@/components/ui/label';
 
 const personSchema = z.object({
   name: z.string().min(1, "이름을 입력해주세요."),
@@ -274,7 +275,7 @@ export default function RelationshipCompatibilityPage() {
       hanjaPart += selectedHanjaPerSyllable[index] || '';
     });
 
-    if (hanjaPart.length !== syllables.length) {
+    if (hanjaPart.length !== syllables.length && hanjaPart.length > 0) {
          toast({
             title: "오류",
             description: "모든 글자에 해당하는 한자를 선택해주세요.",
@@ -283,7 +284,7 @@ export default function RelationshipCompatibilityPage() {
         return;
     }
     
-    const newName = `${koreanOnlyName} (${hanjaPart})`;
+    const newName = hanjaPart.length > 0 ? `${koreanOnlyName} (${hanjaPart})` : koreanOnlyName;
     form.setValue(currentConvertingNameField as any, newName, { shouldValidate: true });
     setIsHanjaModalOpen(false);
   };
@@ -359,14 +360,12 @@ export default function RelationshipCompatibilityPage() {
                     className="space-y-1"
                   >
                     {suggestion.options.slice(0, 20).map((opt, optIndex) => (
-                      <FormItem key={optIndex} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-md">
-                        <FormControl>
-                          <RadioGroupItem value={opt.hanja} id={`syl-${sylIndex}-opt-${optIndex}`} />
-                        </FormControl>
-                        <FormLabel htmlFor={`syl-${sylIndex}-opt-${optIndex}`} className="font-normal text-sm cursor-pointer w-full">
+                      <div key={optIndex} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-md">
+                        <RadioGroupItem value={opt.hanja} id={`syl-${sylIndex}-opt-${optIndex}`} />
+                        <Label htmlFor={`syl-${sylIndex}-opt-${optIndex}`} className="font-normal text-sm cursor-pointer w-full">
                            <span className="text-lg font-semibold text-primary">{opt.hanja}</span> ({opt.reading}) - {opt.description} ({opt.strokeCount}획)
-                        </FormLabel>
-                      </FormItem>
+                        </Label>
+                      </div>
                     ))}
                     {suggestion.options.length > 20 && <p className="text-xs text-muted-foreground mt-1">더 많은 한자가 있지만, 상위 20개만 표시됩니다.</p>}
                   </RadioGroup>
