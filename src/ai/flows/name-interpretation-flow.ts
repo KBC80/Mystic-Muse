@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview 사용자의 이름, 성별, 생년월일시를 바탕으로 성명학적 분석과 인생 조언을 제공합니다.
+ * @fileOverview 사용자의 이름, 생년월일시, 성별, 자녀 순서, 출생지를 바탕으로 동서양 철학 및 성명학적 분석과 인생 조언을 제공합니다.
  *
  * - interpretName - 이름 해석 과정을 처리하는 함수입니다.
  * - InterpretNameInput - interpretName 함수의 입력 타입입니다.
@@ -11,38 +11,123 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const InterpretNameInputSchema = z.object({
+  name: z.string().describe('해석할 이름입니다. AI가 한글, 한자(제공된 경우)를 판단하여 분석합니다. 예: 홍길동 또는 홍길동(洪吉童)'),
   birthDate: z.string().describe('생년월일입니다 (YYYY-MM-DD 형식).'),
   calendarType: z.enum(['solar', 'lunar']).describe('달력 유형입니다 (solar: 양력, lunar: 음력).'),
   birthTime: z.string().describe('태어난 시간입니다 (예: 자시, 축시 등 12지신 시간 또는 "모름").'),
-  name: z.string().describe('해석할 이름입니다. AI가 한글, 한자, 영문 이름을 스스로 판단하여 분석합니다.'),
   gender: z.enum(['male', 'female']).describe('성별입니다 (male: 남자, female: 여자).'),
+  childOrder: z.string().optional().describe('자녀 순위입니다 (예: 맏이, 둘째, 막내 등, 선택 사항).'),
+  birthPlace: z.string().optional().describe('출생지입니다 (예: 서울, 부산 등, 선택 사항).'),
 });
 export type InterpretNameInput = z.infer<typeof InterpretNameInputSchema>;
 
-const InterpretNameOutputSchema = z.object({
-  nameAnalysis: z.string().describe('이름에 대한 성명학적 분석 결과의 핵심 요약입니다. 장점, 단점, 잠재적 어려움, 개선을 위한 조언을 간결하게 포함해야 합니다. 이름 유형(한글/한자/영문) 판단 내용을 간략히 언급할 수 있습니다.'),
-  lifeStages: z.object({
-    초년운: z.string().describe('초년운의 주요 특징과 핵심 조언을 요약하여 설명합니다. 긍정적 측면과 주의점을 포함해야 합니다.'),
-    중년운: z.string().describe('중년운의 주요 특징과 핵심 조언을 요약하여 설명합니다. 긍정적 측면과 주의점을 포함해야 합니다.'),
-    장년운: z.string().describe('장년운의 주요 특징과 핵심 조언을 요약하여 설명합니다. 긍정적 측면과 주의점을 포함해야 합니다.'),
-    말년운: z.string().describe('말년운의 주요 특징과 핵심 조언을 요약하여 설명합니다. 긍정적 측면과 주의점을 포함해야 합니다.'),
-  }),
-  financialLuck: z.string().describe('재물운에 대한 분석 및 조언입니다. 재물 흐름, 투자, 절약 등 재정 관리에 대한 현실적인 조언과 함께 재물 손실 가능성이나 주의해야 할 투자처 등을 간결하게 포함해야 합니다.'),
-  spouseLuck: z.string().describe('배우자 운의 핵심 분석 및 조언을 요약하여 제공합니다. 결혼 시기, 배우자 유형, 결혼 생활의 특징 및 조언 등을 간결하게 포함할 수 있습니다.'),
-  childLuck: z.string().describe('자녀 운의 핵심 분석 및 조언을 요약하여 제공합니다. 자녀 수, 자녀와의 관계, 자녀의 성향 및 미래 등에 대한 내용을 간결하게 포함할 수 있습니다.'),
-  eightTrigramsAnalysis: z.string().describe('이름과 사주를 바탕으로 한 주역 팔괘(8괘) 분석 및 인생 조언의 핵심을 요약하여 제공합니다. 긍정적 해석과 경계해야 할 부분에 대한 조언을 간결하게 포함해야 합니다.'),
-  compatibility: z.object({
-    zodiacSign: z.string().describe('잘 맞는 띠 또는 좋은 궁합에 대한 설명입니다. 주의해야 할 관계나 상황에 대한 언급도 포함할 수 있습니다.'),
-    colors: z.array(z.string()).length(3).describe('행운을 가져다주는 색상 3가지와 그 이유입니다. 특정 상황에서 피해야 할 색상에 대한 조언도 가능합니다.'),
-  }),
-  luckyNumbers: z
-    .array(z.number().int().min(1).max(45))
-    .length(3)
-    .describe('행운의 숫자 3개 (1-45 사이)입니다.'),
+const SajuCompositionSchema = z.object({
+  yearColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('년주 (천간, 지지, 음양, 오행)'),
+  monthColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('월주 (천간, 지지, 음양, 오행)'),
+  dayColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('일주 (천간, 지지, 음양, 오행)'),
+  timeColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('시주 (천간, 지지, 음양, 오행)'),
   gapjaYearName: z.string().describe('태어난 해의 60갑자 간지 이름입니다 (예: 갑자년).'),
   zodiacColor: z.string().describe('태어난 해의 띠 색깔입니다 (예: 청색).'),
   zodiacAnimal: z.string().describe('태어난 해의 띠 동물입니다 (예: 쥐띠).'),
 });
+
+const DetailedScoresSchema = z.object({
+  eumYangOhaengScore: z.number().min(0).max(5).describe('음양오행 점수 (5점 만점)'),
+  suriGilhyungScore: z.number().min(0).max(35).describe('수리길흉 점수 (35점 만점)'),
+  pronunciationOhaengScore: z.number().min(0).max(25).describe('발음오행 점수 (25점 만점)'),
+  suriOhaengScore: z.number().min(0).max(5).describe('수리오행 점수 (5점 만점)'),
+  resourceOhaengScore: z.number().min(0).max(30).describe('자원오행 점수 (30점 만점)'),
+});
+
+const OhaengRatioSchema = z.object({
+  wood: z.number().describe('목(木) 비율 (%)'),
+  fire: z.number().describe('화(火) 비율 (%)'),
+  earth: z.number().describe('토(土) 비율 (%)'),
+  metal: z.number().describe('금(金) 비율 (%)'),
+  water: z.number().describe('수(水) 비율 (%)'),
+  neededOhaeng: z.string().describe('보충이 필요한 오행'),
+});
+
+const HanjaStrokeEumyangSchema = z.object({
+  character: z.string().describe('한자 또는 한글자'),
+  strokes: z.number().optional().describe('획수 (한자인 경우)'),
+  eumYang: z.string().describe('음(陰) 또는 양(陽)'),
+});
+
+const SuriLuckSchema = z.object({
+  description: z.string().describe('해당 격(운)에 대한 설명'),
+  rating: z.enum(['매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨']).describe('길흉 등급'),
+  ohaeng: z.string().describe('해당 격의 오행'),
+});
+
+const InitialConsonantSchema = z.object({
+  character: z.string().describe('이름의 한글자'),
+  consonant: z.string().describe('초성'),
+  ohaeng: z.string().describe('초성의 오행'),
+});
+
+const InterpretNameOutputSchema = z.object({
+  basicInfoSummary: z.object({
+    koreanName: z.string().describe('이름 (한글)'),
+    hanjaName: z.string().optional().describe('이름 (한자, 해당되는 경우)'),
+    gender: z.string().describe('성별 (남자/여자)'),
+    childOrder: z.string().optional().describe('자녀 순위 (예: 맏자녀, 해당되는 경우)'),
+    solarBirthDate: z.string().describe('양력 생년월일시'),
+    lunarBirthDate: z.string().describe('음력 생년월일시 (양력이면 변환된 음력, 음력이면 입력된 음력)'),
+    birthTime: z.string().describe('출생 시간 (예: 자시)'),
+    birthPlace: z.string().optional().describe('출생지 (해당되는 경우)'),
+    sajuComposition: SajuCompositionSchema.describe('사주 구성 정보'),
+  }).describe('1. 기본 정보 요약'),
+
+  overallScoreAndEvaluation: z.object({
+    totalScore: z.number().min(0).max(100).describe('종합 점수 (100점 만점)'),
+    grade: z.enum(['매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨']).describe('종합 등급'),
+    detailedScores: DetailedScoresSchema.describe('세부 항목별 점수'),
+  }).describe('2. 종합 점수 및 평가'),
+
+  eumYangOhaengAnalysis: z.object({
+    sajuAnalysis: SajuCompositionSchema.omit({ gapjaYearName: true, zodiacColor: true, zodiacAnimal: true }).describe('사주 분석 (년월일시주)'),
+    eumYangRatio: z.object({ eumPercent: z.number(), yangPercent: z.number() }).describe('음양 비율'),
+    ohaengRatio: OhaengRatioSchema.describe('오행 비율 및 보충 필요 오행'),
+  }).describe('3. 음양오행 분석 (사주 기반)'),
+
+  eumYangHarmonyAnalysis: z.object({
+    hanjaStrokesAndEumyang: z.array(HanjaStrokeEumyangSchema).describe('이름 각 글자의 한자 획수 및 음양 정보 (한글 이름인 경우 한글 음절 기반 음양)'),
+    ohaengHarmony: z.string().describe('이름 글자 간 오행의 상생 또는 상극 관계 설명'),
+    evaluation: z.string().describe('음양 조화에 대한 평가 (예: 음양이 조화로운 좋은 이름입니다.)'),
+  }).describe('4. 음양 조화 분석 (이름 자체)'),
+
+  suriGilhyungAnalysis: z.object({
+    cheonGyeok: SuriLuckSchema.describe('천격 (선조, 기초운)'),
+    inGyeok: SuriLuckSchema.describe('인격 (주격, 초년운, 성격, 대인관계)'),
+    jiGyeok: SuriLuckSchema.describe('지격 (중년운, 가정, 배우자, 건강)'),
+    oeGyeok: SuriLuckSchema.describe('외격 (장년운, 사회활동, 환경적응)'),
+    jongGyeok: SuriLuckSchema.describe('종격 (총격, 말년운, 인생 총운)'),
+  }).describe('5. 수리길흉 분석 (5격 중심)'),
+
+  pronunciationOhaengAnalysis: z.object({
+    initialConsonants: z.array(InitialConsonantSchema).describe('이름 각 글자의 초성 및 해당 오행'),
+    harmonyRelationship: z.string().describe('초성 오행 간의 상생 또는 상극 관계 설명'),
+    evaluation: z.string().describe('발음오행에 대한 평가'),
+  }).describe('6. 발음오행 분석'),
+
+  resourceOhaengAnalysis: z.object({
+    sajuStrengthAnalysis: z.string().describe('사주 강약 분석 (부족한 기운과 넘치는 기운의 오행)'),
+    yongsin: z.string().describe('사주를 보완하기 위한 핵심 오행 (용신)'),
+    nameResourceOhaengMatch: z.string().describe('이름의 자원오행(한자 뜻 오행)이 용신을 보완하는지 여부 설명'),
+  }).describe('7. 자원오행 분석'),
+
+  hanjaFilteringAnalysis: z.object({
+    inappropriateHanja: z.string().describe('이름에 사용된 한자가 불용한자인지 여부 및 설명 (한자 이름인 경우)'),
+    firstChildOnlyHanja: z.string().describe('장자녀 전용 한자의 사용 여부 및 설명 (한자 이름인 경우)'),
+  }).describe('8. 한자 필터링 분석'),
+
+  finalOverallEvaluation: z.object({
+    summary: z.string().describe('각 항목의 평가를 종합하여 제공하는 최종 평가'),
+    cautions: z.string().optional().describe('특정 항목에서 주의가 필요한 경우 강조하는 내용'),
+  }).describe('9. 전체 평가 요약'),
+});
+
 export type InterpretNameOutput = z.infer<typeof InterpretNameOutputSchema>;
 
 export async function interpretName(input: InterpretNameInput): Promise<InterpretNameOutput> {
@@ -53,33 +138,97 @@ const nameInterpretationPrompt = ai.definePrompt({
   name: 'nameInterpretationPrompt',
   input: {schema: InterpretNameInputSchema},
   output: {schema: InterpretNameOutputSchema},
-  prompt: `당신은 수십 년간 사주명리학과 한국 전통 성명학, 그리고 주역 팔괘를 깊이 연구해 온 대학자입니다. 당신의 분석은 단순한 예측을 넘어, 각 개인의 삶에 대한 깊은 통찰과 지혜를 제공합니다. 다음 정보를 바탕으로 사용자의 이름에 담긴 의미와 인생 전반에 걸친 운세를 심층적이고 학문적인 관점에서 분석해주세요. 모든 답변은 한국어로, 각 분석 항목에 대해 **주요 특징과 핵심 조언 위주로 간결하게 요약하여** 작성해야 합니다. 특히 **생애 주기별 운세는 더욱 핵심적인 내용 위주로 간결하게** 전달하고, **새롭게 추가된 재물운을 포함**하여 각 항목에 대해 긍정적인 측면과 함께, 사용자가 주의하거나 대비해야 할 잠재적인 어려움이나 약점도 명확히 언급하여 균형 잡힌 시각을 제공해주세요. 사용자가 자신의 강점을 활용하고 약점을 보완하여 미래를 더 잘 준비할 수 있도록 실질적인 조언을 포함해야 합니다.
+  prompt: `당신은 수십 년간 동서양 철학, 사주명리학, 성명학(한자 수리획수법, 음양오행, 발음오행, 자원오행), 주역 등을 깊이 연구하고 통달한 최고의 학자입니다. 당신의 이름풀이는 단순한 예측을 넘어, 개인의 삶에 대한 깊은 통찰과 지혜를 제공하며, 매우 정확하고 상세합니다.
 
-정보:
+다음 사용자 정보를 바탕으로, 제시된 "이름풀이 결과 페이지 구성안"의 모든 항목을 빠짐없이 채워주십시오. 각 항목에 대한 분석은 반드시 "해석 관련 규칙"을 엄격히 준수하여 이루어져야 합니다. 모든 답변은 한국어로, 전문가적이고 학문적인 어조로 작성하되, 사용자가 쉽게 이해할 수 있도록 명확하게 설명해주십시오. 특히, 긍정적인 측면과 함께 주의하거나 개선해야 할 점도 균형 있게 제시하여 사용자가 자신의 삶을 더 잘 개척해나갈 수 있도록 실질적인 조언을 제공해야 합니다.
+
+**사용자 정보:**
+- 이름: {{{name}}} (AI는 제공된 이름이 한글인지, 한글과 한자가 혼용되었는지, 또는 주로 한자인지를 스스로 판단하여 분석합니다. 한자 이름 풀이 시에는 한자의 의미와 획수를 정확히 고려해야 합니다.)
 - 생년월일: {{{birthDate}}} ({{{calendarType}}})
 - 태어난 시간: {{{birthTime}}}
-- 이름: {{{name}}} (AI가 이름의 유형 - 한글, 한자, 영문 - 을 스스로 판단하여 분석합니다.)
-- 성별: {{{gender}}} (male: 남자, female: 여자)
+- 성별: {{{gender}}}
+- 자녀 순위: {{{childOrder}}} (제공된 경우)
+- 출생지: {{{birthPlace}}} (제공된 경우)
 
-분석 내용:
-1.  **이름 분석 (nameAnalysis)**: 이름의 발음오행, 수리오행, 자원오행, 음양의 조화, 주역 팔괘(8괘)의 원리 등을 종합적으로 분석하여 성격, 잠재력, 장단점, 그리고 개운을 위한 조언 등을 **간결하게 핵심 위주로** 설명합니다. AI가 판단한 이름의 유형(한글, 한자, 영문 등)에 대한 간략한 언급도 포함할 수 있습니다. 각 분석 요소가 이름과 어떻게 연결되는지, 그리고 이것이 개인의 특성에 어떤 영향을 미치는지 구체적으로 설명해주세요. 이름에 내재된 강점과 함께 보완해야 할 약점, 또는 삶에서 주의해야 할 부분도 명시해주세요.
-2.  **생애 주기별 운세 (lifeStages - 초년운, 중년운, 장년운, 말년운)**: 각 생애 주기별로 **주요 특징과 핵심 조언을 매우 간결하게 요약**하여 제공합니다. AI는 다음의 대략적인 나이 구간을 참고하여 각 시기를 분석하되, **이 나이 구간을 해설 텍스트에 직접적으로 반복하여 명시하지는 마십시오**: 초년운 (0-25세), 중년운 (26-50세), 장년운 (51-75세), 말년운 (76세 이후). 주요 기회와 성과뿐 아니라, 예상되는 어려움이나 도전 과제, 그리고 이를 극복하기 위한 전략도 함께 **핵심만** 제시해주세요.
-    *   초년운: 유년기부터 청년기까지의 학업, 건강, 대인관계 등 **주요 사항에 대한 핵심 분석 및 조언을 간결하게** 제공합니다.
-    *   중년운: 청장년기의 직업, 재물, 결혼, 자녀 등 **주요 사항에 대한 핵심 분석 및 조언을 간결하게** 제공합니다.
-    *   장년운: 중장년기 이후의 사회적 성취, 건강, 가정 등 **주요 사항에 대한 핵심 분석 및 조언을 간결하게** 제공합니다.
-    *   말년운: 노년기의 삶, 건강, 정신적 안정 등 **주요 사항에 대한 핵심 분석 및 조언을 간결하게** 제공합니다.
-3.  **재물운 (financialLuck)**: 전반적인 재물 흐름, 주요 기회, 잠재적 어려움, 투자 및 지출에 대한 조언, 그리고 재물운을 좋게 만들기 위한 구체적인 방안 등을 **핵심 위주로 간결하게** 분석합니다.
-4.  **배우자운 (spouseLuck)**: 결혼 적령기, 이상적인 배우자상, 결혼 생활에서 예상되는 주요 특징 (긍정적, 부정적 측면 포함), 그리고 원만한 관계 유지를 위한 조언 등을 성별을 고려하여 **핵심 위주로 간결하게** 분석합니다.
-5.  **자녀운 (childLuck)**: 자녀를 갖게 될 시기, 자녀의 수 (가능하다면), 자녀의 성향 및 잠재력, 자녀와의 관계에서 주의할 점, 그리고 자녀 양육에 대한 조언 등을 **핵심 위주로 간결하게** 분석합니다.
-6.  **주역 팔괘 분석 (eightTrigramsAnalysis)**: 이름과 생년월일시를 바탕으로 주역 팔괘(8괘)를 도출하고, 해당하는 괘상(卦象)의 의미, 각 효(爻)의 풀이, 그리고 이것이 인생 전반의 주요 결정과 흐름에 어떤 영향을 미치는지, 어떤 삶의 지혜를 얻을 수 있는지 상세히 설명합니다. 괘가 제시하는 길흉화복의 의미를 균형 있게 전달하고, 어려운 상황에 처했을 때 괘의 가르침을 통해 어떻게 대처할 수 있는지 실질적인 조언을 **핵심 위주로 간결하게** 제공해주세요.
-7.  **궁합 및 행운 (compatibility)**:
-    *   zodiacSign: 잘 맞는 띠 또는 좋은 궁합 (사람, 방향, 활동 등 상세 설명 포함). 반대로 상극이거나 주의해야 할 관계, 피해야 할 방향이나 활동에 대한 언급도 포함할 수 있습니다.
-    *   colors: 행운을 가져다주는 색상 3가지와 그 색상이 사주 및 이름과 어떻게 조화를 이루는지, 어떤 기운을 보강하는지에 대한 설명. 특정 상황에서 기운을 저해할 수 있는 색상에 대한 조언도 가능합니다.
-8.  **행운의 숫자 (luckyNumbers)**: 1부터 45 사이의 행운의 숫자 3개를 추천하고, 그 숫자가 성명학적 또는 사주적으로 어떤 의미를 갖는지, 혹은 어떤 기운을 상징하는지 간략히 설명합니다.
-9.  **사주 정보 (gapjaYearName, zodiacColor, zodiacAnimal)**: 생년월일을 바탕으로 태어난 해의 60갑자 간지(예: 갑자년), 그 간지에 따른 띠 색깔(예: 청색), 그리고 띠 동물(예: 쥐띠)을 정확히 계산하여 알려주세요. 양력/음력 구분을 명확히 인지하여 계산해야 합니다.
+**해석 관련 규칙:**
+1.  **한자 획수 수리법**: 이름의 총획수(한자 이름의 경우) 또는 한글 음절 구조를 기반으로 천격, 인격(주격), 지격, 외격, 종격(총격) 등 5가지 격을 계산하고 각 격의 길흉을 판단합니다. 각 격은 성격, 대인관계, 인생 전반의 흐름(초년, 중년, 장년, 말년)을 나타냅니다.
+2.  **음양의 조화**: 이름 각 글자(한자 또는 한글 음절)의 음(陰)과 양(陽)을 구분하여 이름 전체의 음양 균형을 분석합니다. 음양음 또는 양음양 배열을 이상적으로 보며, 한쪽으로 치우친 배열은 피해야 할 것으로 간주합니다.
+3.  **오행 상생 상극 분석**:
+    *   **사주 오행**: 사용자의 사주팔자를 분석하여 각 주(년주, 월주, 일주, 시주)의 천간, 지지, 음양, 오행을 파악하고, 전체적인 오행 분포와 부족하거나 과다한 오행을 분석합니다.
+    *   **이름 오행**: 이름 각 글자(한자의 경우 부수나 의미 기반, 한글의 경우 발음 기반)에 해당하는 오행을 분석하여 이름 내 오행의 흐름(상생, 상극)을 판단합니다.
+    *   **사주 보완**: 이름의 오행 구성이 사용자의 사주에서 부족한 오행을 보완하는지, 또는 과다한 오행을 더욱 강화시키는지 분석합니다. (자원오행 분석과 연결)
+4.  **발음과 운율 (발음오행)**: 이름의 발음(초성, 중성, 종성)이 부르기 쉽고, 부정적인 연상(흉음)이 없는지 확인합니다. 각 음절 초성의 오행을 분석하여 오행 간 상생상극 관계를 평가합니다.
+5.  **사주 보완 여부 (자원오행)**: 이름풀이에서 가장 중요한 요소 중 하나입니다. 사주팔자의 강약과 오행 흐름을 분석하여 용신(사주에 가장 필요한 오행)을 판단하고, 이름 한자(한자 이름의 경우)의 본래 뜻(자원오행)이 이 용신을 적절히 보완하는지 심층 분석합니다.
+6.  **한자의 의미 (한자 이름의 경우)**: 이름에 사용된 한자 자체의 뜻이 긍정적이고 좋은 메시지를 담고 있는지, 또는 부정적이거나 너무 무겁지 않은지 검토합니다. 불용한자나 특정 성별/자녀 순위에만 적합한 한자 사용 여부도 확인합니다.
 
-분석은 단순한 나열이 아닌, 각 요소들이 어떻게 상호작용하는지에 대한 통찰을 담아야 하며, 사용자가 자신의 삶을 객관적으로 이해하고 긍정적으로 개척해 나갈 수 있도록 지혜와 현실적인 조언을 전달해야 합니다. 당신의 깊이 있는 학문적 지식과 통찰력으로 사용자에게 감동과 깨달음을 주는 균형 잡힌 분석을 제공해주십시오.
-`,
+**이름풀이 결과 페이지 구성안 (아래 모든 항목을 반드시 채워주세요):**
+
+**1. 기본 정보 요약:**
+    *   koreanName: 이름 (한글) - AI가 {{{name}}} 입력값에서 한글 부분 추출
+    *   hanjaName: 이름 (한자) - AI가 {{{name}}} 입력값에서 한자 부분 추출 (없으면 생략)
+    *   gender: 성별 (남자/여자) - 입력값 그대로
+    *   childOrder: 자녀 순위 (예: 맏자녀) - 입력값 그대로 (없으면 생략)
+    *   solarBirthDate: 양력 생년월일시 - 입력값 또는 변환값
+    *   lunarBirthDate: 음력 생년월일시 - 입력값 또는 변환값
+    *   birthTime: 출생 시간 (예: 자시) - 입력값 그대로
+    *   birthPlace: 출생지 (예: 서울) - 입력값 그대로 (없으면 생략)
+    *   sajuComposition:
+        *   yearColumn: 년주 정보 (천간, 지지, 음양, 오행)
+        *   monthColumn: 월주 정보 (천간, 지지, 음양, 오행)
+        *   dayColumn: 일주 정보 (천간, 지지, 음양, 오행)
+        *   timeColumn: 시주 정보 (천간, 지지, 음양, 오행)
+        *   gapjaYearName: 태어난 해의 60갑자 간지 이름 (예: 갑자년)
+        *   zodiacColor: 태어난 해의 띠 색깔 (예: 청색)
+        *   zodiacAnimal: 태어난 해의 띠 동물 (예: 쥐띠)
+
+**2. 종합 점수 및 평가:**
+    *   totalScore: 종합 점수 (100점 만점)
+    *   grade: 종합 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨')
+    *   detailedScores:
+        *   eumYangOhaengScore: 음양오행 점수 (5점 만점)
+        *   suriGilhyungScore: 수리길흉 점수 (35점 만점)
+        *   pronunciationOhaengScore: 발음오행 점수 (25점 만점)
+        *   suriOhaengScore: 수리오행 점수 (5점 만점) - 수리 자체의 오행적 특성 점수
+        *   resourceOhaengScore: 자원오행 점수 (30점 만점)
+
+**3. 음양오행 분석 (사주 기반):**
+    *   sajuAnalysis: (년주, 월주, 일주, 시주 각각의 천간, 지지, 음양, 오행 정보 - 위 sajuComposition의 year/month/day/timeColumn 반복)
+    *   eumYangRatio: 음양 비율 (eumPercent, yangPercent)
+    *   ohaengRatio: 오행 비율 (목, 화, 토, 금, 수 각각의 % 및 보충이 필요한 오행 명시)
+
+**4. 음양 조화 분석 (이름 자체):**
+    *   hanjaStrokesAndEumyang: 이름 각 글자의 한자 획수 및 음양 정보 배열 (한글 이름인 경우, 한글 음절 자체의 음양 분석)
+        *   각 요소는 { character: '글자', strokes: 획수 (선택), eumYang: '음/양' } 형태
+    *   ohaengHarmony: 이름 글자 간 오행의 상생 또는 상극 관계에 대한 상세 설명
+    *   evaluation: 음양 조화에 대한 최종 평가 (예: 음양이 조화로운 좋은 이름입니다.)
+
+**5. 수리길흉 분석 (5격 중심):** (각 격은 설명, 길흉 등급, 해당 격의 오행을 포함)
+    *   cheonGyeok: 천격 (선조운, 기초운, 주로 1-20세에 영향) - 설명, 등급, 오행
+    *   inGyeok: 인격 (주격, 초년운, 20-40세 중심, 성격, 대인관계) - 설명, 등급, 오행
+    *   jiGyeok: 지격 (중년운, 30-50세 중심, 가정, 배우자, 건강) - 설명, 등급, 오행
+    *   oeGyeok: 외격 (장년운, 40세 이후 사회활동, 환경적응) - 설명, 등급, 오행
+    *   jongGyeok: 종격 (총격, 말년운, 인생 전체 총운) - 설명, 등급, 오행
+
+**6. 발음오행 분석:**
+    *   initialConsonants: 이름 각 글자의 초성 및 해당 오행 배열
+        *   각 요소는 { character: '한글자', consonant: '초성', ohaeng: '오행' } 형태
+    *   harmonyRelationship: 초성 오행 간의 상생 또는 상극 관계에 대한 상세 설명
+    *   evaluation: 발음오행에 대한 최종 평가
+
+**7. 자원오행 분석:**
+    *   sajuStrengthAnalysis: 사주 강약 분석 (어떤 오행이 부족하고 어떤 오행이 넘치는지 상세 설명)
+    *   yongsin: 사주를 균형있게 만들기 위해 가장 필요한 핵심 오행 (용신) 설명
+    *   nameResourceOhaengMatch: 이름 한자(한자 이름의 경우)의 본래 뜻에 담긴 오행(자원오행)이 사주의 용신을 잘 보완하는지에 대한 상세 설명 및 평가
+
+**8. 한자 필터링 분석 (한자 이름의 경우에만 해당, 한글 이름이면 "해당 없음" 또는 긍정적 기술):**
+    *   inappropriateHanja: 이름에 사용된 한자가 불용한자(획수가 너무 많거나, 뜻이 나쁘거나, 특정 상황에만 쓰는 글자)인지 여부 및 그 이유에 대한 설명
+    *   firstChildOnlyHanja: 이름에 사용된 한자가 장자(녀) 전용 한자인지 여부 및 그 이유에 대한 설명 (사용자의 자녀 순위 고려)
+
+**9. 전체 평가 요약:**
+    *   summary: 위 모든 항목의 분석 결과를 종합하여 이름에 대한 최종적이고 상세한 평가 (장점, 단점, 전반적인 조언 포함)
+    *   cautions: 특별히 주의해야 할 점이나 개선을 위한 제언 (선택 사항)
+
+사용자의 미래에 대한 깊은 통찰과 지혜를 담아, 각 항목을 상세하고 정확하게 분석해주십시오.`,
 });
 
 const interpretNameFlow = ai.defineFlow(
@@ -89,7 +238,12 @@ const interpretNameFlow = ai.defineFlow(
     outputSchema: InterpretNameOutputSchema,
   },
   async input => {
+    // 생년월일로부터 양력/음력 날짜를 결정 (실제 변환 로직은 LLM에 위임하거나, 필요시 외부 API/라이브러리 사용 가정)
+    // 여기서는 LLM이 입력된 calendarType을 기준으로 solarBirthDate와 lunarBirthDate를 적절히 생성하도록 프롬프트에 명시합니다.
     const {output} = await nameInterpretationPrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("이름 풀이 결과를 생성하지 못했습니다.");
+    }
+    return output;
   }
 );
