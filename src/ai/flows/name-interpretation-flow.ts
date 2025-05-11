@@ -20,11 +20,18 @@ const InterpretNameInputSchema = z.object({
 });
 export type InterpretNameInput = z.infer<typeof InterpretNameInputSchema>;
 
+const SajuColumnSchema = z.object({
+  cheonGan: z.string().describe('천간'),
+  jiJi: z.string().describe('지지'),
+  eumYang: z.string().describe('음양'),
+  ohaeng: z.string().describe('오행')
+});
+
 const SajuCompositionSchema = z.object({
-  yearColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('년주 (천간, 지지, 음양, 오행)'),
-  monthColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('월주 (천간, 지지, 음양, 오행)'),
-  dayColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('일주 (천간, 지지, 음양, 오행)'),
-  timeColumn: z.object({ cheonGan: z.string(), jiJi: z.string(), eumYang: z.string(), ohaeng: z.string() }).describe('시주 (천간, 지지, 음양, 오행)'),
+  yearColumn: SajuColumnSchema.describe('년주 (천간, 지지, 음양, 오행)'),
+  monthColumn: SajuColumnSchema.describe('월주 (천간, 지지, 음양, 오행)'),
+  dayColumn: SajuColumnSchema.describe('일주 (천간, 지지, 음양, 오행)'),
+  timeColumn: SajuColumnSchema.describe('시주 (천간, 지지, 음양, 오행)'),
   gapjaYearName: z.string().describe('음력 생년을 기준으로 계산된 60갑자 간지 이름입니다 (예: 경신년(庚申年)).'),
   zodiacColor: z.string().describe('음력 생년을 기준으로 계산된 띠의 색깔입니다 (예: 흰색).'),
   zodiacAnimal: z.string().describe('음력 생년을 기준으로 계산된 띠 동물입니다 (예: 원숭이띠).'),
@@ -54,7 +61,7 @@ const HanjaStrokeEumyangSchema = z.object({
 });
 
 const SuriLuckSchema = z.object({
-  description: z.string().describe('해당 격(운)에 대한 상세한 설명 (성격, 대인관계, 건강, 학업/직업운, 삶의 경로에 미치는 영향, 강점, 약점, 기회, 도전, 조언 포함)'),
+  description: z.string().describe('해당 격(운)에 대한 핵심적인 설명 (성격, 대인관계, 건강, 학업/직업운, 삶의 경로에 미치는 영향, 강점, 약점, 기회, 도전, 조언 포함). 간결하지만 통찰력 있게 기술하시오.'),
   rating: z.enum(['매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨']).describe('길흉 등급'),
   ohaeng: z.string().describe('해당 격의 오행'),
 });
@@ -70,10 +77,10 @@ const InterpretNameOutputSchema = z.object({
     koreanName: z.string().describe('이름 (한글)'),
     hanjaName: z.string().optional().describe('이름 (한자, 해당되는 경우)'),
     gender: z.string().describe('성별 (입력된 성별과 동일해야 함: 남자/여자)'),
-    solarBirthDate: z.string().describe('양력 생년월일시'),
-    lunarBirthDate: z.string().describe('음력 생년월일시 (양력이면 변환된 음력, 음력이면 입력된 음력). 사주 정보는 이 음력 생일을 기준으로 계산되어야 합니다.'),
-    birthTime: z.string().describe('출생 시간 (예: 자시)'),
-    sajuComposition: SajuCompositionSchema.describe('사주 구성 정보. gapjaYearName, zodiacColor, zodiacAnimal은 음력 생년월일을 기준으로 계산되어야 합니다.'),
+    solarBirthDate: z.string().describe('양력 생년월일 (YYYY-MM-DD 형식). 입력이 음력이면 양력으로 변환된 날짜, 양력이면 입력된 양력 날짜.'),
+    lunarBirthDate: z.string().describe('음력 생년월일 (YYYY-MM-DD 형식). 입력이 양력이면 음력으로 변환된 날짜, 음력이면 입력된 음력 날짜. 사주 정보는 이 음력 생일을 기준으로 계산되어야 합니다.'),
+    birthTime: z.string().describe('출생 시간 (예: 자시). 이 값은 사용자가 입력한 시간 명칭 그대로여야 합니다 (예: "자시", "모름"). 클라이언트에서 시간 범위로 변환합니다.'),
+    sajuComposition: SajuCompositionSchema.describe('사주 구성 정보. gapjaYearName, zodiacColor, zodiacAnimal은 lunarBirthDate를 기준으로 계산되어야 합니다.'),
   }).describe('1. 기본 정보 요약'),
 
   overallScoreAndEvaluation: z.object({
@@ -95,11 +102,11 @@ const InterpretNameOutputSchema = z.object({
   }).describe('4. 음양 조화 분석 (이름 자체)'),
 
   suriGilhyungAnalysis: z.object({
-    cheonGyeok: SuriLuckSchema.describe('천격 (초년운, 1-20세)'), // 이전 "선조운, 기초운" 에서 "초년운"으로 변경
-    inGyeok: SuriLuckSchema.describe('인격 (중년운, 20-40세, 성격, 대인관계)'), // 이전 "주격, 초년운" 에서 "중년운"으로 변경
-    jiGyeok: SuriLuckSchema.describe('지격 (장년운, 30-50세, 가정, 배우자, 건강)'), // 이전 "중년운" 에서 "장년운"으로 변경
-    oeGyeok: SuriLuckSchema.describe('외격 (말년운, 40세 이후 사회활동, 환경적응)'), // 이전 "장년운" 에서 "말년운"으로 변경
-    jongGyeok: SuriLuckSchema.describe('종격 (총격, 전체 인생 총운)'), // "말년운"에서 "전체 인생 총운"으로 강조
+    cheonGyeok: SuriLuckSchema.describe('천격 (초년운, 1-20세)'), 
+    inGyeok: SuriLuckSchema.describe('인격 (청년운, 20-40세, 성격, 대인관계)'), 
+    jiGyeok: SuriLuckSchema.describe('지격 (중년운, 30-50세, 가정, 배우자, 건강)'), 
+    oeGyeok: SuriLuckSchema.describe('외격 (말년운, 40세 이후 사회활동, 환경적응)'), 
+    jongGyeok: SuriLuckSchema.describe('종격 (총격, 전체 인생 총운)'),
   }).describe('5. 수리길흉 분석 (5격 중심)'),
 
   pronunciationOhaengAnalysis: z.object({
@@ -142,11 +149,11 @@ const nameInterpretationPrompt = ai.definePrompt({
 **사용자 정보:**
 - 이름: {{{name}}} (AI는 제공된 이름이 한글인지, 한글과 한자가 혼용되었는지, 또는 주로 한자인지를 스스로 판단하여 분석합니다. 한자 이름 풀이 시에는 한자의 의미와 획수를 정확히 고려해야 합니다.)
 - 생년월일: {{{birthDate}}} ({{{calendarType}}})
-- 태어난 시간: {{{birthTime}}}
+- 태어난 시간: {{{birthTime}}} (AI는 이 값을 그대로 birthTime 필드에 출력해야 합니다. 예를 들어 "자시"로 입력되면 "자시"로 출력.)
 - 성별: {{{gender}}} (제공된 성별을 정확히 반영하여 결과에 '남자' 또는 '여자'로 표시해야 합니다.)
 
 **해석 관련 규칙:**
-1.  **한자 획수 수리법**: 이름의 총획수(한자 이름의 경우) 또는 한글 음절 구조를 기반으로 천격(초년운), 인격(중년운), 지격(장년운), 외격(말년운), 종격(총격) 등 5가지 격을 계산하고 각 격의 길흉을 판단합니다. 각 격은 성격, 대인관계, 인생 전반의 흐름을 나타냅니다.
+1.  **한자 획수 수리법**: 이름의 총획수(한자 이름의 경우) 또는 한글 음절 구조를 기반으로 천격(초년운), 인격(청년운), 지격(중년운), 외격(말년운), 종격(총격) 등 5가지 격을 계산하고 각 격의 길흉을 판단합니다. 각 격은 성격, 대인관계, 인생 전반의 흐름을 나타냅니다. 각 격에 대한 설명은 핵심적이고 간결하되, 중요한 통찰을 담아 기술하십시오.
 2.  **음양의 조화**: 이름 각 글자(한자 또는 한글 음절)의 음(陰)과 양(陽)을 구분하여 이름 전체의 음양 균형을 분석합니다. 음양음 또는 양음양 배열을 이상적으로 보며, 한쪽으로 치우친 배열은 피해야 할 것으로 간주합니다.
 3.  **오행 상생 상극 분석**:
     *   **사주 오행**: 사용자의 사주팔자를 분석하여 각 주(년주, 월주, 일주, 시주)의 천간, 지지, 음양, 오행을 파악하고, 전체적인 오행 분포와 부족하거나 과다한 오행을 분석합니다.
@@ -162,15 +169,15 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   koreanName: 이름 (한글) - AI가 {{{name}}} 입력값에서 한글 부분 추출
     *   hanjaName: 이름 (한자) - AI가 {{{name}}} 입력값에서 한자 부분 추출 (없으면 생략)
     *   gender: 성별 (입력된 {{{gender}}} 값을 바탕으로 '남자' 또는 '여자'로 정확히 표시)
-    *   solarBirthDate: 양력 생년월일시 - 입력값 또는 변환값
-    *   lunarBirthDate: 음력 생년월일시 - 입력값 또는 변환값. 사주 정보는 이 음력 생일을 기준으로 계산됩니다.
-    *   birthTime: 출생 시간 (예: 자시) - 입력값 그대로
+    *   solarBirthDate: **양력 생년월일 (YYYY-MM-DD 형식)**. 입력이 음력이었다면 반드시 해당 음력 생년월일을 정확한 양력으로 변환하여 제공. 입력이 양력이었다면 입력된 양력 날짜를 제공.
+    *   lunarBirthDate: **음력 생년월일 (YYYY-MM-DD 형식)**. 입력이 양력이었다면 반드시 해당 양력 생년월일을 정확한 음력으로 변환하여 제공. 입력이 음력이었다면 입력된 음력 날짜를 제공. 사주 관련 모든 정보는 이 음력 날짜를 기준으로 계산되어야 합니다.
+    *   birthTime: 출생 시간 (예: 자시) - 사용자가 입력한 시간 명칭(예: "자시", "모름") 그대로 출력.
     *   sajuComposition:
         *   yearColumn: 년주 정보 (천간, 지지, 음양, 오행)
         *   monthColumn: 월주 정보 (천간, 지지, 음양, 오행)
         *   dayColumn: 일주 정보 (천간, 지지, 음양, 오행)
         *   timeColumn: 시주 정보 (천간, 지지, 음양, 오행)
-        *   gapjaYearName: 음력 생년을 기준으로 계산된 60갑자 간지 이름 (예: 경신년(庚申年))
+        *   gapjaYearName: 음력 생년(lunarBirthDate의 연도)을 기준으로 계산된 60갑자 간지 이름 (예: 경신년(庚申年))
         *   zodiacColor: 음력 생년을 기준으로 계산된 띠의 색깔 (예: 흰색)
         *   zodiacAnimal: 음력 생년을 기준으로 계산된 띠 동물 (예: 원숭이띠). 이 모든 정보는 lunarBirthDate를 기준으로 계산해야 합니다.
 
@@ -196,11 +203,11 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   evaluation: 음양 조화에 대한 최종 평가 (예: 음양이 조화로운 좋은 이름입니다.)
 
 **5. 수리길흉 분석 (5격 중심):** (각 격은 설명, 길흉 등급, 해당 격의 오행을 포함. 나이대는 참고용이며, 실제 영향력은 복합적임)
-    *   cheonGyeok: 천격 (초년운, 1-20세) - 이 격(運)이 개인의 성격, 초기 사회 생활, 건강, 그리고 학업운에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
-    *   inGyeok: 인격 (중년운, 20-40세, 성격, 대인관계) - 이 격(運)이 개인의 성격 형성, 대인관계, 사회 활동 시작, 그리고 직업적 기초에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
-    *   jiGyeok: 지격 (장년운, 30-50세, 가정, 배우자, 건강) - 이 격(運)이 개인의 가정 생활, 배우자와의 관계, 자녀운, 건강 상태, 그리고 사회적 안정에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
-    *   oeGyeok: 외격 (말년운, 40세 이후 사회활동, 환경적응) - 이 격(運)이 개인의 사회적 활동, 외부 환경과의 관계, 명예, 그리고 중장년기의 직업적 성취에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
-    *   jongGyeok: 종격 (총격, 전체 인생 총운) - 이 격(運)이 개인의 인생 전체적인 흐름과 말년의 삶, 건강, 재물, 그리고 자손과의 관계에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
+    *   cheonGyeok: 천격 (초년운, 1-20세) - 이 격(運)이 개인의 성격, 초기 사회 생활, 건강, 그리고 학업운에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오. (설명은 핵심적이고 간결하게)
+    *   inGyeok: 인격 (청년운, 20-40세, 성격, 대인관계) - 이 격(運)이 개인의 성격 형성, 대인관계, 사회 활동 시작, 그리고 직업적 기초에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오. (설명은 핵심적이고 간결하게)
+    *   jiGyeok: 지격 (중년운, 30-50세, 가정, 배우자, 건강) - 이 격(運)이 개인의 가정 생활, 배우자와의 관계, 자녀운, 건강 상태, 그리고 사회적 안정에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오. (설명은 핵심적이고 간결하게)
+    *   oeGyeok: 외격 (말년운, 40세 이후 사회활동, 환경적응) - 이 격(運)이 개인의 사회적 활동, 외부 환경과의 관계, 명예, 그리고 중장년기의 직업적 성취에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오. (설명은 핵심적이고 간결하게)
+    *   jongGyeok: 종격 (총격, 전체 인생 총운) - 이 격(運)이 개인의 인생 전체적인 흐름과 말년의 삶, 건강, 재물, 그리고 자손과의 관계에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오. (설명은 핵심적이고 간결하게)
 
 **6. 발음오행 분석:**
     *   initialConsonants: 이름 각 글자의 초성 및 해당 오행 배열
@@ -241,6 +248,12 @@ const interpretNameFlow = ai.defineFlow(
         // console.warn("LLM did not match gender input. Overriding.");
         output.basicInfoSummary.gender = (input.gender === 'male' ? '남자' : '여자');
     }
+    // Ensure birthTime output matches input as per prompt instruction.
+    if (output.basicInfoSummary && output.basicInfoSummary.birthTime !== input.birthTime) {
+        // console.warn("LLM did not match birthTime input. Overriding.");
+        output.basicInfoSummary.birthTime = input.birthTime;
+    }
     return output;
   }
 );
+

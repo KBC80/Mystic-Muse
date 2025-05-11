@@ -36,15 +36,16 @@ body {
     --input: 230 20% 92%; /* Slightly darker input background */
     --ring: 174 100% 39%; /* Teal for focus rings */
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* Ohaeng Colors for Charts */
+    --chart-1: 120 60% 45%; /* 목 (Wood) - Green */
+    --chart-2: 0 70% 55%;   /* 화 (Fire) - Red */
+    --chart-3: 40 60% 50%;  /* 토 (Earth) - Yellow/Brown */
+    --chart-4: 220 15% 75%; /* 금 (Metal) - Light Grey/Silver */
+    --chart-5: 210 70% 50%; /* 수 (Water) - Blue */
     --radius: 0.5rem;
 
     /* Sidebar specific theme */
-    --sidebar-background: 231 35% 28%; /* Dark Indigo */
+    --sidebar-background: 231 35% 25%; /* Darker Indigo for better contrast */
     --sidebar-foreground: 230 50% 92%; /* Off-white text */
     --sidebar-primary: 174 100% 35%; /* Brighter Teal for active/primary in sidebar */
     --sidebar-primary-foreground: 0 0% 100%; /* White text on Teal */
@@ -83,14 +84,16 @@ body {
     --input: 230 20% 25%;
     --ring: 174 100% 49%;
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Ohaeng Colors for Charts - Dark Mode */
+    --chart-1: 120 50% 55%; /* 목 (Wood) - Green (Darker) */
+    --chart-2: 0 60% 60%;   /* 화 (Fire) - Red (Darker) */
+    --chart-3: 40 50% 55%;  /* 토 (Earth) - Yellow/Brown (Darker) */
+    --chart-4: 220 10% 65%; /* 금 (Metal) - Grey (Darker) */
+    --chart-5: 210 60% 55%; /* 수 (Water) - Blue (Darker) */
+
 
     /* Dark Sidebar specific theme */
-    --sidebar-background: 231 25% 18%; /* Even darker Indigo */
+    --sidebar-background: 231 25% 15%; /* Even darker Indigo for better contrast */
     --sidebar-foreground: 230 40% 85%;
     --sidebar-primary: 174 100% 42%; /* Teal for active items */
     --sidebar-primary-foreground: 0 0% 100%;

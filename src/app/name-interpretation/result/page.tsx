@@ -8,29 +8,35 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
-import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon } from 'lucide-react';
+import { interpretName, type InterpretNameInput, type InterpretNameOutput, type SuriLuckSchema as SuriLuckType } from '@/ai/flows/name-interpretation-flow';
+import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, BarChart2, Star as StarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
-// import { Progress } from "@/components/ui/progress"; // Progress bar removed for detailed scores
+import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
 import {
   PieChart as RechartsPieChart,
   Pie,
   Cell,
   Tooltip as RechartsTooltip,
   Legend as RechartsLegend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  BarChart as RechartsBarChart,
+  XAxis,
+  YAxis,
+  Bar,
+  CartesianGrid
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 
 
-const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string }> = ({ title, icon: Icon, children, className }) => (
-  <Card className={cn("bg-secondary/20 shadow", className)}>
-    <CardHeader className="pb-3 pt-4">
+const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string }> = ({ title, icon: Icon, children, className, cardDescription }) => (
+  <Card className={cn("bg-secondary/20 shadow-md", className)}>
+    <CardHeader className="pb-3 pt-5">
       <CardTitle className="text-xl text-primary flex items-center gap-2">
         {Icon && <Icon className="h-5 w-5" />}
         {title}
       </CardTitle>
+      {cardDescription && <CardDescription className="text-xs pt-1">{cardDescription}</CardDescription>}
     </CardHeader>
     <CardContent>{children}</CardContent>
   </Card>
@@ -51,6 +57,23 @@ const ohaengChartConfig = {
   metal: { label: "금(金)", color: "hsl(var(--chart-4))" },
   water: { label: "수(水)", color: "hsl(var(--chart-5))" },
 } satisfies ChartConfig;
+
+const getRatingValue = (rating: SuriLuckType['rating']): number => {
+  switch (rating) {
+    case '매우 좋음': return 5;
+    case '좋음': return 4;
+    case '보통': return 3;
+    case '나쁨': return 2;
+    case '매우 나쁨': return 1;
+    default: return 0;
+  }
+};
+
+const getRatingColor = (ratingValue: number): string => {
+  if (ratingValue >= 4) return "hsl(var(--chart-1))"; // Greenish (good)
+  if (ratingValue === 3) return "hsl(var(--chart-3))"; // Yellowish (neutral)
+  return "hsl(var(--chart-2))"; // Reddish (bad)
+};
 
 
 function NameInterpretationResultContent() {
@@ -138,6 +161,8 @@ function NameInterpretationResultContent() {
     finalOverallEvaluation: foe
   } = result;
 
+  const birthTimeLabel = EAST_ASIAN_BIRTH_TIMES.find(time => time.value === bis.birthTime)?.label || bis.birthTime;
+
   const ohaengPieData = [
     { nameKey: "wood", name: ohaengChartConfig.wood.label, value: eyoa.ohaengRatio.wood, fill: ohaengChartConfig.wood.color },
     { nameKey: "fire", name: ohaengChartConfig.fire.label, value: eyoa.ohaengRatio.fire, fill: ohaengChartConfig.fire.color },
@@ -146,87 +171,58 @@ function NameInterpretationResultContent() {
     { nameKey: "water", name: ohaengChartConfig.water.label, value: eyoa.ohaengRatio.water, fill: ohaengChartConfig.water.color },
   ].filter(item => item.value > 0); 
 
+  const lifeLuckData = [
+    { name: '초년운', rating: getRatingValue(sga.cheonGyeok.rating), ratingText: sga.cheonGyeok.rating },
+    { name: '청년운', rating: getRatingValue(sga.inGyeok.rating), ratingText: sga.inGyeok.rating },
+    { name: '중년운', rating: getRatingValue(sga.jiGyeok.rating), ratingText: sga.jiGyeok.rating },
+    { name: '말년운', rating: getRatingValue(sga.oeGyeok.rating), ratingText: sga.oeGyeok.rating },
+  ];
+
 
   return (
-    <div className="space-y-8 py-8 flex flex-col flex-1">
-      <Card className="shadow-lg">
-        <CardHeader>
+    <div className="space-y-6 py-6 flex flex-col flex-1">
+      {/* 1. 헤더 영역 */}
+      <Card className="shadow-lg border-primary/30">
+        <CardHeader className="pb-4">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <Sparkles className="h-8 w-8 text-primary" /> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`}님의 이름 풀이
+            <Sparkles className="h-8 w-8" /> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-          <CardDescription className="text-md pt-1">
-            제공해주신 정보를 바탕으로 AI가 분석한 상세 이름 풀이 결과입니다.
+          <CardDescription className="text-md pt-2 bg-accent/10 p-3 rounded-md text-accent-foreground">
+            <strong>간단 요약:</strong> {foe.summary.split('.')[0] + '.'} (종합 등급: {ose.grade})
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* 1. 기본 정보 요약 */}
-          <SectionCard title="기본 정보 요약" icon={Info}>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <p><strong className="text-foreground">이름(한글):</strong> {bis.koreanName}</p>
-              {bis.hanjaName && <p><strong className="text-foreground">이름(한자):</strong> {bis.hanjaName}</p>}
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-6">
+          {/* 2. 사용자 기본정보 요약 카드 */}
+          <SectionCard title="기본 정보" icon={User} className="sticky top-20">
+            <div className="space-y-1 text-sm">
               <p><strong className="text-foreground">성별:</strong> {bis.gender}</p>
               <p><strong className="text-foreground">양력 생일:</strong> {bis.solarBirthDate}</p>
               <p><strong className="text-foreground">음력 생일:</strong> {bis.lunarBirthDate}</p>
-              <p><strong className="text-foreground">출생 시간:</strong> {bis.birthTime}</p>
-              <p className="col-span-2 pt-1">
-                <strong className="text-foreground">사주 정보 (음력 기준):</strong> {bis.sajuComposition.gapjaYearName} - {bis.sajuComposition.zodiacColor} {bis.sajuComposition.zodiacAnimal}
+              <p><strong className="text-foreground">출생 시간:</strong> {birthTimeLabel}</p>
+              <p className="pt-1">
+                <strong className="text-foreground">사주 정보:</strong> {bis.sajuComposition.gapjaYearName} - {bis.sajuComposition.zodiacColor} {bis.sajuComposition.zodiacAnimal}
               </p>
+              <div className="pt-2">
+                <strong className="text-foreground block mb-1">사주팔자 (년/월/일/시):</strong>
+                {[bis.sajuComposition.yearColumn, bis.sajuComposition.monthColumn, bis.sajuComposition.dayColumn, bis.sajuComposition.timeColumn].map((col, idx) => (
+                    <span key={idx} className="mr-2 text-xs bg-muted px-1.5 py-0.5 rounded">
+                        {col.cheonGan}{col.jiJi}
+                    </span>
+                ))}
+              </div>
+              <p className="pt-1"><strong className="text-foreground">사주 필요 오행:</strong> {eyoa.ohaengRatio.neededOhaeng}</p>
+              <p><strong className="text-foreground">사주 용신:</strong> {roa.yongsin}</p>
             </div>
-          </SectionCard>
-
-          {/* 2. 종합 점수 및 평가 */}
-          <SectionCard title="종합 점수 및 평가" icon={CheckCircle}>
-            <div className="flex items-center justify-between mb-4">
-                <p className="text-2xl font-bold text-accent">{ose.totalScore}점</p>
-                <p className={`text-xl font-semibold px-3 py-1 rounded-md ${ose.grade === '매우 좋음' || ose.grade === '좋음' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : ose.grade === '보통' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>
-                    {ose.grade}
-                </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              {(Object.keys(ose.detailedScores) as Array<keyof typeof ose.detailedScores>).map((key) => {
-                const scoreInfo = scoreConfig[key];
-                const scoreValue = ose.detailedScores[key];
-                if (!scoreInfo) return null;
-                const percentage = (scoreValue / scoreInfo.maxScore) * 100;
-                return (
-                  <div key={key} className="flex flex-col">
-                    <div className="flex justify-between text-sm items-baseline">
-                      <span className="text-muted-foreground">{scoreInfo.label}</span>
-                      <span className="font-semibold text-foreground">{scoreValue} / {scoreInfo.maxScore}점</span>
-                    </div>
-                    <div className="mt-1 h-2.5 w-full bg-muted rounded-full overflow-hidden">
-                       <div
-                         className={cn(
-                           "h-full rounded-full transition-all duration-500 ease-out",
-                           percentage > 70 ? "bg-green-500" : percentage > 40 ? "bg-yellow-500" : "bg-red-500"
-                         )}
-                         style={{ width: `${percentage}%` }}
-                       />
-                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </SectionCard>
-
-          {/* 3. 음양오행 분석 (사주 기반) */}
-          <SectionCard title="음양오행 분석 (사주 기반)" icon={Palette}>
-            <h4 className="font-semibold text-md mb-1 text-secondary-foreground">사주 구성 (년/월/일/시)</h4>
-            {[eyoa.sajuAnalysis.yearColumn, eyoa.sajuAnalysis.monthColumn, eyoa.sajuAnalysis.dayColumn, eyoa.sajuAnalysis.timeColumn].map((col, idx) => (
-                <p key={idx} className="text-sm text-muted-foreground">
-                    {['년주', '월주', '일주', '시주'][idx]}: {col.cheonGan}{col.jiJi} ({col.eumYang}, {col.ohaeng})
-                </p>
-            ))}
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">음양 비율</h4>
-            <p className="text-sm text-muted-foreground">음: {eyoa.eumYangRatio.eumPercent}% / 양: {eyoa.eumYangRatio.yangPercent}%</p>
-            
-            <h4 className="font-semibold text-md mt-3 mb-2 text-secondary-foreground flex items-center gap-1">
-              <PieChartIcon className="h-4 w-4" /> 오행 비율
+            <h4 className="font-semibold text-md mt-4 mb-2 text-secondary-foreground flex items-center gap-1">
+              <PieChartIcon className="h-4 w-4" /> 사주 오행 비율
             </h4>
             {ohaengPieData.length > 0 ? (
-              <div className="h-[200px] w-full">
+              <div className="h-[180px] w-full">
                  <ChartContainer config={ohaengChartConfig} className="aspect-auto h-full w-full">
-                    <RechartsPieChart>
+                    <RechartsPieChart margin={{ top:0, right:0, bottom:0, left:0}}>
                       <RechartsTooltip
                         cursor={false}
                         content={<ChartTooltipContent hideLabel indicator="dot" nameKey="name" />}
@@ -237,49 +233,103 @@ function NameInterpretationResultContent() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={60}
+                        innerRadius={30}
+                        outerRadius={50}
                         labelLine={false}
-                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-                            const RADIAN = Math.PI / 180;
-                            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                            return (
-                              <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs fill-background">
-                                {`${(percent * 100).toFixed(0)}%`}
-                              </text>
-                            );
-                          }}
+                        label={({ name, percent }) => `${name.substring(0,1)}: ${(percent * 100).toFixed(0)}%`}
                       >
                         {ohaengPieData.map((entry) => (
                           <Cell key={`cell-${entry.nameKey}`} fill={entry.fill} />
                         ))}
                       </Pie>
-                       <RechartsLegend content={({ payload }) => {
-                          if (!payload) return null;
-                          return (
-                            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs mt-3">
-                              {payload.map((entry, index) => (
-                                <div key={`legend-${index}`} className="flex items-center gap-1.5">
-                                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                                  <span>{entry.value} ({ (entry.payload as any)?.value }%)</span>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        }} />
                     </RechartsPieChart>
                   </ChartContainer>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">오행 비율 데이터가 없습니다.</p>
             )}
-            <p className="text-sm text-muted-foreground mt-2">보충 필요 오행: {eyoa.ohaengRatio.neededOhaeng}</p>
+          </SectionCard>
+        </div>
+
+        <div className="lg:col-span-2 space-y-6">
+          {/* 3. 전체운(그래픽) 요약 섹션 */}
+          <SectionCard title="생애 주기별 운세 요약" icon={BarChart2}>
+            <div className="mb-2">
+                <p className="text-sm text-muted-foreground">
+                    종합 평가 등급: <strong className={`font-semibold px-2 py-0.5 rounded-sm text-sm ${ose.grade === '매우 좋음' || ose.grade === '좋음' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : ose.grade === '보통' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>{ose.grade}</strong>
+                    {' '}(종합 점수: <strong className="text-accent">{ose.totalScore}점</strong> / 100점)
+                </p>
+            </div>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={lifeLuckData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" domain={[0, 5]} ticks={[1,2,3,4,5]} tickFormatter={(value) => ['매우나쁨','나쁨','보통','좋음','매우좋음'][value-1] || ''} style={{ fontSize: '10px' }} />
+                  <YAxis dataKey="name" type="category" width={50} style={{ fontSize: '12px' }}/>
+                  <RechartsTooltip contentStyle={{fontSize: '12px', padding: '5px'}} formatter={(value, name, props) => [props.payload.ratingText, name]}/>
+                  <Bar dataKey="rating" barSize={20}>
+                     {lifeLuckData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getRatingColor(entry.rating)} />
+                      ))}
+                  </Bar>
+                </RechartsBarChart>
+              </ResponsiveContainer>
+            </div>
           </SectionCard>
 
-          {/* 4. 음양 조화 분석 (이름 자체) */}
-          <SectionCard title="음양 조화 분석 (이름 자체)" icon={BookOpen}>
-             <h4 className="font-semibold text-md mb-2 text-secondary-foreground">이름 글자 분석</h4>
+          {/* 4. 수리오행 분석 섹션 */}
+          <SectionCard title="수리길흉 분석 (5격 해설)" icon={TrendingUp} cardDescription="이름의 획수를 기반으로 인생의 주요 시기별 운세를 분석합니다.">
+            {[
+              {key: 'cheonGyeok', label: '천격 (초년운, 1-20세)', data: sga.cheonGyeok},
+              {key: 'inGyeok', label: '인격 (청년운, 20-40세)', data: sga.inGyeok},
+              {key: 'jiGyeok', label: '지격 (중년운, 30-50세)', data: sga.jiGyeok},
+              {key: 'oeGyeok', label: '외격 (말년운, 40세 이후)', data: sga.oeGyeok},
+              {key: 'jongGyeok', label: '종격 (총격, 전체 인생)', data: sga.jongGyeok},
+            ].map((luckItem) => (
+                <div key={luckItem.key} className="mb-3 pb-3 border-b last:border-b-0 border-border/50">
+                    <h4 className="font-semibold text-md text-secondary-foreground mb-0.5">
+                        {luckItem.label}: <span className="font-normal">{luckItem.data.rating} ({luckItem.data.ohaeng})</span>
+                    </h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{luckItem.data.description}</p>
+                </div>
+            ))}
+          </SectionCard>
+          
+          {/* 5. 오행 상세 분석 */}
+          <SectionCard title="오행 상세 분석" icon={Palette} cardDescription="이름의 발음, 획수, 글자 뜻에 담긴 오행의 조화를 분석합니다.">
+            <div className="space-y-4">
+                <div>
+                    <h4 className="font-semibold text-md mb-1 text-secondary-foreground">발음오행</h4>
+                    <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">
+                        {poa.initialConsonants.map((item, idx) => (
+                            <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[55px] text-center">
+                                <div className="font-semibold text-lg text-foreground">{item.character}</div>
+                                <div className="text-xs">{item.consonant} ({item.ohaeng})</div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>관계:</strong> {poa.harmonyRelationship}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>평가:</strong> {poa.evaluation}</p>
+                    <p className="text-sm text-muted-foreground"><strong>점수:</strong> {ose.detailedScores.pronunciationOhaengScore} / {scoreConfig.pronunciationOhaengScore.maxScore}점</p>
+                </div>
+                 <div>
+                    <h4 className="font-semibold text-md mb-1 text-secondary-foreground">획수오행 (수리오행)</h4>
+                     <p className="text-sm text-muted-foreground">5격(천격, 인격 등)의 오행 구성은 위 수리길흉 분석 섹션을 참고하세요.</p>
+                    <p className="text-sm text-muted-foreground"><strong>종합 점수:</strong> {ose.detailedScores.suriOhaengScore} / {scoreConfig.suriOhaengScore.maxScore}점</p>
+                </div>
+                <div>
+                    <h4 className="font-semibold text-md mb-1 text-secondary-foreground">자의오행 (자원오행) - 사주 보완</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>사주 강약:</strong> {roa.sajuStrengthAnalysis}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>용신:</strong> {roa.yongsin}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>이름과의 조화:</strong> {roa.nameResourceOhaengMatch}</p>
+                     <p className="text-sm text-muted-foreground"><strong>점수:</strong> {ose.detailedScores.resourceOhaengScore} / {scoreConfig.resourceOhaengScore.maxScore}점</p>
+                </div>
+            </div>
+          </SectionCard>
+
+          {/* 6. 음양 구성 섹션 */}
+          <SectionCard title="음양 조화 분석 (이름 자체)" icon={BookOpen} cardDescription="이름 글자 자체의 음양 구성을 분석합니다.">
+            <h4 className="font-semibold text-md mb-2 text-secondary-foreground">이름 글자 음양 분석</h4>
             <div className="flex flex-wrap gap-x-3 gap-y-2 items-center">
                 {eyha.hanjaStrokesAndEumyang.map((item, idx) => (
                     <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[60px] text-center">
@@ -289,84 +339,48 @@ function NameInterpretationResultContent() {
                     </div>
                 ))}
             </div>
-            <h4 className="font-semibold text-md mt-4 mb-1 text-secondary-foreground">오행 조화</h4>
+            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">오행 조화 (이름 글자 간)</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{eyha.ohaengHarmony}</p>
             <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">평가</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{eyha.evaluation}</p>
+             <p className="text-sm text-muted-foreground mt-1"><strong>점수:</strong> {ose.detailedScores.eumYangOhaengScore} / {scoreConfig.eumYangOhaengScore.maxScore}점</p>
           </SectionCard>
 
-          {/* 5. 수리길흉 분석 */}
-          <SectionCard title="수리길흉 분석 (5격)" icon={TrendingUp}>
-            {[sga.cheonGyeok, sga.inGyeok, sga.jiGyeok, sga.oeGyeok, sga.jongGyeok].map((luck, idx) => (
-                <div key={idx} className="mb-3 pb-3 border-b last:border-b-0 border-border/50">
-                    <h4 className="font-semibold text-md text-secondary-foreground mb-0.5">
-                        {['천격 (초년운, 1-20세)', '인격 (중년운, 20-40세)', '지격 (장년운, 30-50세)', '외격 (말년운, 40세 이후)', '종격 (총격, 전체 인생 총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
-                    </h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{luck.description}</p>
-                </div>
-            ))}
-          </SectionCard>
+          {/* 7. 사주 보완 분석 (이미 기본정보 및 자원오행에 통합됨) */}
 
-          {/* 6. 발음오행 분석 */}
-          <SectionCard title="발음오행 분석" icon={Mic}>
-            <h4 className="font-semibold text-md mb-2 text-secondary-foreground">초성 분석</h4>
-            <div className="flex flex-wrap gap-x-3 gap-y-2 items-center">
-            {poa.initialConsonants.map((item, idx) => (
-                <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[60px] text-center">
-                    <div className="font-semibold text-lg text-foreground">{item.character}</div>
-                    <div className="text-xs">{item.consonant} ({item.ohaeng})</div>
-                </div>
-            ))}
-            </div>
-            <h4 className="font-semibold text-md mt-4 mb-1 text-secondary-foreground">상생상극 관계</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{poa.harmonyRelationship}</p>
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">평가</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{poa.evaluation}</p>
-          </SectionCard>
-
-          {/* 7. 자원오행 분석 */}
-          <SectionCard title="자원오행 분석" icon={Gem}>
-            <h4 className="font-semibold text-md mb-1 text-secondary-foreground">사주 강약 분석</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{roa.sajuStrengthAnalysis}</p>
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">용신</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{roa.yongsin}</p>
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">이름의 자원오행 조화</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{roa.nameResourceOhaengMatch}</p>
-          </SectionCard>
-
-          {/* 8. 한자 필터링 분석 */}
-          <SectionCard title="한자 필터링 분석" icon={Filter}>
+          {/* 8. 감점 요인 및 주의사항 */}
+          <SectionCard title="한자 필터링 및 주의사항" icon={Filter} cardDescription="이름에 사용된 한자의 적절성과 전반적인 주의점을 확인합니다.">
             <h4 className="font-semibold text-md mb-1 text-secondary-foreground">불용한자 여부</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{hfa.inappropriateHanja}</p>
             <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">장자녀 전용 한자 여부</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{hfa.firstChildOnlyHanja}</p>
-          </SectionCard>
-
-          {/* 9. 전체 평가 요약 */}
-          <SectionCard title="전체 평가 요약" icon={Sparkles} className="bg-card border-primary/50">
-             <p className="text-base text-muted-foreground whitespace-pre-wrap">{foe.summary}</p>
-            {foe.cautions && (
+             {foe.cautions && (
               <>
-                <h4 className="font-semibold text-md mt-4 mb-1 text-destructive flex items-center gap-1"><AlertTriangle className="h-4 w-4"/>주의사항</h4>
+                <h4 className="font-semibold text-md mt-4 mb-1 text-destructive flex items-center gap-1"><AlertTriangle className="h-4 w-4"/>추가 주의사항</h4>
                 <p className="text-sm text-destructive/90 whitespace-pre-wrap">{foe.cautions}</p>
               </>
             )}
           </SectionCard>
 
-        </CardContent>
-        <CardFooter className="pt-8 border-t flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button onClick={() => router.push('/name-interpretation')} variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
-                <RotateCcw className="mr-2 h-4 w-4" />
-                다른 이름 풀이하기
+           {/* 9. 하단 요약 */}
+          <SectionCard title="최종 종합 평가" icon={Sparkles} className="bg-card border-primary/50">
+             <p className="text-base text-muted-foreground whitespace-pre-wrap">{foe.summary}</p>
+          </SectionCard>
+        </div>
+      </div>
+
+      <CardFooter className="pt-8 border-t flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button onClick={() => router.push('/name-interpretation')} variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+              <RotateCcw className="mr-2 h-4 w-4" />
+              다른 이름 풀이하기
+          </Button>
+          <Link href="/" passHref>
+            <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+              <Home className="mr-2 h-4 w-4" />
+              홈으로 돌아가기
             </Button>
-            <Link href="/" passHref>
-              <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
-                <Home className="mr-2 h-4 w-4" />
-                홈으로 돌아가기
-              </Button>
-            </Link>
-        </CardFooter>
-      </Card>
+          </Link>
+      </CardFooter>
     </div>
   );
 }
