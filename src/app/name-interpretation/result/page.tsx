@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -9,8 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
-import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  Tooltip as RechartsTooltip,
+  Legend as RechartsLegend,
+  ResponsiveContainer
+} from 'recharts';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
+
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string }> = ({ title, icon: Icon, children, className }) => (
   <Card className={cn("bg-secondary/20 shadow", className)}>
@@ -24,12 +35,21 @@ const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children:
   </Card>
 );
 
-const ScoreDisplay: React.FC<{ score: number; maxScore: number; label: string }> = ({ score, maxScore, label }) => (
-  <div className="flex justify-between items-center text-sm py-1">
-    <span className="text-muted-foreground">{label}:</span>
-    <span className="font-semibold text-foreground">{score} / {maxScore}점</span>
-  </div>
-);
+const scoreConfig = {
+  eumYangOhaengScore: { label: "음양오행", maxScore: 5 },
+  suriGilhyungScore: { label: "수리길흉", maxScore: 35 },
+  pronunciationOhaengScore: { label: "발음오행", maxScore: 25 },
+  suriOhaengScore: { label: "수리오행", maxScore: 5 },
+  resourceOhaengScore: { label: "자원오행", maxScore: 30 },
+};
+
+const ohaengChartConfig = {
+  wood: { label: "목(木)", color: "hsl(var(--chart-1))" },
+  fire: { label: "화(火)", color: "hsl(var(--chart-2))" },
+  earth: { label: "토(土)", color: "hsl(var(--chart-3))" },
+  metal: { label: "금(金)", color: "hsl(var(--chart-4))" },
+  water: { label: "수(水)", color: "hsl(var(--chart-5))" },
+} satisfies ChartConfig;
 
 
 function NameInterpretationResultContent() {
@@ -45,9 +65,6 @@ function NameInterpretationResultContent() {
     const calendarType = searchParams.get('calendarType') as InterpretNameInput['calendarType'];
     const birthTime = searchParams.get('birthTime');
     const gender = searchParams.get('gender') as InterpretNameInput['gender'];
-    // 자녀 순위와 출생지는 이제 선택 사항이 아니므로 URL에서 가져오지 않습니다.
-    // const childOrder = searchParams.get('childOrder') || undefined;
-    // const birthPlace = searchParams.get('birthPlace') || undefined;
 
     if (!name || !birthDate || !calendarType || !birthTime || !gender) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
@@ -120,6 +137,15 @@ function NameInterpretationResultContent() {
     finalOverallEvaluation: foe
   } = result;
 
+  const ohaengPieData = [
+    { nameKey: "wood", name: ohaengChartConfig.wood.label, value: eyoa.ohaengRatio.wood, fill: ohaengChartConfig.wood.color },
+    { nameKey: "fire", name: ohaengChartConfig.fire.label, value: eyoa.ohaengRatio.fire, fill: ohaengChartConfig.fire.color },
+    { nameKey: "earth", name: ohaengChartConfig.earth.label, value: eyoa.ohaengRatio.earth, fill: ohaengChartConfig.earth.color },
+    { nameKey: "metal", name: ohaengChartConfig.metal.label, value: eyoa.ohaengRatio.metal, fill: ohaengChartConfig.metal.color },
+    { nameKey: "water", name: ohaengChartConfig.water.label, value: eyoa.ohaengRatio.water, fill: ohaengChartConfig.water.color },
+  ].filter(item => item.value > 0); // Filter out elements with 0% to avoid cluttering the chart
+
+
   return (
     <div className="space-y-8 py-8 flex flex-col flex-1">
       <Card className="shadow-lg">
@@ -149,17 +175,28 @@ function NameInterpretationResultContent() {
 
           {/* 2. 종합 점수 및 평가 */}
           <SectionCard title="종합 점수 및 평가" icon={CheckCircle}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
                 <p className="text-2xl font-bold text-accent">{ose.totalScore}점</p>
-                <p className={`text-xl font-semibold px-3 py-1 rounded-md ${ose.grade === '매우 좋음' || ose.grade === '좋음' ? 'bg-green-100 text-green-700' : ose.grade === '보통' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                <p className={`text-xl font-semibold px-3 py-1 rounded-md ${ose.grade === '매우 좋음' || ose.grade === '좋음' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : ose.grade === '보통' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>
                     {ose.grade}
                 </p>
             </div>
-            <ScoreDisplay score={ose.detailedScores.eumYangOhaengScore} maxScore={5} label="음양오행" />
-            <ScoreDisplay score={ose.detailedScores.suriGilhyungScore} maxScore={35} label="수리길흉" />
-            <ScoreDisplay score={ose.detailedScores.pronunciationOhaengScore} maxScore={25} label="발음오행" />
-            <ScoreDisplay score={ose.detailedScores.suriOhaengScore} maxScore={5} label="수리오행" />
-            <ScoreDisplay score={ose.detailedScores.resourceOhaengScore} maxScore={30} label="자원오행" />
+            <div className="space-y-3">
+              {(Object.keys(ose.detailedScores) as Array<keyof typeof ose.detailedScores>).map((key) => {
+                const scoreInfo = scoreConfig[key];
+                const scoreValue = ose.detailedScores[key];
+                if (!scoreInfo) return null;
+                return (
+                  <div key={key}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-muted-foreground">{scoreInfo.label}</span>
+                      <span className="font-semibold text-foreground">{scoreValue} / {scoreInfo.maxScore}점</span>
+                    </div>
+                    <Progress value={(scoreValue / scoreInfo.maxScore) * 100} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
           </SectionCard>
 
           {/* 3. 음양오행 분석 (사주 기반) */}
@@ -172,9 +209,62 @@ function NameInterpretationResultContent() {
             ))}
             <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">음양 비율</h4>
             <p className="text-sm text-muted-foreground">음: {eyoa.eumYangRatio.eumPercent}% / 양: {eyoa.eumYangRatio.yangPercent}%</p>
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">오행 비율</h4>
-            <p className="text-sm text-muted-foreground">목: {eyoa.ohaengRatio.wood}% | 화: {eyoa.ohaengRatio.fire}% | 토: {eyoa.ohaengRatio.earth}% | 금: {eyoa.ohaengRatio.metal}% | 수: {eyoa.ohaengRatio.water}%</p>
-            <p className="text-sm text-muted-foreground">보충 필요 오행: {eyoa.ohaengRatio.neededOhaeng}</p>
+            
+            <h4 className="font-semibold text-md mt-3 mb-2 text-secondary-foreground flex items-center gap-1">
+              <PieChartIcon className="h-4 w-4" /> 오행 비율
+            </h4>
+            {ohaengPieData.length > 0 ? (
+              <div className="h-[200px] w-full"> {/* ResponsiveContainer needs a sized parent */}
+                 <ChartContainer config={ohaengChartConfig} className="aspect-auto h-full w-full">
+                    <RechartsPieChart>
+                      <RechartsTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent hideLabel indicator="dot" nameKey="name" />}
+                      />
+                      <Pie
+                        data={ohaengPieData}
+                        dataKey="value"
+                        nameKey="name" // This should match the 'name' property in ohaengPieData
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={60}
+                        labelLine={false}
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                            const RADIAN = Math.PI / 180;
+                            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                            return (
+                              <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs fill-background">
+                                {`${(percent * 100).toFixed(0)}%`}
+                              </text>
+                            );
+                          }}
+                      >
+                        {ohaengPieData.map((entry) => (
+                          <Cell key={`cell-${entry.nameKey}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                       <RechartsLegend content={({ payload }) => {
+                          if (!payload) return null;
+                          return (
+                            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs mt-3">
+                              {payload.map((entry, index) => (
+                                <div key={`legend-${index}`} className="flex items-center gap-1.5">
+                                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                                  <span>{entry.value} ({ (entry.payload as any)?.value }%)</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }} />
+                    </RechartsPieChart>
+                  </ChartContainer>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">오행 비율 데이터가 없습니다.</p>
+            )}
+            <p className="text-sm text-muted-foreground mt-2">보충 필요 오행: {eyoa.ohaengRatio.neededOhaeng}</p>
           </SectionCard>
 
           {/* 4. 음양 조화 분석 (이름 자체) */}
@@ -245,25 +335,19 @@ function NameInterpretationResultContent() {
           </SectionCard>
 
         </CardContent>
-        <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           {/* ShareButton removed */}
-        </CardFooter>
-      </Card>
-
-      <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-        <Link href="/name-interpretation" passHref>
-            <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+        <CardFooter className="pt-8 border-t flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button onClick={() => router.push('/name-interpretation')} variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
                 <RotateCcw className="mr-2 h-4 w-4" />
                 다른 이름 풀이하기
             </Button>
-        </Link>
-        <Link href="/" passHref>
-          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
-            <Home className="mr-2 h-4 w-4" />
-            홈으로 돌아가기
-          </Button>
-        </Link>
-      </div>
+            <Link href="/" passHref>
+              <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+                <Home className="mr-2 h-4 w-4" />
+                홈으로 돌아가기
+              </Button>
+            </Link>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
@@ -280,4 +364,3 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
-
