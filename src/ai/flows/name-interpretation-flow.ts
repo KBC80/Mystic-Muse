@@ -54,7 +54,7 @@ const HanjaStrokeEumyangSchema = z.object({
 });
 
 const SuriLuckSchema = z.object({
-  description: z.string().describe('해당 격(운)에 대한 설명'),
+  description: z.string().describe('해당 격(운)에 대한 상세한 설명 (성격, 대인관계, 건강, 학업/직업운, 삶의 경로에 미치는 영향, 강점, 약점, 기회, 도전, 조언 포함)'),
   rating: z.enum(['매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨']).describe('길흉 등급'),
   ohaeng: z.string().describe('해당 격의 오행'),
 });
@@ -70,11 +70,11 @@ const InterpretNameOutputSchema = z.object({
     koreanName: z.string().describe('이름 (한글)'),
     hanjaName: z.string().optional().describe('이름 (한자, 해당되는 경우)'),
     gender: z.string().describe('성별 (남자/여자)'),
-    childOrder: z.string().optional().describe('자녀 순위 (정보가 없는 경우 생략)'),
+    // childOrder: z.string().optional().describe('자녀 순위 (정보가 없는 경우 생략)'), // Removed as per user request
     solarBirthDate: z.string().describe('양력 생년월일시'),
     lunarBirthDate: z.string().describe('음력 생년월일시 (양력이면 변환된 음력, 음력이면 입력된 음력)'),
     birthTime: z.string().describe('출생 시간 (예: 자시)'),
-    birthPlace: z.string().optional().describe('출생지 (정보가 없는 경우 생략)'),
+    // birthPlace: z.string().optional().describe('출생지 (정보가 없는 경우 생략)'), // Removed as per user request
     sajuComposition: SajuCompositionSchema.describe('사주 구성 정보'),
   }).describe('1. 기본 정보 요약'),
 
@@ -164,11 +164,9 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   koreanName: 이름 (한글) - AI가 {{{name}}} 입력값에서 한글 부분 추출
     *   hanjaName: 이름 (한자) - AI가 {{{name}}} 입력값에서 한자 부분 추출 (없으면 생략)
     *   gender: 성별 (남자/여자) - 입력값 그대로
-    *   childOrder: 자녀 순위 - 정보가 없는 경우 생략 또는 '정보 없음'으로 명시
     *   solarBirthDate: 양력 생년월일시 - 입력값 또는 변환값
     *   lunarBirthDate: 음력 생년월일시 - 입력값 또는 변환값
     *   birthTime: 출생 시간 (예: 자시) - 입력값 그대로
-    *   birthPlace: 출생지 - 정보가 없는 경우 생략 또는 '정보 없음'으로 명시
     *   sajuComposition:
         *   yearColumn: 년주 정보 (천간, 지지, 음양, 오행)
         *   monthColumn: 월주 정보 (천간, 지지, 음양, 오행)
@@ -200,11 +198,11 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   evaluation: 음양 조화에 대한 최종 평가 (예: 음양이 조화로운 좋은 이름입니다.)
 
 **5. 수리길흉 분석 (5격 중심):** (각 격은 설명, 길흉 등급, 해당 격의 오행을 포함. 나이대는 참고용이며, 실제 영향력은 복합적임)
-    *   cheonGyeok: 천격 (선조운, 기초운, 1-20세) - 설명, 등급, 오행
-    *   inGyeok: 인격 (주격, 초년운, 20-40세, 성격, 대인관계) - 설명, 등급, 오행
-    *   jiGyeok: 지격 (중년운, 30-50세, 가정, 배우자, 건강) - 설명, 등급, 오행
-    *   oeGyeok: 외격 (장년운, 40세 이후 사회활동, 환경적응) - 설명, 등급, 오행
-    *   jongGyeok: 종격 (총격, 말년운, 인생 전체 총운) - 설명, 등급, 오행
+    *   cheonGyeok: 천격 (선조운, 기초운, 1-20세) - 이 격(運)이 개인의 성격, 초기 사회 생활, 건강, 그리고 학업운에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
+    *   inGyeok: 인격 (주격, 초년운, 20-40세, 성격, 대인관계) - 이 격(運)이 개인의 성격 형성, 대인관계, 사회 활동 시작, 그리고 직업적 기초에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
+    *   jiGyeok: 지격 (중년운, 30-50세, 가정, 배우자, 건강) - 이 격(運)이 개인의 가정 생활, 배우자와의 관계, 자녀운, 건강 상태, 그리고 사회적 안정에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
+    *   oeGyeok: 외격 (장년운, 40세 이후 사회활동, 환경적응) - 이 격(運)이 개인의 사회적 활동, 외부 환경과의 관계, 명예, 그리고 중장년기의 직업적 성취에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
+    *   jongGyeok: 종격 (총격, 말년운, 인생 총운) - 이 격(運)이 개인의 인생 전체적인 흐름과 말년의 삶, 건강, 재물, 그리고 자손과의 관계에 구체적으로 어떤 영향을 미치는지 상세히 설명해주십시오. 이 시기에 나타날 수 있는 잠재적인 강점과 약점, 기회와 도전 과제들을 명확히 제시하고, 이 시기를 성공적으로 헤쳐나가기 위한 실질적이고 지혜로운 조언을 포함해주십시오. 등급 ('매우 좋음', '좋음', '보통', '나쁨', '매우 나쁨') 및 해당 격의 오행을 명시하시오.
 
 **6. 발음오행 분석:**
     *   initialConsonants: 이름 각 글자의 초성 및 해당 오행 배열
@@ -242,4 +240,3 @@ const interpretNameFlow = ai.defineFlow(
     return output;
   }
 );
-

@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
 import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress"; // Progress bar removed for detailed scores
 import {
   PieChart as RechartsPieChart,
   Pie,
@@ -143,7 +143,7 @@ function NameInterpretationResultContent() {
     { nameKey: "earth", name: ohaengChartConfig.earth.label, value: eyoa.ohaengRatio.earth, fill: ohaengChartConfig.earth.color },
     { nameKey: "metal", name: ohaengChartConfig.metal.label, value: eyoa.ohaengRatio.metal, fill: ohaengChartConfig.metal.color },
     { nameKey: "water", name: ohaengChartConfig.water.label, value: eyoa.ohaengRatio.water, fill: ohaengChartConfig.water.color },
-  ].filter(item => item.value > 0); // Filter out elements with 0% to avoid cluttering the chart
+  ].filter(item => item.value > 0); 
 
 
   return (
@@ -164,11 +164,11 @@ function NameInterpretationResultContent() {
               <p><strong className="text-foreground">이름(한글):</strong> {bis.koreanName}</p>
               {bis.hanjaName && <p><strong className="text-foreground">이름(한자):</strong> {bis.hanjaName}</p>}
               <p><strong className="text-foreground">성별:</strong> {bis.gender === 'male' ? '남자' : '여자'}</p>
-              {bis.childOrder && <p><strong className="text-foreground">자녀 순위:</strong> {bis.childOrder}</p>}
+              {/* bis.childOrder && <p><strong className="text-foreground">자녀 순위:</strong> {bis.childOrder}</p> */}
               <p><strong className="text-foreground">양력 생일:</strong> {bis.solarBirthDate}</p>
               <p><strong className="text-foreground">음력 생일:</strong> {bis.lunarBirthDate}</p>
               <p><strong className="text-foreground">출생 시간:</strong> {bis.birthTime}</p>
-              {bis.birthPlace && <p><strong className="text-foreground">출생지:</strong> {bis.birthPlace}</p>}
+              {/* bis.birthPlace && <p><strong className="text-foreground">출생지:</strong> {bis.birthPlace}</p> */}
               <p className="col-span-2 pt-1"><strong className="text-foreground">사주 정보:</strong> {bis.sajuComposition.gapjaYearName} ({bis.sajuComposition.zodiacColor} {bis.sajuComposition.zodiacAnimal})</p>
             </div>
           </SectionCard>
@@ -181,18 +181,27 @@ function NameInterpretationResultContent() {
                     {ose.grade}
                 </p>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
               {(Object.keys(ose.detailedScores) as Array<keyof typeof ose.detailedScores>).map((key) => {
                 const scoreInfo = scoreConfig[key];
                 const scoreValue = ose.detailedScores[key];
                 if (!scoreInfo) return null;
+                const percentage = (scoreValue / scoreInfo.maxScore) * 100;
                 return (
-                  <div key={key}>
-                    <div className="flex justify-between text-sm mb-1">
+                  <div key={key} className="flex flex-col">
+                    <div className="flex justify-between text-sm items-baseline">
                       <span className="text-muted-foreground">{scoreInfo.label}</span>
                       <span className="font-semibold text-foreground">{scoreValue} / {scoreInfo.maxScore}점</span>
                     </div>
-                    <Progress value={(scoreValue / scoreInfo.maxScore) * 100} className="h-2" />
+                    <div className="mt-1 h-2.5 w-full bg-muted rounded-full overflow-hidden">
+                       <div
+                         className={cn(
+                           "h-full rounded-full transition-all duration-500 ease-out",
+                           percentage > 70 ? "bg-green-500" : percentage > 40 ? "bg-yellow-500" : "bg-red-500"
+                         )}
+                         style={{ width: `${percentage}%` }}
+                       />
+                     </div>
                   </div>
                 );
               })}
@@ -214,7 +223,7 @@ function NameInterpretationResultContent() {
               <PieChartIcon className="h-4 w-4" /> 오행 비율
             </h4>
             {ohaengPieData.length > 0 ? (
-              <div className="h-[200px] w-full"> {/* ResponsiveContainer needs a sized parent */}
+              <div className="h-[200px] w-full">
                  <ChartContainer config={ohaengChartConfig} className="aspect-auto h-full w-full">
                     <RechartsPieChart>
                       <RechartsTooltip
@@ -224,7 +233,7 @@ function NameInterpretationResultContent() {
                       <Pie
                         data={ohaengPieData}
                         dataKey="value"
-                        nameKey="name" // This should match the 'name' property in ohaengPieData
+                        nameKey="name"
                         cx="50%"
                         cy="50%"
                         outerRadius={60}
@@ -269,11 +278,17 @@ function NameInterpretationResultContent() {
 
           {/* 4. 음양 조화 분석 (이름 자체) */}
           <SectionCard title="음양 조화 분석 (이름 자체)" icon={BookOpen}>
-             <h4 className="font-semibold text-md mb-1 text-secondary-foreground">이름 글자 분석</h4>
-            {eyha.hanjaStrokesAndEumyang.map((item, idx) => (
-                <p key={idx} className="text-sm text-muted-foreground">{item.character}: {item.eumYang} {item.strokes && `(${item.strokes}획)`}</p>
-            ))}
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">오행 조화</h4>
+             <h4 className="font-semibold text-md mb-2 text-secondary-foreground">이름 글자 분석</h4>
+            <div className="flex flex-wrap gap-x-3 gap-y-2 items-center">
+                {eyha.hanjaStrokesAndEumyang.map((item, idx) => (
+                    <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[60px] text-center">
+                        <div className="font-semibold text-lg text-foreground">{item.character}</div>
+                        <div className="text-xs">{item.eumYang}</div>
+                        {item.strokes !== undefined && <div className="text-xs">({item.strokes}획)</div>}
+                    </div>
+                ))}
+            </div>
+            <h4 className="font-semibold text-md mt-4 mb-1 text-secondary-foreground">오행 조화</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{eyha.ohaengHarmony}</p>
             <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">평가</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{eyha.evaluation}</p>
@@ -282,24 +297,27 @@ function NameInterpretationResultContent() {
           {/* 5. 수리길흉 분석 */}
           <SectionCard title="수리길흉 분석 (5격)" icon={TrendingUp}>
             {[sga.cheonGyeok, sga.inGyeok, sga.jiGyeok, sga.oeGyeok, sga.jongGyeok].map((luck, idx) => (
-                <div key={idx} className="mb-2 pb-2 border-b last:border-b-0 border-border/50">
-                    <h4 className="font-semibold text-md text-secondary-foreground">
-                        {['천격 (선조운, 1-20세)', '인격 (초년운/주격, 20-40세)', '지격 (중년운, 30-50세)', '외격 (장년운, 40세 이후)', '종격 (말년운/총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
+                <div key={idx} className="mb-3 pb-3 border-b last:border-b-0 border-border/50">
+                    <h4 className="font-semibold text-md text-secondary-foreground mb-0.5">
+                        {['천격 (선조운, 기초운, 1-20세)', '인격 (주격, 초년운, 20-40세)', '지격 (중년운, 30-50세)', '외격 (장년운, 40세 이후)', '종격 (총격, 말년운, 인생 총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
                     </h4>
-                    <p className="text-xs text-muted-foreground whitespace-pre-wrap">{luck.description}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{luck.description}</p>
                 </div>
             ))}
           </SectionCard>
 
           {/* 6. 발음오행 분석 */}
           <SectionCard title="발음오행 분석" icon={Mic}>
-            <h4 className="font-semibold text-md mb-1 text-secondary-foreground">초성 분석</h4>
-            <div className="flex gap-3">
+            <h4 className="font-semibold text-md mb-2 text-secondary-foreground">초성 분석</h4>
+            <div className="flex flex-wrap gap-x-3 gap-y-2 items-center">
             {poa.initialConsonants.map((item, idx) => (
-                <p key={idx} className="text-sm text-muted-foreground">{item.character}: {item.consonant} ({item.ohaeng})</p>
+                <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[60px] text-center">
+                    <div className="font-semibold text-lg text-foreground">{item.character}</div>
+                    <div className="text-xs">{item.consonant} ({item.ohaeng})</div>
+                </div>
             ))}
             </div>
-            <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">상생상극 관계</h4>
+            <h4 className="font-semibold text-md mt-4 mb-1 text-secondary-foreground">상생상극 관계</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{poa.harmonyRelationship}</p>
             <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground">평가</h4>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{poa.evaluation}</p>
