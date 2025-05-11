@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput } from '@/ai/flows/name-interpretation-flow';
 import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string }> = ({ title, icon: Icon, children, className }) => (
   <Card className={cn("bg-secondary/20 shadow", className)}>
@@ -44,8 +45,9 @@ function NameInterpretationResultContent() {
     const calendarType = searchParams.get('calendarType') as InterpretNameInput['calendarType'];
     const birthTime = searchParams.get('birthTime');
     const gender = searchParams.get('gender') as InterpretNameInput['gender'];
-    const childOrder = searchParams.get('childOrder') || undefined;
-    const birthPlace = searchParams.get('birthPlace') || undefined;
+    // 자녀 순위와 출생지는 이제 선택 사항이 아니므로 URL에서 가져오지 않습니다.
+    // const childOrder = searchParams.get('childOrder') || undefined;
+    // const birthPlace = searchParams.get('birthPlace') || undefined;
 
     if (!name || !birthDate || !calendarType || !birthTime || !gender) {
       setError("필수 정보가 누락되었습니다. 다시 시도해주세요.");
@@ -54,7 +56,7 @@ function NameInterpretationResultContent() {
     }
 
     const input: InterpretNameInput = {
-      name, birthDate, calendarType, birthTime, gender, childOrder, birthPlace
+      name, birthDate, calendarType, birthTime, gender
     };
 
     interpretName(input)
@@ -192,7 +194,7 @@ function NameInterpretationResultContent() {
             {[sga.cheonGyeok, sga.inGyeok, sga.jiGyeok, sga.oeGyeok, sga.jongGyeok].map((luck, idx) => (
                 <div key={idx} className="mb-2 pb-2 border-b last:border-b-0 border-border/50">
                     <h4 className="font-semibold text-md text-secondary-foreground">
-                        {['천격 (선조운)', '인격 (초년운/주격)', '지격 (중년운)', '외격 (장년운)', '종격 (말년운/총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
+                        {['천격 (선조운, 1-20세)', '인격 (초년운/주격, 20-40세)', '지격 (중년운, 30-50세)', '외격 (장년운, 40세 이후)', '종격 (말년운/총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
                     </h4>
                     <p className="text-xs text-muted-foreground whitespace-pre-wrap">{luck.description}</p>
                 </div>
@@ -278,3 +280,4 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
+

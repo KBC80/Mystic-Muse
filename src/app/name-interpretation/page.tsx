@@ -40,8 +40,6 @@ const formSchema = z.object({
   calendarType: z.enum(["solar", "lunar"], { errorMap: () => ({ message: "달력 유형을 선택해주세요."}) }),
   birthTime: z.string().min(1, "태어난 시간을 선택해주세요."),
   gender: z.enum(["male", "female"], { errorMap: () => ({ message: "성별을 선택해주세요."}) }),
-  childOrder: z.string().optional(),
-  birthPlace: z.string().optional(),
 });
 
 type NameInterpretationFormValues = z.infer<typeof formSchema>;
@@ -59,8 +57,6 @@ export default function NameInterpretationPage() {
       calendarType: "solar",
       birthTime: "모름",
       gender: "male",
-      childOrder: "",
-      birthPlace: "",
     },
   });
 
@@ -73,8 +69,6 @@ export default function NameInterpretationPage() {
       birthTime: values.birthTime,
       gender: values.gender,
     });
-    if (values.childOrder) queryParams.append('childOrder', values.childOrder);
-    if (values.birthPlace) queryParams.append('birthPlace', values.birthPlace);
     
     router.push(`/name-interpretation/result?${queryParams.toString()}`);
   }
@@ -87,8 +81,7 @@ export default function NameInterpretationPage() {
             <PenTool className="text-primary h-6 w-6" /> 이름 풀이
           </CardTitle>
           <CardDescription>
-            생년월일시, 이름, 성별 등 정보를 입력하여 이름에 담긴 깊은 의미와 인생 경로를 알아보세요.
-            한자 이름인 경우 이름 입력란에 한자를 함께 입력해주세요 (예: 홍길동 (洪吉童)).
+            생년월일시, 이름, 성별 정보를 입력하여 이름에 담긴 깊은 의미와 인생 경로를 알아보세요.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -228,32 +221,6 @@ export default function NameInterpretationPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="childOrder"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>자녀 순위 (선택)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="예: 맏이, 둘째, 막내" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="birthPlace"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>출생지 (선택)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="예: 서울, 부산" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -275,3 +242,4 @@ export default function NameInterpretationPage() {
     </div>
   );
 }
+
