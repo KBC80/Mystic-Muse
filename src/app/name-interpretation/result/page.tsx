@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -163,13 +164,13 @@ function NameInterpretationResultContent() {
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <p><strong className="text-foreground">이름(한글):</strong> {bis.koreanName}</p>
               {bis.hanjaName && <p><strong className="text-foreground">이름(한자):</strong> {bis.hanjaName}</p>}
-              <p><strong className="text-foreground">성별:</strong> {bis.gender === 'male' ? '남자' : '여자'}</p>
-              {/* bis.childOrder && <p><strong className="text-foreground">자녀 순위:</strong> {bis.childOrder}</p> */}
+              <p><strong className="text-foreground">성별:</strong> {bis.gender}</p>
               <p><strong className="text-foreground">양력 생일:</strong> {bis.solarBirthDate}</p>
               <p><strong className="text-foreground">음력 생일:</strong> {bis.lunarBirthDate}</p>
               <p><strong className="text-foreground">출생 시간:</strong> {bis.birthTime}</p>
-              {/* bis.birthPlace && <p><strong className="text-foreground">출생지:</strong> {bis.birthPlace}</p> */}
-              <p className="col-span-2 pt-1"><strong className="text-foreground">사주 정보:</strong> {bis.sajuComposition.gapjaYearName} ({bis.sajuComposition.zodiacColor} {bis.sajuComposition.zodiacAnimal})</p>
+              <p className="col-span-2 pt-1">
+                <strong className="text-foreground">사주 정보 (음력 기준):</strong> {bis.sajuComposition.gapjaYearName} - {bis.sajuComposition.zodiacColor} {bis.sajuComposition.zodiacAnimal}
+              </p>
             </div>
           </SectionCard>
 
@@ -299,7 +300,7 @@ function NameInterpretationResultContent() {
             {[sga.cheonGyeok, sga.inGyeok, sga.jiGyeok, sga.oeGyeok, sga.jongGyeok].map((luck, idx) => (
                 <div key={idx} className="mb-3 pb-3 border-b last:border-b-0 border-border/50">
                     <h4 className="font-semibold text-md text-secondary-foreground mb-0.5">
-                        {['천격 (선조운, 기초운, 1-20세)', '인격 (주격, 초년운, 20-40세)', '지격 (중년운, 30-50세)', '외격 (장년운, 40세 이후)', '종격 (총격, 말년운, 인생 총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
+                        {['천격 (초년운, 1-20세)', '인격 (중년운, 20-40세)', '지격 (장년운, 30-50세)', '외격 (말년운, 40세 이후)', '종격 (총격, 전체 인생 총운)'][idx]}: <span className="font-normal">{luck.rating} ({luck.ohaeng})</span>
                     </h4>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{luck.description}</p>
                 </div>

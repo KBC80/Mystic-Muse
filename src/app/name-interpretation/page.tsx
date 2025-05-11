@@ -17,6 +17,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +34,7 @@ import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, GENDER_OPTIONS } from "@/lib/co
 import { PenTool, Home, CalendarIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+// import { HanjaModal } from '@/components/hanja-modal'; // Removed HanjaModal
 
 const formSchema = z.object({
   name: z.string().min(1, "이름을 입력해주세요."),
@@ -40,6 +42,8 @@ const formSchema = z.object({
   calendarType: z.enum(["solar", "lunar"], { errorMap: () => ({ message: "달력 유형을 선택해주세요."}) }),
   birthTime: z.string().min(1, "태어난 시간을 선택해주세요."),
   gender: z.enum(["male", "female"], { errorMap: () => ({ message: "성별을 선택해주세요."}) }),
+  // childOrder: z.string().optional(), // Removed
+  // birthPlace: z.string().optional(), // Removed
 });
 
 type NameInterpretationFormValues = z.infer<typeof formSchema>;
@@ -48,6 +52,9 @@ export default function NameInterpretationPage() {
   const router = useRouter();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isHanjaModalOpen, setIsHanjaModalOpen] = useState(false); // Removed HanjaModal state
+  // const [nameForHanjaConversion, setNameForHanjaConversion] = useState(""); // Removed HanjaModal state
+
 
   const form = useForm<NameInterpretationFormValues>({
     resolver: zodResolver(formSchema),
@@ -57,8 +64,21 @@ export default function NameInterpretationPage() {
       calendarType: "solar",
       birthTime: "모름",
       gender: "male",
+      // childOrder: "", // Removed
+      // birthPlace: "", // Removed
     },
   });
+
+  // const handleOpenHanjaModal = () => {
+  //   setNameForHanjaConversion(form.getValues("name"));
+  //   setIsHanjaModalOpen(true);
+  // };
+
+  // const handleHanjaNameSelect = (hanjaName: string) => {
+  //   form.setValue("name", hanjaName);
+  //   setIsHanjaModalOpen(false);
+  // };
+
 
   async function onSubmit(values: NameInterpretationFormValues) {
     setIsSubmitting(true);
@@ -68,9 +88,11 @@ export default function NameInterpretationPage() {
       calendarType: values.calendarType,
       birthTime: values.birthTime,
       gender: values.gender,
-    });
+      // ...(values.childOrder && { childOrder: values.childOrder }), // Removed
+      // ...(values.birthPlace && { birthPlace: values.birthPlace }), // Removed
+    }).toString();
     
-    router.push(`/name-interpretation/result?${queryParams.toString()}`);
+    router.push(`/name-interpretation/result?${queryParams}`);
   }
 
   return (
@@ -93,10 +115,18 @@ export default function NameInterpretationPage() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>이름 (한자 포함 가능)</FormLabel>
+                      <FormLabel>이름</FormLabel>
                       <FormControl>
-                        <Input placeholder="예: 홍길동 또는 홍길동 (洪吉童)" {...field} />
+                        <div className="flex gap-2">
+                          <Input placeholder="예: 홍길동 또는 홍길동(洪吉童)" {...field} />
+                          {/* <Button type="button" variant="outline" onClick={handleOpenHanjaModal} className="shrink-0">
+                            한자 변환
+                          </Button> */}
+                        </div>
                       </FormControl>
+                      {/* <FormDescription>
+                        한자 이름인 경우 괄호 안에 함께 입력해주세요 (예: 홍길동 (洪吉童)).
+                      </FormDescription> */}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -221,6 +251,7 @@ export default function NameInterpretationPage() {
                     </FormItem>
                   )}
                 />
+                {/* Removed childOrder and birthPlace fields */}
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
@@ -230,6 +261,15 @@ export default function NameInterpretationPage() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* {isHanjaModalOpen && ( // Removed HanjaModal related code
+        <HanjaModal
+          isOpen={isHanjaModalOpen}
+          onClose={() => setIsHanjaModalOpen(false)}
+          koreanName={nameForHanjaConversion}
+          onSelect={handleHanjaNameSelect}
+        />
+      )} */}
       
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>
@@ -242,4 +282,3 @@ export default function NameInterpretationPage() {
     </div>
   );
 }
-
