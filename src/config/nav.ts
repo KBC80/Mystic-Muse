@@ -22,7 +22,7 @@ export const navItems: NavItem[] = [
     icon: PenTool,
   },
   {
-    title: '궁합',
+    title: '천생연분 궁합',
     href: '/relationship-compatibility',
     icon: Heart,
   },
@@ -50,3 +50,4 @@ export const navItems: NavItem[] = [
     icon: Ticket, 
   },
 ];
+
