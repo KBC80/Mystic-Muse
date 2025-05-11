@@ -11,10 +11,11 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { findHanjaForSyllable, type HanjaDetail } from '@/lib/hanja-utils';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HanjaSelectionModalProps {
   isOpen: boolean;
@@ -24,6 +25,8 @@ interface HanjaSelectionModalProps {
   onComplete: (selections: (HanjaDetail | null)[]) => void;
   targetFieldName: string | null; 
 }
+
+const HANJAS_PER_PAGE = 12;
 
 export function HanjaSelectionModal({
   isOpen,
@@ -38,11 +41,13 @@ export function HanjaSelectionModal({
   const [selectedHanjaPerSyllable, setSelectedHanjaPerSyllable] = useState<(HanjaDetail | null)[]>([]);
   const [hanjaOptions, setHanjaOptions] = useState<HanjaDetail[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [currentPageForHanja, setCurrentPageForHanja] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
       setSelectedHanjaPerSyllable(new Array(nameSyllables.length).fill(null));
       setCurrentSyllableIndex(0);
+      setCurrentPageForHanja(0); // Reset page on modal open
     }
   }, [isOpen, nameSyllables]);
 
@@ -51,6 +56,7 @@ export function HanjaSelectionModal({
       setIsLoadingOptions(true);
       const options = findHanjaForSyllable(nameSyllables[currentSyllableIndex]);
       setHanjaOptions(options);
+      setCurrentPageForHanja(0); // Reset page when syllable changes
       setIsLoadingOptions(false);
     }
   }, [isOpen, nameSyllables, currentSyllableIndex]);
@@ -63,15 +69,15 @@ export function HanjaSelectionModal({
 
   const handleKeepKorean = () => {
     const newSelections = [...selectedHanjaPerSyllable];
-    newSelections[currentSyllableIndex] = null; // Mark as "keep Korean"
+    newSelections[currentSyllableIndex] = null; 
     setSelectedHanjaPerSyllable(newSelections);
-    // Automatically move to next or complete if it's the last syllable
     handleNextSyllable(); 
   };
 
   const handleNextSyllable = () => {
     if (currentSyllableIndex < nameSyllables.length - 1) {
       setCurrentSyllableIndex(prev => prev + 1);
+      setCurrentPageForHanja(0); // Reset page for new syllable
     } else {
       handleComplete();
     }
@@ -80,6 +86,7 @@ export function HanjaSelectionModal({
   const handlePreviousSyllable = () => {
     if (currentSyllableIndex > 0) {
       setCurrentSyllableIndex(prev => prev - 1);
+      setCurrentPageForHanja(0); // Reset page for new syllable
     }
   };
 
@@ -88,13 +95,18 @@ export function HanjaSelectionModal({
     onClose();
   };
 
-
   if (!isOpen || nameSyllables.length === 0) {
     return null;
   }
 
   const currentSyllable = nameSyllables[currentSyllableIndex];
   const isLastSyllable = currentSyllableIndex === nameSyllables.length - 1;
+
+  const totalPages = Math.ceil(hanjaOptions.length / HANJAS_PER_PAGE);
+  const paginatedHanjaOptions = hanjaOptions.slice(
+    currentPageForHanja * HANJAS_PER_PAGE,
+    (currentPageForHanja + 1) * HANJAS_PER_PAGE
+  );
 
   const getTargetFieldNameDisplay = () => {
     if (!targetFieldName) return "";
@@ -116,15 +128,15 @@ export function HanjaSelectionModal({
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-grow max-h-[calc(90vh-200px)] pr-1"> {/* Apply max-h here */}
+        <div className="flex-grow overflow-y-auto pr-1">
           <div className="py-2">
             {isLoadingOptions ? (
               <p className="text-center py-4 text-muted-foreground">옵션 로딩 중...</p>
-            ) : hanjaOptions.length > 0 ? (
+            ) : paginatedHanjaOptions.length > 0 ? (
               <div className="grid grid-cols-4 gap-2">
-                {hanjaOptions.map((opt, optIndex) => (
+                {paginatedHanjaOptions.map((opt, optIndex) => (
                   <Button
-                    key={`${opt.hanja}-${optIndex}`}
+                    key={`${opt.hanja}-${optIndex}-${currentSyllableIndex}-${currentPageForHanja}`}
                     variant={selectedHanjaPerSyllable[currentSyllableIndex]?.hanja === opt.hanja ? "default" : "outline"}
                     onClick={() => handleHanjaSelect(opt)}
                     className="flex flex-col h-auto p-2 text-center text-xs"
@@ -138,7 +150,31 @@ export function HanjaSelectionModal({
               <p className="text-center py-4 text-muted-foreground">"{currentSyllable}"에 대한 추천 한자가 없습니다.</p>
             )}
           </div>
-        </ScrollArea>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 py-2 border-t">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setCurrentPageForHanja(p => Math.max(0, p - 1))} 
+              disabled={currentPageForHanja === 0}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> 이전
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {currentPageForHanja + 1} / {totalPages}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setCurrentPageForHanja(p => Math.min(totalPages - 1, p + 1))} 
+              disabled={currentPageForHanja === totalPages - 1}
+            >
+              다음 <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        )}
 
         <DialogFooter className="mt-auto pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
           <Button 
@@ -166,4 +202,3 @@ export function HanjaSelectionModal({
     </Dialog>
   );
 }
-
