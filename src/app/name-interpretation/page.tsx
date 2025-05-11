@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -33,7 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES, GENDER_OPTIONS } from "@/lib/constants";
 import { PenTool, Home, CalendarIcon, Palette, Users, TrendingUp, Gift, Sparkles as SparklesIcon, Palmtree, VenetianMask, Brain, Zap, Heart, UserCircle2, BabyIcon as BabyIconLucide, Coins } from 'lucide-react'; // Renamed Sparkles to SparklesIcon
-import hanjaData from '@/lib/hanjaData.json';
+// import hanjaData from '@/lib/hanjaData.json'; // Removed for revert
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -73,7 +72,7 @@ export default function NameInterpretationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<InterpretNameOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [converted, setConverted] = useState<any[]>([]);
+  // const [converted, setConverted] = useState<any[]>([]); // Removed for revert
 
 
   const form = useForm<NameInterpretationFormValues>({
@@ -87,23 +86,23 @@ export default function NameInterpretationPage() {
     },
   });
 
-  const convertNameToHanja = (koreanName: string) => {
-    const resultArr = [];
-    for (const char of koreanName) {
-      if (hanjaData[char as keyof typeof hanjaData]) {
-        resultArr.push({
-          hangul: char,
-          hanjas: hanjaData[char as keyof typeof hanjaData],
-        });
-      } else {
-        resultArr.push({
-          hangul: char,
-          hanjas: [],
-        });
-      }
-    }
-    return resultArr;
-  };
+  // const convertNameToHanja = (koreanName: string) => { // Removed for revert
+  //   const resultArr = [];
+  //   for (const char of koreanName) {
+  //     if (hanjaData[char as keyof typeof hanjaData]) {
+  //       resultArr.push({
+  //         hangul: char,
+  //         hanjas: hanjaData[char as keyof typeof hanjaData],
+  //       });
+  //     } else {
+  //       resultArr.push({
+  //         hangul: char,
+  //         hanjas: [],
+  //       });
+  //     }
+  //   }
+  //   return resultArr;
+  // };
 
   async function onSubmit(values: NameInterpretationFormValues) {
     setIsSubmitting(true);
@@ -120,13 +119,13 @@ export default function NameInterpretationPage() {
     }
   }
 
-  const handleConvertHanja = () => {
-    const nameVal = form.getValues("name");
-    if (nameVal) {
-      const conversionResult = convertNameToHanja(nameVal);
-      setConverted(conversionResult);
-    }
-  };
+  // const handleConvertHanja = () => { // Removed for revert
+  //   const nameVal = form.getValues("name");
+  //   if (nameVal) {
+  //     const conversionResult = convertNameToHanja(nameVal);
+  //     setConverted(conversionResult);
+  //   }
+  // };
 
   const orderedLifeStages: (keyof InterpretNameOutput['lifeStages'])[] = ["초년운", "중년운", "장년운", "말년운"];
 
@@ -247,12 +246,13 @@ export default function NameInterpretationPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>이름</FormLabel>
-                      <div className="flex items-center gap-2">
+                      {/* Hanja conversion button removed for revert */}
+                      {/* <div className="flex items-center gap-2"> */}
                         <FormControl>
                           <Input placeholder="이름을 입력하세요" {...field} />
                         </FormControl>
-                         <Button type="button" onClick={handleConvertHanja} variant="outline">한자로 변환</Button>
-                      </div>
+                         {/* <Button type="button" onClick={handleConvertHanja} variant="outline">한자로 변환</Button> */}
+                      {/* </div> */}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -291,7 +291,8 @@ export default function NameInterpretationPage() {
         </CardContent>
       </Card>
 
-      {converted.length > 0 && (
+      {/* Hanja conversion display removed for revert */}
+      {/* {converted.length > 0 && (
         <Card className="shadow-lg mt-6">
           <CardHeader>
             <CardTitle className="text-xl">한자 변환 결과 (참고용)</CardTitle>
@@ -308,7 +309,7 @@ export default function NameInterpretationPage() {
             ))}
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {isSubmitting && <div className="flex justify-center items-center py-10"><LoadingSpinner size={32} /><p className="ml-2 text-muted-foreground">이름을 분석 중입니다...</p></div>}
       {error && !isSubmitting && <Alert variant="destructive" className="mt-4"><AlertTitle>해석 오류</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
@@ -336,7 +337,7 @@ export default function NameInterpretationPage() {
                   <Card key={stage} className="bg-secondary/20 p-4">
                     <CardHeader className="p-0 pb-2 flex flex-row items-center gap-2">
                       <LifeStageIcon stage={stage} />
-                      <CardTitle className="text-lg text-primary">{stage} {lifeStageAgeRanges[stage]}</CardTitle>
+                      <CardTitle className="text-lg text-primary">{stage} <span className="text-sm font-normal text-muted-foreground">{lifeStageAgeRanges[stage]}</span></CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.lifeStages[stage]}</p>
@@ -395,10 +396,8 @@ export default function NameInterpretationPage() {
                 </div>
             </div>
           </CardContent>
-           {/* ShareButton removed */}
         </Card>
       )}
-
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>
@@ -411,4 +410,3 @@ export default function NameInterpretationPage() {
     </div>
   );
 }
-
