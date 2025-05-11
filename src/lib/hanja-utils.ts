@@ -3,8 +3,9 @@ import hanjaFullData from './hanja_full_data.json';
 
 export interface HanjaDetail {
   hanja: string;
-  reading: string; // The full "음" field, e.g., "넓을 홍"
-  description: string;
+  specificReading: string; // e.g., "높을 고" or "갈 역" - the segment relevant to the phonetic syllable
+  // originalFullReading: string; // The full "음" field from JSON, e.g., "넓을 홍" or "갈 역, 쉬울 이" (optional if needed elsewhere)
+  description: string; // The "설명" field from JSON (usually English/Japanese description)
   strokeCount: number;
 }
 
@@ -16,30 +17,31 @@ function initializeHanjaMap() {
   if (isMapInitialized) return;
 
   for (const [hanjaChar, detailsObj] of Object.entries(hanjaFullData as Record<string, any>)) {
-    const fullReading: string = detailsObj.음 || ''; // e.g., "갈 역, 쉬울 이" or "돌이킬 반"
+    const originalFullReading: string = detailsObj.음 || ''; // e.g., "갈 역, 쉬울 이" or "돌이킬 반"
     
-    // Split by comma or semicolon for multiple readings, then extract the last word (syllable) of each part.
-    const readings = fullReading.split(/,|;/); 
+    // Split by comma or semicolon for multiple readings
+    const readingSegments = originalFullReading.split(/,|;/); 
     
-    readings.forEach(readingSegment => {
-      const trimmedSegment = readingSegment.trim();
+    readingSegments.forEach(segment => {
+      const trimmedSegment = segment.trim(); // e.g., "갈 역" or "쉬울 이"
       if (!trimmedSegment) return;
 
-      const words = trimmedSegment.split(/\s+/);
+      const words = trimmedSegment.split(/\s+/); // e.g., ["갈", "역"] or ["쉬울", "이"]
       if (words.length > 0) {
         // The Korean phonetic syllable is usually the last word in the reading segment.
-        const syllable = words[words.length - 1]; 
+        const phoneticSyllable = words[words.length - 1]; 
         
         // Validate if it's a single Korean character.
-        if (syllable && syllable.length === 1 && /^[가-힣]$/.test(syllable)) { 
-          const currentList = hanjaMapBySyllable.get(syllable) || [];
+        if (phoneticSyllable && phoneticSyllable.length === 1 && /^[가-힣]$/.test(phoneticSyllable)) { 
+          const currentList = hanjaMapBySyllable.get(phoneticSyllable) || [];
           currentList.push({
             hanja: hanjaChar,
-            reading: detailsObj.음, // Store the original full "음" field
-            description: detailsObj.설명,
+            specificReading: trimmedSegment, // Store the relevant segment like "갈 역"
+            // originalFullReading: originalFullReading, // Store original if needed
+            description: detailsObj.설명, // This is the "설명" field
             strokeCount: detailsObj.획수,
           });
-          hanjaMapBySyllable.set(syllable, currentList);
+          hanjaMapBySyllable.set(phoneticSyllable, currentList);
         }
       }
     });
@@ -60,3 +62,4 @@ export function splitKoreanName(name: string): string[] {
   // It filters out non-Korean characters before splitting.
   return name.replace(/[^가-힣]/g, '').split('');
 }
+

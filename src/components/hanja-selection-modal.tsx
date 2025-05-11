@@ -47,16 +47,35 @@ export function HanjaSelectionModal({
     if (isOpen) {
       setSelectedHanjaPerSyllable(new Array(nameSyllables.length).fill(null));
       setCurrentSyllableIndex(0);
-      setCurrentPageForHanja(0); // Reset page on modal open
+      setCurrentPageForHanja(0); 
     }
-  }, [isOpen, nameSyllables]);
+  }, [isOpen, nameSyllables.length]); // nameSyllables.length ensures re-init if syllables change while open (though unlikely)
 
   useEffect(() => {
     if (isOpen && nameSyllables.length > 0 && currentSyllableIndex < nameSyllables.length) {
       setIsLoadingOptions(true);
-      const options = findHanjaForSyllable(nameSyllables[currentSyllableIndex]);
+      const currentPhoneticSyllable = nameSyllables[currentSyllableIndex];
+      let options = findHanjaForSyllable(currentPhoneticSyllable);
+
+      // Helper function to get the descriptive part of the reading (e.g., "높을" from "높을 고")
+      const getDescriptivePart = (specificReading: string, syllable: string): string => {
+        const pattern = new RegExp("\\s*" + syllable + "$");
+        const desc = specificReading.replace(pattern, "").trim();
+        return desc || specificReading; 
+      };
+      
+      options.sort((a, b) => {
+        const descA = getDescriptivePart(a.specificReading, currentPhoneticSyllable);
+        const descB = getDescriptivePart(b.specificReading, currentPhoneticSyllable);
+        
+        const keyA = descA.length > 0 ? descA[0] : ''; // First character of descriptive part
+        const keyB = descB.length > 0 ? descB[0] : '';
+        
+        return keyA.localeCompare(keyB, 'ko-KR'); // Sort by Korean alphabetical order
+      });
+
       setHanjaOptions(options);
-      setCurrentPageForHanja(0); // Reset page when syllable changes
+      setCurrentPageForHanja(0); 
       setIsLoadingOptions(false);
     }
   }, [isOpen, nameSyllables, currentSyllableIndex]);
@@ -77,7 +96,7 @@ export function HanjaSelectionModal({
   const handleNextSyllable = () => {
     if (currentSyllableIndex < nameSyllables.length - 1) {
       setCurrentSyllableIndex(prev => prev + 1);
-      setCurrentPageForHanja(0); // Reset page for new syllable
+      setCurrentPageForHanja(0); 
     } else {
       handleComplete();
     }
@@ -86,7 +105,7 @@ export function HanjaSelectionModal({
   const handlePreviousSyllable = () => {
     if (currentSyllableIndex > 0) {
       setCurrentSyllableIndex(prev => prev - 1);
-      setCurrentPageForHanja(0); // Reset page for new syllable
+      setCurrentPageForHanja(0); 
     }
   };
 
@@ -128,23 +147,28 @@ export function HanjaSelectionModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-grow overflow-y-auto pr-1">
+        <div className="flex-grow overflow-y-auto pr-1"> {/* Changed to overflow-y-auto for vertical scroll only */}
           <div className="py-2">
             {isLoadingOptions ? (
               <p className="text-center py-4 text-muted-foreground">옵션 로딩 중...</p>
             ) : paginatedHanjaOptions.length > 0 ? (
               <div className="grid grid-cols-4 gap-2">
-                {paginatedHanjaOptions.map((opt, optIndex) => (
-                  <Button
-                    key={`${opt.hanja}-${optIndex}-${currentSyllableIndex}-${currentPageForHanja}`}
-                    variant={selectedHanjaPerSyllable[currentSyllableIndex]?.hanja === opt.hanja ? "default" : "outline"}
-                    onClick={() => handleHanjaSelect(opt)}
-                    className="flex flex-col h-auto p-2 text-center text-xs"
-                  >
-                    <span className="text-2xl font-semibold">{opt.hanja}</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5 truncate w-full">{opt.reading.split(',')[0].trim()}</span>
-                  </Button>
-                ))}
+                {paginatedHanjaOptions.map((opt, optIndex) => {
+                  // Extract descriptive part for display
+                  const descriptivePart = opt.specificReading.replace(new RegExp("\\s*" + nameSyllables[currentSyllableIndex] + "$"), "").trim();
+                  return (
+                    <Button
+                      key={`${opt.hanja}-${optIndex}-${currentSyllableIndex}-${currentPageForHanja}`}
+                      variant={selectedHanjaPerSyllable[currentSyllableIndex]?.hanja === opt.hanja ? "default" : "outline"}
+                      onClick={() => handleHanjaSelect(opt)}
+                      className="flex flex-col h-auto p-2 text-center text-xs" // text-xs applied here
+                    >
+                      <span className="text-2xl font-semibold">{opt.hanja}</span>
+                      {/* Ensure descriptivePart or a fallback is shown */}
+                      <span className="text-[10px] text-muted-foreground mt-0.5 truncate w-full">{descriptivePart || opt.specificReading}</span>
+                    </Button>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-center py-4 text-muted-foreground">"{currentSyllable}"에 대한 추천 한자가 없습니다.</p>
