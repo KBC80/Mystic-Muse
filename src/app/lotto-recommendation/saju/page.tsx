@@ -29,17 +29,15 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { EAST_ASIAN_BIRTH_TIMES, CALENDAR_TYPES } from "@/lib/constants";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Ticket, Home, CalendarIcon, Newspaper, AlertTriangle, ExternalLink, Wand2 } from 'lucide-react';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions';
 import { cn } from "@/lib/utils";
-import { findHanjaForSyllable, splitKoreanName, type HanjaDetail } from '@/lib/hanja-utils';
+import { HanjaSelectionModal } from '@/components/hanja-selection-modal';
+import { splitKoreanName, type HanjaDetail } from '@/lib/hanja-utils';
 import { useToast } from "@/hooks/use-toast";
-import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   birthDate: z.string().min(1, "생년월일을 입력해주세요."),
@@ -78,13 +76,10 @@ export default function SajuLottoRecommendationPage() {
   const [isLoadingLatestDraw, setIsLoadingLatestDraw] = useState(true);
   const [latestDrawError, setLatestDrawError] = useState<string | null>(null);
 
-  const [hanjaSuggestions, setHanjaSuggestions] = useState<Array<{
-    originalSyllable: string;
-    options: HanjaDetail[];
-  }>>([]);
   const [isHanjaModalOpen, setIsHanjaModalOpen] = useState(false);
-  const [currentConvertingNameField, setCurrentConvertingNameField] = useState<FieldPath<LottoRecommendationFormValues> | null>(null);
-  const [selectedHanjaPerSyllable, setSelectedHanjaPerSyllable] = useState<Record<number, string>>({});
+  const [nameSyllablesForModal, setNameSyllablesForModal] = useState<string[]>([]);
+  const [originalNameToConvert, setOriginalNameToConvert] = useState<string>("");
+  const [targetFieldNameForHanja, setTargetFieldNameForHanja] = useState<FieldPath<LottoRecommendationFormValues> | null>(null);
 
 
   useEffect(() => {
@@ -118,64 +113,56 @@ export default function SajuLottoRecommendationPage() {
     },
   });
 
-  const openHanjaModal = (fieldName: FieldPath<LottoRecommendationFormValues>) => {
-    const currentName = form.getValues(fieldName);
-    if (typeof currentName !== 'string' || !currentName.trim() || /[\u4E00-\u9FFF()]+/.test(currentName)) {
-      toast({
-        title: "알림",
-        description: "한글 이름을 먼저 입력해주세요. 이미 한자가 포함되어 있거나 이름이 비어있습니다.",
-        variant: "default",
-      });
+  const handleOpenHanjaModal = (fieldName: FieldPath<LottoRecommendationFormValues>) => {
+    const currentNameValue = form.getValues(fieldName);
+    const koreanOnlyName = currentNameValue.replace(/\s*\(.*\)\s*$/, "").trim();
+
+    if (!koreanOnlyName) {
+      toast({ title: "알림", description: "한자로 변환할 한글 이름을 입력해주세요." });
       return;
     }
-    const syllables = splitKoreanName(currentName);
-     if (syllables.length === 0) {
-      toast({
-        title: "알림",
-        description: "한자로 변환할 한글 이름이 없습니다.",
-        variant: "default",
-      });
-      return;
-    }
-    const suggestions = syllables.map(syl => ({
-      originalSyllable: syl,
-      options: findHanjaForSyllable(syl),
-    }));
-    setHanjaSuggestions(suggestions);
-    setSelectedHanjaPerSyllable({});
-    setCurrentConvertingNameField(fieldName);
-    setIsHanjaModalOpen(true);
-  };
-
-  const handleSelectHanja = (syllableIndex: number, hanjaChar: string) => {
-    setSelectedHanjaPerSyllable(prev => ({ ...prev, [syllableIndex]: hanjaChar }));
-  };
-
-  const updateNameWithHanja = () => {
-    if (!currentConvertingNameField || hanjaSuggestions.length === 0) return;
-    
-    const originalNameValue = form.getValues(currentConvertingNameField as any);
-    const koreanOnlyName = (originalNameValue as string).replace(/\s*\(.*\)\s*$/, "").trim();
-
-    let hanjaPart = "";
     const syllables = splitKoreanName(koreanOnlyName);
-
-    syllables.forEach((syl, index) => {
-      hanjaPart += selectedHanjaPerSyllable[index] || '';
-    });
-
-    if (hanjaPart.length !== syllables.length && hanjaPart.length > 0) {
-         toast({
-            title: "오류",
-            description: "모든 글자에 해당하는 한자를 선택해주세요.",
-            variant: "destructive",
-        });
-        return;
+    if (syllables.length > 0) {
+      setNameSyllablesForModal(syllables);
+      setOriginalNameToConvert(koreanOnlyName);
+      setTargetFieldNameForHanja(fieldName);
+      setIsHanjaModalOpen(true);
+    } else {
+      toast({ title: "알림", description: "한자로 변환할 한글 이름이 없습니다." });
     }
-    
-    const newName = hanjaPart.length > 0 ? `${koreanOnlyName} (${hanjaPart})` : koreanOnlyName;
-    form.setValue(currentConvertingNameField as any, newName, { shouldValidate: true });
-    setIsHanjaModalOpen(false);
+  };
+
+  const handleHanjaConversionComplete = (selections: (HanjaDetail | null)[]) => {
+     if (targetFieldNameForHanja) {
+      const koreanOnlyName = originalNameToConvert;
+      const syllables = nameSyllablesForModal;
+
+      let hanjaPart = "";
+      let allConverted = true;
+      let someConverted = false;
+
+      for (let i = 0; i < syllables.length; i++) {
+        if (selections[i]) {
+          hanjaPart += selections[i]!.hanja;
+          someConverted = true;
+        } else {
+          allConverted = false; 
+        }
+      }
+      
+      if (someConverted && !allConverted) {
+          toast({
+              title: "알림",
+              description: "모든 글자를 한자로 변환하거나, 모든 글자를 한글로 유지해주세요. (부분 변환 미지원)",
+              variant: "default"
+          });
+      } else if (allConverted && hanjaPart.length === syllables.length) {
+          form.setValue(targetFieldNameForHanja, `${koreanOnlyName} (${hanjaPart})`, { shouldValidate: true });
+      } else { 
+          form.setValue(targetFieldNameForHanja, koreanOnlyName, { shouldValidate: true });
+      }
+      setIsHanjaModalOpen(false);
+    }
   };
 
 
@@ -247,7 +234,7 @@ export default function SajuLottoRecommendationPage() {
                         <FormControl>
                           <Input placeholder="이름을 입력하세요" {...field} />
                         </FormControl>
-                        <Button type="button" variant="outline" size="sm" onClick={() => openHanjaModal("name")}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => handleOpenHanjaModal("name")}>
                           <Wand2 className="mr-1 h-4 w-4" />한자 변환
                         </Button>
                       </div>
@@ -374,47 +361,16 @@ export default function SajuLottoRecommendationPage() {
         </a>
       </div>
 
-       <Dialog open={isHanjaModalOpen} onOpenChange={setIsHanjaModalOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>한자 선택</DialogTitle>
-            <DialogDescription>
-              이름 각 글자에 해당하는 한자를 선택해주세요.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {hanjaSuggestions.map((suggestion, sylIndex) => (
-              <div key={sylIndex} className="mb-4 p-3 border rounded-md bg-background">
-                <p className="font-semibold text-lg mb-2">'{suggestion.originalSyllable}' 선택:</p>
-                {suggestion.options.length > 0 ? (
-                  <RadioGroup
-                    onValueChange={(value) => handleSelectHanja(sylIndex, value)}
-                    value={selectedHanjaPerSyllable[sylIndex]}
-                    className="space-y-1"
-                  >
-                    {suggestion.options.slice(0, 20).map((opt, optIndex) => (
-                      <div key={optIndex} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-md">
-                        <RadioGroupItem value={opt.hanja} id={`syl-${sylIndex}-opt-${optIndex}`} />
-                        <Label htmlFor={`syl-${sylIndex}-opt-${optIndex}`} className="font-normal text-sm cursor-pointer w-full">
-                           <span className="text-lg font-semibold text-primary">{opt.hanja}</span> ({opt.reading}) - {opt.description} ({opt.strokeCount}획)
-                        </Label>
-                      </div>
-                    ))}
-                     {suggestion.options.length > 20 && <p className="text-xs text-muted-foreground mt-1">더 많은 한자가 있지만, 상위 20개만 표시됩니다.</p>}
-                  </RadioGroup>
-                ) : (
-                  <p className="text-sm text-muted-foreground">추천 한자가 없습니다.</p>
-                )}
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-             <Button variant="outline" onClick={() => setIsHanjaModalOpen(false)}>취소</Button>
-            <Button onClick={updateNameWithHanja}>선택 완료 및 이름 업데이트</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      {isHanjaModalOpen && targetFieldNameForHanja && (
+        <HanjaSelectionModal
+          isOpen={isHanjaModalOpen}
+          onClose={() => setIsHanjaModalOpen(false)}
+          nameSyllables={nameSyllablesForModal}
+          originalName={originalNameToConvert}
+          onComplete={handleHanjaConversionComplete}
+          targetFieldName={targetFieldNameForHanja}
+        />
+      )}
     </div>
   );
 }
