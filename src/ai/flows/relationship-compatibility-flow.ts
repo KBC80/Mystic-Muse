@@ -18,7 +18,7 @@ const PersonInputSchema = z.object({
   gender: z.enum(['male', 'female']).describe('성별 (male: 남자, female: 여자)'),
 });
 
-export const RelationshipCompatibilityInputSchema = z.object({
+const RelationshipCompatibilityInputSchema = z.object({
   person1: PersonInputSchema.describe('첫 번째 사람의 정보'),
   person2: PersonInputSchema.describe('두 번째 사람의 정보'),
 });
@@ -37,7 +37,7 @@ const SibsinYukchinAnalysisSchema = z.object({
   // 표 데이터는 LLM이 일관되게 생성하기 어려울 수 있으므로, 상세 설명에 집중.
 });
 
-export const RelationshipCompatibilityOutputSchema = z.object({
+const RelationshipCompatibilityOutputSchema = z.object({
   overallScore: z.number().min(0).max(100).describe('궁합 총점 (100점 만점)'),
   overallGrade: z.enum(['최상', '상', '중상', '중', '중하', '하', '최하']).describe('궁합 등급'),
   sajuCompatibility: z.object({
