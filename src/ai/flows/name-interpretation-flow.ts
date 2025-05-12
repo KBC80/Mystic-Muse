@@ -37,7 +37,7 @@ const SajuOhaengDistributionSchema = z.object({
 });
 
 const SuriGyeokSchema = z.object({
-  name: z.string().describe('격의 이름 (예: 원격(元格) - 초년운, 형격(亨格) - 청년운 등)'),
+  // name: z.string().describe('격의 이름 (예: 원격(元格) - 초년운, 형격(亨格) - 청년운 등)'), // This will be overridden by z.literal in extensions
   suriNumber: z.number().int().min(1).max(81).describe('수리 획수 (1-81). 이 값은 1에서 81 사이여야 합니다.'),
   rating: z.enum(['대길', '길', '평', '흉', '대흉']).describe('길흉 등급'),
   interpretation: z.string().describe('해당 격에 대한 상세 해설입니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 대인관계, 건강, 재물, 직업 등)에 대한 구체적이고 심층적인 내용을 포함해야 합니다. 단순한 키워드 나열이 아닌, 삶의 지침이 될 수 있는 통찰력 있는 설명을 제공해야 합니다.'),
@@ -45,7 +45,7 @@ const SuriGyeokSchema = z.object({
 
 const DetailedScoreSchema = z.object({
   score: z.number().int().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
-  maxScore: z.number().int().positive().describe('해당 항목의 만점입니다. 양의 정수여야 합니다.'),
+  maxScore: z.number().int().min(1).describe('해당 항목의 만점입니다. 0보다 큰 양의 정수여야 합니다.'), // Changed from .positive() to .min(1)
 });
 
 const InterpretNameOutputSchema = z.object({
@@ -76,10 +76,10 @@ const InterpretNameOutputSchema = z.object({
     summaryEvaluation: z.enum(['매우 좋음', '좋음', '보통', '주의 필요', '나쁨']).describe('간단한 요약 평가 문구'),
     overallFortuneSummary: z.string().describe('간단한 인생 총운 요약입니다. 이름의 전반적인 기운과 삶에 미칠 수 있는 영향을 포함해야 합니다.'),
     detailedScores: z.object({
-        eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수'),
-        suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수'),
-        pronunciationOhaengScore: DetailedScoreSchema.describe('발음오행 점수'),
-        resourceOhaengScore: DetailedScoreSchema.describe('자원오행 보완 점수'),
+        eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수 (만점: 20점)'),
+        suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수 (만점: 35점)'),
+        pronunciationOhaengScore: DetailedScoreSchema.describe('발음오행 점수 (만점: 25점)'),
+        resourceOhaengScore: DetailedScoreSchema.describe('자원오행 보완 점수 (만점: 20점)'),
     }).describe('세부 항목별 점수'),
   }).describe('이름의 종합적인 평가'),
   
@@ -101,10 +101,10 @@ const InterpretNameOutputSchema = z.object({
     
     suriGilhyungAnalysis: z.object({
         introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 청년운, 장년운, 말년운/인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
-        wonGyeok: SuriGyeokSchema.extend({ name: z.string().default('원격(元格) - 초년운 (0-20세)').describe('원격(元格) - 초년운 (0-20세)에 대한 격의 이름과 운세 시기입니다.') }),
-        hyeongGyeok: SuriGyeokSchema.extend({ name: z.string().default('형격(亨格) - 청년운 (21-40세)').describe('형격(亨格) - 청년운 (21-40세)에 대한 격의 이름과 운세 시기입니다.') }),
-        iGyeok: SuriGyeokSchema.extend({ name: z.string().default('이격(利格) - 장년운 (41-60세)').describe('이격(利格) - 장년운 (41-60세)에 대한 격의 이름과 운세 시기입니다.') }),
-        jeongGyeok: SuriGyeokSchema.extend({ name: z.string().default('정격(貞格) - 말년운/총운 (60세 이후)').describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 격의 이름과 운세 시기입니다.') })
+        wonGyeok: SuriGyeokSchema.omit({ name: true }).extend({ name: z.literal('원격(元格) - 초년운 (0-20세)').describe('원격(元格) - 초년운 (0-20세)에 대한 격의 이름과 운세 시기입니다.') }),
+        hyeongGyeok: SuriGyeokSchema.omit({ name: true }).extend({ name: z.literal('형격(亨格) - 청년운 (21-40세)').describe('형격(亨格) - 청년운 (21-40세)에 대한 격의 이름과 운세 시기입니다.') }),
+        iGyeok: SuriGyeokSchema.omit({ name: true }).extend({ name: z.literal('이격(利格) - 장년운 (41-60세)').describe('이격(利格) - 장년운 (41-60세)에 대한 격의 이름과 운세 시기입니다.') }),
+        jeongGyeok: SuriGyeokSchema.omit({ name: true }).extend({ name: z.literal('정격(貞格) - 말년운/총운 (60세 이후)').describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 격의 이름과 운세 시기입니다.') })
     }).describe('수리길흉 분석 (원형이정 4격 기반)'),
 
     resourceOhaengAnalysis: z.object({
@@ -169,7 +169,7 @@ const nameInterpretationPrompt = ai.definePrompt({
 3.  **종합 평가 및 조언:**
     *   위 모든 분석(사주, 음양, 수리, 자원오행, 주역 등)을 종합하여 이름에 대한 최종 점수(100점 만점)와 평가 등급('매우 좋음', '좋음', '보통', '주의 필요', '나쁨')을 산정합니다. 간단한 요약 평가 문구와 함께 인생 총운에 대한 간략한 요약 (overallFortuneSummary)도 포함해주십시오.
     *   이름의 장점, 단점, 그리고 삶에 미치는 영향에 대한 전반적인 조언을 제공합니다.
-    *   세부 항목별 점수(음양오행, 수리길흉, 발음오행, 자원오행 각각)도 제시합니다. 
+    *   세부 항목별 점수(음양오행(만점 20점), 수리길흉(만점 35점), 발음오행(만점 25점), 자원오행(만점 20점) 각각)도 제시합니다. 
 4.  **주의사항:**
     *   이름에 사용된 한자 중 불용한자(뜻이 나쁘거나, 특정 성별/상황에만 쓰여 부적절한 글자)가 있는지 확인하고, 있다면 그 목록과 이유를 설명합니다. 또한, 이름에 사용된 한자 중 특별히 길한 의미를 가지거나 사주에 긍정적인 영향을 주는 한자가 있다면 그 목록과 이유(auspiciousHanja)도 함께 설명해주십시오.
     *   기타 이름과 관련하여 특별히 주의해야 할 점이나 개선을 위한 제언이 있다면 포함합니다. 전반적인 조언에는 운세를 개선하기 위한 구체적인 해결 방안이나 지니면 좋은 물건, 추천하는 활동 등 실질적인 내용도 포함해주세요. (generalAdvice)
@@ -195,10 +195,10 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   summaryEvaluation: 종합 등급 ('매우 좋음', '좋음', '보통', '주의 필요', '나쁨')
     *   overallFortuneSummary: 인생 총운에 대한 간략한 요약. (1~2문장으로, 이름의 전반적인 기운과 삶에 미칠 수 있는 주요 영향을 언급)
     *   detailedScores:
-        *   eumYangOhaengScore: { score: number, maxScore: number } (음양오행 조화)
-        *   suriGilhyungScore: { score: number, maxScore: number } (수리길흉 - 원형이정)
-        *   pronunciationOhaengScore: { score: number, maxScore: number } (발음오행)
-        *   resourceOhaengScore: { score: number, maxScore: number } (자원오행 - 사주보완)
+        *   eumYangOhaengScore: { score: number, maxScore: 20 } (음양오행 조화)
+        *   suriGilhyungScore: { score: number, maxScore: 35 } (수리길흉 - 원형이정)
+        *   pronunciationOhaengScore: { score: number, maxScore: 25 } (발음오행)
+        *   resourceOhaengScore: { score: number, maxScore: 20 } (자원오행 - 사주보완)
 
 **3. 상세 분석 섹션 (detailedAnalysis):**
     *   **nameStructureAnalysis (이름 구조 및 소리 분석):**
