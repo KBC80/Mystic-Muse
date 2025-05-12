@@ -24,7 +24,7 @@ export default function LottoRecommendationLandingPage() {
       title: "역대 당첨번호 조회",
       href: "/lotto-recommendation/history",
       icon: Archive,
-      description: "과거 로또 당첨 번호를 회차별로 조회하고, 1등 당첨자 수를 확인해보세요."
+      description: "과거 로또 당첨 번호를 회차별로 조회하고, 1등 당첨 정보를 확인해보세요."
     }
   ];
 

@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
 import { getLottoRecommendationsAction, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; 
-import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle } from 'lucide-react';
+import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle, Info } from 'lucide-react';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -37,7 +37,6 @@ function ScientificLottoResultContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [llmResult, setLlmResult] = useState<ScientificLottoRecommendationOutput | null>(null);
-  const [analysisAverages, setAnalysisAverages] = useState<CalculatedAverages | null>(null);
   
   const [includeNumbersStr, setIncludeNumbersStr] = useState<string>("");
   const [excludeNumbersStr, setExcludeNumbersStr] = useState<string>("");
@@ -54,22 +53,29 @@ function ScientificLottoResultContent() {
     const excludeParam = searchParams.get('excludeNumbers');
     const numDrawsParam = searchParams.get('numberOfDrawsForAnalysis');
     
-    setIncludeNumbersStr(includeParam || "");
-    setExcludeNumbersStr(excludeParam || "");
+    if (!numDrawsParam) {
+        setError("분석할 회차 수 정보가 누락되었습니다.");
+        setIsLoading(false);
+        setIsLoadingLatestDraw(false);
+        return;
+    }
+    setAnalyzedDrawsCountInput(numDrawsParam);
+
+    setIncludeNumbersStr(includeParam || "없음");
+    setExcludeNumbersStr(excludeParam || "없음");
 
     const fetchRecommendation = getLottoRecommendationsAction({
       includeNumbersStr: includeParam || undefined,
       excludeNumbersStr: excludeParam || undefined,
-      numberOfDrawsForAnalysisStr: numDrawsParam || undefined,
+      numberOfDrawsForAnalysisStr: numDrawsParam,
     })
     .then(result => {
       if (result.error) {
         setError(prev => prev ? `${prev}\n추천 오류: ${result.error}` : `추천 오류: ${result.error}`);
       } else {
         setLlmResult(result.llmResponse || null);
-        setAnalysisAverages(result.averages || null);
-        if (result.averages?.analyzedDrawsCount) {
-            setNumberOfDrawsAnalyzed(result.averages.analyzedDrawsCount);
+        if(result.analyzedDrawsCount) {
+            setNumberOfDrawsAnalyzed(result.analyzedDrawsCount);
         }
       }
     })
@@ -97,9 +103,12 @@ function ScientificLottoResultContent() {
     Promise.all([fetchRecommendation, fetchLatestLotto]).finally(() => {
       setIsLoading(false);
     });
-
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Helper state setter for analyzedDrawsCountInput to satisfy TypeScript
+  const [analyzedDrawsCountInputState, setAnalyzedDrawsCountInput] = useState<string>("");
+
 
   if (isLoading || isLoadingLatestDraw) {
     return (
@@ -116,6 +125,7 @@ function ScientificLottoResultContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
+          <AlertTriangle className="h-5 w-5" />
           <AlertTitle>오류</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -144,16 +154,19 @@ function ScientificLottoResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8 text-primary" /> AI 분석 기반 추천 번호
           </CardTitle>
-           <CardDescription className="text-md pt-1">
-              AI가 과거 데이터 통계 (최근 {numberOfDrawsAnalyzed ?? '24'}회차 기준)와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
-              {(includeNumbersStr || excludeNumbersStr) && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                    {includeNumbersStr && <span>포함된 숫자: {includeNumbersStr}</span>}
-                    {includeNumbersStr && excludeNumbersStr && <span> / </span>}
-                    {excludeNumbersStr && <span>제외된 숫자: {excludeNumbersStr}</span>}
+           <CardDescription className="text-md pt-1 flex items-start gap-1">
+              <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
+              <span>
+                AI가 과거 데이터 통계 (최근 {numberOfDrawsAnalyzed || analyzedDrawsCountInputState}회차 기준)와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
+              </span>
+            </CardDescription>
+            {(includeNumbersStr !== "없음" || excludeNumbersStr !== "없음") && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                    {includeNumbersStr !== "없음" && <span>포함된 숫자: {includeNumbersStr}</span>}
+                    {includeNumbersStr !== "없음" && excludeNumbersStr !== "없음" && <span> / </span>}
+                    {excludeNumbersStr !== "없음" && <span>제외된 숫자: {excludeNumbersStr}</span>}
                 </div>
-              )}
-          </CardDescription>
+            )}
         </CardHeader>
         <CardContent className="space-y-8">
           {latestDrawError && !isLoadingLatestDraw && (
@@ -229,6 +242,12 @@ function ScientificLottoResultContent() {
             다른 조건으로 추천받기
           </Button>
         </Link>
+        <Link href="/lotto-recommendation" passHref>
+          <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+            <TestTubeDiagonal className="mr-2 h-4 w-4" />
+            다른 로또 정보
+          </Button>
+        </Link>
         <Link href="/" passHref>
           <Button variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
             <Home className="mr-2 h-4 w-4" />
@@ -258,4 +277,3 @@ export default function ScientificLottoResultPage() {
     </Suspense>
   );
 }
-

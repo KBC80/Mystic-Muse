@@ -17,15 +17,26 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, TrendingUp, Info, ExternalLink, FileText } from 'lucide-react';
-import { getInitialScientificLottoData, type ProcessedWinningNumber, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
+import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, TrendingUp, Info, ExternalLink, FileText, Sigma, HelpCircle } from 'lucide-react';
+import { getInitialScientificLottoData, type ProcessedWinningNumber, type CalculatedAverages, getLottoRecommendationsAction } from '@/app/lotto-recommendation/scientific/actions';
+import { cn } from '@/lib/utils';
 
-const formSchema = z.object({
+const analysisFormSchema = z.object({
+  numberOfDrawsForAnalysis: z.string()
+    .min(1, "분석할 회차 수를 입력해주세요.")
+    .refine(val => {
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num >= 5 && num <= 100;
+    }, { message: "분석할 회차 수는 5에서 100 사이의 숫자여야 합니다." }),
+});
+
+type AnalysisFormValues = z.infer<typeof analysisFormSchema>;
+
+const recommendationFormSchema = z.object({
   includeNumbers: z.string().optional().refine(val => {
     if (!val) return true;
     const nums = val.split(',').map(n => parseInt(n.trim(), 10));
@@ -46,12 +57,6 @@ const formSchema = z.object({
     const nums = val.split(',').map(n => n.trim()).filter(n => n !== "");
     return new Set(nums).size === nums.length;
   }, { message: "제외할 숫자에 중복된 값이 있습니다."}),
-  numberOfDrawsForAnalysis: z.string().optional()
-    .refine(val => {
-      if (!val) return true; // Optional field
-      const num = parseInt(val, 10);
-      return !isNaN(num) && num >= 5 && num <= 100;
-    }, { message: "분석할 회차 수는 5에서 100 사이의 숫자여야 합니다." }),
 }).refine(data => {
     if (!data.includeNumbers || !data.excludeNumbers) return true;
     const includeArr = data.includeNumbers.split(',').map(n => n.trim()).filter(n => n !== "");
@@ -60,7 +65,7 @@ const formSchema = z.object({
 }, { message: "포함할 숫자와 제외할 숫자에 중복된 값이 있습니다.", path: ["includeNumbers"] });
 
 
-type ScientificLottoFormValues = z.infer<typeof formSchema>;
+type RecommendationFormValues = z.infer<typeof recommendationFormSchema>;
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -80,38 +85,45 @@ const LottoBall = ({ number, size = 'medium' }: { number: number, size?: 'small'
   );
 };
 
-
 export default function ScientificLottoRecommendationPage() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [isSubmittingRecommendation, setIsSubmittingRecommendation] = useState(false);
+  
   const [error, setError] = useState<string | null>(null);
+  
   const [recentDrawsForDisplay, setRecentDrawsForDisplay] = useState<ProcessedWinningNumber[]>([]);
-  const [analysisAverages, setAnalysisAverages] = useState<CalculatedAverages | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<CalculatedAverages | null>(null);
+  const [analyzedDrawsCountInput, setAnalyzedDrawsCountInput] = useState<string>("24");
 
+  const analysisForm = useForm<AnalysisFormValues>({
+    resolver: zodResolver(analysisFormSchema),
+    defaultValues: {
+      numberOfDrawsForAnalysis: "24",
+    },
+  });
 
-  const form = useForm<ScientificLottoFormValues>({
-    resolver: zodResolver(formSchema),
+  const recommendationForm = useForm<RecommendationFormValues>({
+    resolver: zodResolver(recommendationFormSchema),
     defaultValues: {
       includeNumbers: "",
       excludeNumbers: "",
-      numberOfDrawsForAnalysis: "24", // Default to 24 draws for analysis
     },
   });
 
   useEffect(() => {
-    async function loadData() {
+    async function loadInitialData() {
       setIsInitialLoading(true);
       setError(null);
-      setAnalysisAverages(null); 
       try {
-        // For initial page load, use a default number of draws for summary
-        const data = await getInitialScientificLottoData(form.getValues("numberOfDrawsForAnalysis") || "24");
+        const data = await getInitialScientificLottoData(); // Fetches top 5 for display, and default analysis for LLM summary
         if (data.error) {
           setError(data.error);
         } else {
           if (data.recentDraws) setRecentDrawsForDisplay(data.recentDraws);
-          if (data.averages) setAnalysisAverages(data.averages);
+          // Initially, we don't display analysis results until user submits N
         }
       } catch (err) {
         console.error("초기 데이터 로딩 오류:", err);
@@ -120,16 +132,35 @@ export default function ScientificLottoRecommendationPage() {
         setIsInitialLoading(false);
       }
     }
-    loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Form.getValues() is stable, so this should be fine for initial load.
+    loadInitialData();
+  }, []);
 
-  async function onSubmit(values: ScientificLottoFormValues) {
-    setIsSubmitting(true);
+  async function onAnalysisSubmit(values: AnalysisFormValues) {
+    setIsLoadingAnalysis(true);
+    setError(null);
+    setAnalysisResults(null);
+    setAnalyzedDrawsCountInput(values.numberOfDrawsForAnalysis);
+    try {
+      const data = await getInitialScientificLottoData(values.numberOfDrawsForAnalysis);
+      if (data.error) {
+        setError(data.error);
+      } else {
+        if (data.averages) setAnalysisResults(data.averages);
+      }
+    } catch (err) {
+      console.error("과거 데이터 분석 오류:", err);
+      setError(err instanceof Error ? err.message : "과거 데이터 분석 중 오류 발생");
+    } finally {
+      setIsLoadingAnalysis(false);
+    }
+  }
+
+  async function onRecommendationSubmit(values: RecommendationFormValues) {
+    setIsSubmittingRecommendation(true);
     const queryParams = new URLSearchParams();
     if (values.includeNumbers) queryParams.append('includeNumbers', values.includeNumbers);
     if (values.excludeNumbers) queryParams.append('excludeNumbers', values.excludeNumbers);
-    if (values.numberOfDrawsForAnalysis) queryParams.append('numberOfDrawsForAnalysis', values.numberOfDrawsForAnalysis);
+    queryParams.append('numberOfDrawsForAnalysis', analyzedDrawsCountInput); // Use the N from analysis step
     
     router.push(`/lotto-recommendation/scientific/result?${queryParams.toString()}`);
   }
@@ -144,7 +175,7 @@ export default function ScientificLottoRecommendationPage() {
           <CardDescription className="flex items-start gap-1">
              <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
             <span>
-                실제 동행복권 API 데이터를 기반으로 로또 번호를 추천해 드립니다. 최근 당첨 번호와 통계적 분석 결과를 확인하세요.
+                실제 동행복권 API 데이터를 기반으로 로또 번호를 추천해 드립니다. 분석할 회차 수를 입력하고, 필요시 조건을 설정하세요.
             </span>
           </CardDescription>
         </CardHeader>
@@ -153,17 +184,16 @@ export default function ScientificLottoRecommendationPage() {
       {isInitialLoading && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">최신 당첨 번호 및 분석 데이터를 불러오는 중...</p>
+          <p className="ml-2 text-muted-foreground">최근 당첨 번호 로딩 중...</p>
         </div>
       )}
       
-      {error && !isSubmitting && ( 
-        <Alert variant="destructive">
+      {error && !isInitialLoading && !isLoadingAnalysis && !isSubmittingRecommendation && ( 
+        <Alert variant="destructive" className="my-4">
           <AlertTitle>오류 발생</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-
 
       {!isInitialLoading && recentDrawsForDisplay.length > 0 && (
         <Card className="shadow-md">
@@ -204,66 +234,17 @@ export default function ScientificLottoRecommendationPage() {
         </Card>
       )}
       
-      {analysisAverages && !isInitialLoading && (
-         <Card className="shadow-md">
-            <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2"><TrendingUp className="h-5 w-5 text-secondary-foreground" />과거 데이터 분석 (최근 {analysisAverages.analyzedDrawsCount}회차 기준)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                    평균 당첨 번호 합계: <strong className="text-foreground">{analysisAverages.averageSum.toFixed(1)}</strong>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    가장 흔한 짝수:홀수 비율: <strong className="text-foreground">{analysisAverages.averageEvenOddRatio}</strong>
-                </p>
-                 <p className="text-xs text-muted-foreground pt-1">{analysisAverages.summaryForDisplay}</p>
-            </CardContent>
-        </Card>
-      )}
-
-
-      <Card className="shadow-lg">
+      <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
-            <CheckSquare className="text-primary h-5 w-5" /> AI 번호 추천 조건 설정
+            <Sigma className="h-5 w-5 text-primary" /> 과거 데이터 분석 조건 설정
           </CardTitle>
-          <CardDescription>
-            AI는 입력된 조건과 함께 아래 설정된 회차의 통계적 패턴을 고려하여 번호를 추천합니다.
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="includeNumbers"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-1"><CheckSquare className="h-4 w-4"/> 포함할 숫자 (선택, 최대 6개, 쉼표로 구분)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="예: 7, 14, 21" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="excludeNumbers"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-1"><XSquare className="h-4 w-4"/> 제외할 숫자 (선택, 쉼표로 구분)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="예: 1, 10, 45" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+          <Form {...analysisForm}>
+            <form onSubmit={analysisForm.handleSubmit(onAnalysisSubmit)} className="space-y-4">
               <FormField
-                control={form.control}
+                control={analysisForm.control}
                 name="numberOfDrawsForAnalysis"
                 render={({ field }) => (
                   <FormItem>
@@ -275,13 +256,100 @@ export default function ScientificLottoRecommendationPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isSubmitting || isInitialLoading} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-                {isSubmitting ? <LoadingSpinner size={20} /> : "AI 과학적 번호 추천 받기"}
+              <Button type="submit" disabled={isLoadingAnalysis} className="w-full md:w-auto">
+                {isLoadingAnalysis ? <LoadingSpinner size={20} /> : "과거 데이터 분석하기"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
+      
+      {isLoadingAnalysis && (
+        <div className="flex justify-center items-center p-6">
+          <LoadingSpinner size={28} />
+          <p className="ml-2 text-muted-foreground">과거 데이터 분석 중...</p>
+        </div>
+      )}
+
+      {analysisResults && !isLoadingAnalysis && (
+         <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-secondary-foreground" />
+                과거 데이터 분석 (최근 {analysisResults.analyzedDrawsCount}회차 기준)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                <p className="text-base text-muted-foreground">
+                    평균 당첨 번호 합계: <strong className="text-foreground">{analysisResults.averageSum.toFixed(1)}</strong>
+                </p>
+                <p className="text-base text-muted-foreground">
+                    가장 흔한 짝수:홀수 비율: <strong className="text-foreground">{analysisResults.averageEvenOddRatio}</strong>
+                </p>
+                {analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0 && (
+                    <p className="text-base text-muted-foreground">
+                        자주 당첨된 번호 (횟수): <strong className="text-foreground">{analysisResults.frequentNumbers.map(item => `${item.num}(${item.count})`).join(', ')}</strong>
+                    </p>
+                )}
+                {analysisResults.infrequentNumbers && analysisResults.infrequentNumbers.length > 0 && (
+                     <p className="text-base text-muted-foreground">
+                        가장 적게 나온 번호: <strong className="text-foreground">{analysisResults.infrequentNumbers.join(', ')}</strong>
+                    </p>
+                )}
+                <p className="text-sm text-muted-foreground pt-1">{analysisResults.summaryForDisplay}</p>
+            </CardContent>
+        </Card>
+      )}
+
+      {analysisResults && !isLoadingAnalysis && ( // Show recommendation inputs only after analysis
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <HelpCircle className="text-primary h-5 w-5" /> AI 번호 추천 조건 설정
+            </CardTitle>
+            <CardDescription>
+              포함하거나 제외할 숫자를 선택하고, AI 추천 번호를 받아보세요.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...recommendationForm}>
+              <form onSubmit={recommendationForm.handleSubmit(onRecommendationSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={recommendationForm.control}
+                    name="includeNumbers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1"><CheckSquare className="h-4 w-4"/> 포함할 숫자 (선택, 최대 6개, 쉼표로 구분)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="예: 7, 14, 21" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={recommendationForm.control}
+                    name="excludeNumbers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1"><XSquare className="h-4 w-4"/> 제외할 숫자 (선택, 쉼표로 구분)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="예: 1, 10, 45" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <Button type="submit" disabled={isSubmittingRecommendation || isLoadingAnalysis} className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                  {isSubmittingRecommendation ? <LoadingSpinner size={20} /> : "AI 과학적 번호 추천 받기"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mt-auto pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Link href="/" passHref>
@@ -300,4 +368,3 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
-
