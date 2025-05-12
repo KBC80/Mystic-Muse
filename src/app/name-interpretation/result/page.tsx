@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput, type SuriGyeokSchema as SuriGyeokType } from '@/ai/flows/name-interpretation-flow';
-import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, BarChart2, Star as StarIcon, Award } from 'lucide-react';
+import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, BarChart2, Star as StarIcon, Award, ThumbsUp } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
@@ -26,7 +26,7 @@ import {
   Legend,
   CartesianGrid,
 } from 'recharts';
-import { ChartContainer, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string | React.ReactNode }> = ({ title, icon: Icon, children, className, cardDescription }) => (
@@ -267,7 +267,7 @@ function NameInterpretationResultContent() {
             <Sparkles className="h-8 w-8" /> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
           <CardDescription className={cn("text-md pt-2 p-3 rounded-md", getOverallGradeStyle(oa.summaryEvaluation))}>
-            <strong>간단 요약:</strong> {oa.summaryEvaluation} (종합 점수: <strong className="text-accent">{oa.totalScore}점</strong>)
+            <strong>간단 요약:</strong> {oa.summaryEvaluation} (종합 점수: <strong className="text-accent-foreground">{oa.totalScore}점</strong>). {oa.overallFortuneSummary}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -314,7 +314,6 @@ function NameInterpretationResultContent() {
                       cy="50%"
                       innerRadius={30}
                       outerRadius={50}
-                      labelLine={false}
                       label={({ name, percent, value }) => value > 0 ? `${name.substring(0,1)}: ${(percent * 100).toFixed(0)}%` : null}
                       fontSize={10}
                     >
@@ -349,7 +348,7 @@ function NameInterpretationResultContent() {
                 종합 평가 등급: {oa.summaryEvaluation}
             </p>
             <p className="text-3xl font-bold mt-2">
-                종합 점수: <span className="text-accent">{oa.totalScore}점</span> / 100점
+                종합 점수: <span className="text-accent-foreground">{oa.totalScore}점</span> / 100점
             </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
@@ -382,20 +381,6 @@ function NameInterpretationResultContent() {
       <SectionCard title="오행 및 음양 상세 분석" icon={Palette} className="bg-card" cardDescription="이름의 소리, 글자 모양, 한자 뜻에 담긴 오행과 음양의 조화를 분석합니다.">
         <div className="space-y-4">
             <div>
-                <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><Mic className="h-4 w-4"/> 이름의 발음오행 분석</h4>
-                <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">
-                    {da.nameStructureAnalysis.pronunciationOhaeng.initialConsonants.map((item, idx) => (
-                        <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[55px] text-center">
-                            <div className="font-semibold text-lg text-foreground">{item.character}</div>
-                            <div className="text-xs">{item.consonant} ({item.ohaeng})</div>
-                        </div>
-                    ))}
-                </div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>관계:</strong> {da.nameStructureAnalysis.pronunciationOhaeng.harmonyRelationship}</p>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>평가:</strong> {da.nameStructureAnalysis.pronunciationOhaeng.assessment}</p>
-            </div>
-            <Separator className="my-3"/>
-            <div>
                 <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground flex items-center gap-1"><BookOpen className="h-4 w-4"/> 이름의 음양 조화 (획수 기반)</h4>
                  <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">
                     {da.nameStructureAnalysis.hanjaStrokeCounts?.map((item, idx) => (
@@ -407,6 +392,20 @@ function NameInterpretationResultContent() {
                 </div>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>음양 구성:</strong> {da.nameStructureAnalysis.yinYangHarmony.nameYinYangComposition}</p>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>평가:</strong> {da.nameStructureAnalysis.yinYangHarmony.assessment}</p>
+            </div>
+            <Separator className="my-3"/>
+            <div>
+                <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><Mic className="h-4 w-4"/> 이름의 발음오행 분석</h4>
+                <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">
+                    {da.nameStructureAnalysis.pronunciationOhaeng.initialConsonants.map((item, idx) => (
+                        <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[55px] text-center">
+                            <div className="font-semibold text-lg text-foreground">{item.character}</div>
+                            <div className="text-xs">{item.consonant} ({item.ohaeng})</div>
+                        </div>
+                    ))}
+                </div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>관계:</strong> {da.nameStructureAnalysis.pronunciationOhaeng.harmonyRelationship}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap"><strong>평가:</strong> {da.nameStructureAnalysis.pronunciationOhaeng.assessment}</p>
             </div>
             <Separator className="my-3"/>
              <div>
@@ -425,14 +424,22 @@ function NameInterpretationResultContent() {
       </SectionCard>
       
       <SectionCard title="한자 필터링 및 주의사항" icon={Filter} className="bg-card">
-        <h4 className="font-semibold text-md mb-1 text-secondary-foreground">불용한자 여부</h4>
-        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.inauspiciousHanja && car.inauspiciousHanja.length > 0 ? car.inauspiciousHanja.join(', ') : "이름에 특별한 불용한자는 발견되지 않았습니다."}</p>
-         {car.generalAdvice && (
-          <>
-            <h4 className="font-semibold text-md mt-4 mb-1 text-destructive flex items-center gap-1"><AlertTriangle className="h-4 w-4"/>종합 조언 및 주의사항</h4>
-            <p className="text-sm text-destructive/90 whitespace-pre-wrap">{car.generalAdvice}</p>
-          </>
-        )}
+        <div className="space-y-3">
+            <div>
+                <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><AlertTriangle className="h-4 w-4 text-red-500"/> 불용한자 여부</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.inauspiciousHanja && car.inauspiciousHanja.length > 0 ? car.inauspiciousHanja.join(', ') : "이름에 특별한 불용한자는 발견되지 않았습니다."}</p>
+            </div>
+             <div>
+                <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><ThumbsUp className="h-4 w-4 text-green-500"/> 길한 한자</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.auspiciousHanja && car.auspiciousHanja.length > 0 ? car.auspiciousHanja.join(', ') : "이름에 특별히 길한 의미를 지닌 한자는 발견되지 않았습니다."}</p>
+            </div>
+            {car.generalAdvice && (
+            <>
+                <h4 className="font-semibold text-md mt-4 mb-1 text-secondary-foreground flex items-center gap-1"><Info className="h-4 w-4"/>종합 조언 및 참고사항</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.generalAdvice}</p>
+            </>
+            )}
+        </div>
       </SectionCard>
 
 
