@@ -45,14 +45,15 @@ const ohaengChartConfig = {
 
 
 const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: number; maxScore: number }) => {
-  const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-  let barColor = 'bg-primary'; 
-  if (maxScore > 0) {
-    if (percentage >= 80) barColor = 'bg-green-500'; 
-    else if (percentage >= 60) barColor = 'bg-blue-500'; 
-    else if (percentage >= 40) barColor = 'bg-yellow-500'; 
-    else barColor = 'bg-red-500'; 
-  }
+  const percentage = maxScore > 0 ? Math.max(0, Math.min(100, (score / maxScore) * 100)) : 0; 
+  
+  const colorMap: { [key: string]: string } = {
+    "음양오행 조화": "bg-blue-500",
+    "수리길흉 (원형이정)": "bg-green-500",
+    "발음오행": "bg-yellow-500",
+    "자원오행 (사주보완)": "bg-purple-500",
+  };
+  const barColor = colorMap[label] || 'bg-primary';
 
   return (
     <div className="mb-3">
@@ -72,23 +73,25 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
 
 const getRatingValue = (rating?: string): number => {
     if (!rating) return 0;
-    if (suri81Data.numberClassifications.choiSangUnSu.some(r => rating.includes(r.toString()))) return 5;
-    if (suri81Data.numberClassifications.sangUnSu.some(r => rating.includes(r.toString()))) return 4;
-    if (suri81Data.numberClassifications.yangUnSu.some(r => rating.includes(r.toString()))) return 3; // 양운수도 길함으로 처리
-    if (rating.includes("길")) return 4; // 일반 '길'
-    if (rating.includes("평")) return 3;
-    if (suri81Data.numberClassifications.choiHyungUnSu.some(r => rating.includes(r.toString()))) return 1;
-    if (suri81Data.numberClassifications.hyungUnSu.some(r => rating.includes(r.toString()))) return 2;
-    if (rating.includes("흉")) return 2; // 일반 '흉'
+    const ratingString = rating.toString(); // Ensure it's a string
+    if (suri81Data.numberClassifications.choiSangUnSu.some(r => ratingString.includes(r.toString()))) return 5;
+    if (suri81Data.numberClassifications.sangUnSu.some(r => ratingString.includes(r.toString()))) return 4;
+    if (suri81Data.numberClassifications.yangUnSu.some(r => ratingString.includes(r.toString()))) return 3; 
+    if (ratingString.includes("길")) return 4; 
+    if (ratingString.includes("평")) return 3;
+    if (suri81Data.numberClassifications.choiHyungUnSu.some(r => ratingString.includes(r.toString()))) return 1;
+    if (suri81Data.numberClassifications.hyungUnSu.some(r => ratingString.includes(r.toString()))) return 2;
+    if (ratingString.includes("흉")) return 2; 
     return 0;
 };
 
 const getRatingColorClass = (rating?: string): string => {
   if (!rating) return "text-muted-foreground";
-  if (rating.includes("대길") || rating.includes("최상") || rating.includes("상운수") || rating.includes("양운수")) return "text-green-600 dark:text-green-400";
-  if (rating.includes("길")) return "text-blue-500 dark:text-blue-400";
-  if (rating.includes("평") || rating.includes("보통")) return "text-yellow-600 dark:text-yellow-400";
-  if (rating.includes("흉") || rating.includes("최흉")) return "text-red-600 dark:text-red-400";
+  const ratingString = rating.toString();
+  if (ratingString.includes("대길") || ratingString.includes("최상") || ratingString.includes("상운수") || ratingString.includes("양운수")) return "text-green-600 dark:text-green-400";
+  if (ratingString.includes("길")) return "text-blue-500 dark:text-blue-400";
+  if (ratingString.includes("평") || ratingString.includes("보통")) return "text-yellow-600 dark:text-yellow-400";
+  if (ratingString.includes("흉") || ratingString.includes("최흉")) return "text-red-600 dark:text-red-400";
   return "text-muted-foreground";
 };
 
@@ -220,13 +223,13 @@ function NameInterpretationResultContent() {
       <Card className="shadow-xl border-primary/40">
         <CardHeader className="pb-4 bg-secondary/10 dark:bg-secondary/20 rounded-t-lg">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <Sparkles className="h-8 w-8" /> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`} 님의 이름 풀이 결과
+            <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className="text-md pt-2 p-3 rounded-md text-foreground bg-background/50 dark:bg-background/30 shadow-sm"> 
+           <CardDescription className="text-md pt-2 p-3 rounded-md bg-card dark:bg-card/80 shadow-sm text-card-foreground"> 
               <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation}
               </strong>
-              <span className="text-foreground"> (종합 점수: <strong className="text-foreground">{oa.totalScore}점</strong>). </span>
+              <span className="text-card-foreground"> (종합 점수: <strong className="text-primary">{oa.totalScore}점</strong>). </span>
               {oa.overallFortuneSummary}
           </CardDescription>
         </CardHeader>
@@ -234,13 +237,12 @@ function NameInterpretationResultContent() {
       
       <SectionCard title="기본 정보 요약" icon={Info} className="bg-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <p><strong className="text-foreground">이름 (한글):</strong> {bis.koreanName}</p>
-          {bis.hanjaName && <p><strong className="text-foreground">이름 (한자):</strong> {bis.hanjaName}</p>}
+          <p><strong className="text-foreground">이름:</strong> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`}</p>
           <p><strong className="text-foreground">성별:</strong> {bis.gender}</p>
           <p><strong className="text-foreground">양력 생일:</strong> {bis.solarBirthDate}</p>
           <p><strong className="text-foreground">음력 생일:</strong> {bis.lunarBirthDate}</p>
           <p><strong className="text-foreground">출생 시간:</strong> {birthTimeLabel}</p>
-          <p className="md:col-span-2 pt-1">
+          <p className="pt-1">
             <strong className="text-foreground">사주 정보:</strong> {bis.gapjaYearName} ({bis.zodiacColor && `${bis.zodiacColor} `}{bis.zodiacSign})
           </p>
           <div className="md:col-span-2 pt-1">
@@ -268,7 +270,7 @@ function NameInterpretationResultContent() {
             <p className={cn("text-lg font-semibold px-2 py-1 rounded-md inline-block", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 종합 평가 등급: {oa.summaryEvaluation}
             </p>
-            <p className="text-3xl font-bold mt-2">
+            <p className="text-3xl font-bold mt-2 text-foreground">
                 종합 점수: <span className="text-primary">{oa.totalScore}점</span> / 100점
             </p>
         </div>
