@@ -244,7 +244,7 @@ function NameInterpretationResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm", oa.summaryEvaluation ? "text-foreground bg-card" : "text-muted-foreground")}> 
+           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm text-foreground", oa.summaryEvaluation ? "bg-card" : "bg-muted")}> 
               <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation || "정보 없음"}
               </strong>
@@ -345,7 +345,7 @@ function NameInterpretationResultContent() {
                     {da.nameStructureAnalysis.hanjaStrokeCounts?.map((item, idx) => (
                         <div key={idx} className="text-sm text-muted-foreground border border-border/70 p-2 rounded-md bg-background/30 shadow-sm min-w-[60px] text-center">
                             <div className="font-semibold text-lg text-foreground">{item.character}</div>
-                            {item.strokes !== undefined && <div className="text-xs">{item.strokes % 2 === 0 ? '음(陰)' : '양(陽)'} ({item.strokes}획)</div>}
+                            {item.strokes !== undefined && <div className="text-xs">{item.yinYang} ({item.strokes}획)</div>}
                         </div>
                     ))}
                 </div>
