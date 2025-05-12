@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,16 +25,24 @@ import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, TrendingUp, Inf
 import { getInitialScientificLottoData, type ProcessedWinningNumber, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
 import { cn } from '@/lib/utils';
 
-const analysisFormSchema = z.object({
+const createAnalysisFormSchema = (latestDrawNo: number | null) => z.object({
   numberOfDrawsForAnalysis: z.string()
     .min(1, "분석할 회차 수를 입력해주세요.")
     .refine(val => {
       const num = parseInt(val, 10);
-      return !isNaN(num) && num >= 5 && num <= 100;
-    }, { message: "분석할 회차 수는 5에서 100 사이의 숫자여야 합니다." }),
+      if (isNaN(num)) return false;
+      if (num < 5) return false;
+      if (latestDrawNo !== null && num > latestDrawNo) return false;
+      return true;
+    }, { 
+      message: latestDrawNo 
+                 ? `분석할 회차 수는 5에서 ${latestDrawNo} 사이의 숫자여야 합니다.` 
+                 : "분석할 회차 수는 5 이상이어야 합니다. (최신 회차 정보 로딩 중)" 
+    }),
 });
 
-type AnalysisFormValues = z.infer<typeof analysisFormSchema>;
+
+type AnalysisFormValues = z.infer<ReturnType<typeof createAnalysisFormSchema>>;
 
 const recommendationFormSchema = z.object({
   includeNumbers: z.string().optional().refine(val => {
@@ -96,12 +105,17 @@ export default function ScientificLottoRecommendationPage() {
   const [recentDrawsForDisplay, setRecentDrawsForDisplay] = useState<ProcessedWinningNumber[]>([]);
   const [analysisResults, setAnalysisResults] = useState<CalculatedAverages | null>(null);
   const [analyzedDrawsCountInput, setAnalyzedDrawsCountInput] = useState<string>("24");
+  const [latestDrawNo, setLatestDrawNo] = useState<number | null>(null);
+
+
+  const analysisSchema = useMemo(() => createAnalysisFormSchema(latestDrawNo), [latestDrawNo]);
 
   const analysisForm = useForm<AnalysisFormValues>({
-    resolver: zodResolver(analysisFormSchema),
+    resolver: zodResolver(analysisSchema),
     defaultValues: {
       numberOfDrawsForAnalysis: "24",
     },
+     mode: "onChange", // To reflect dynamic error messages from schema
   });
 
   const recommendationForm = useForm<RecommendationFormValues>({
@@ -122,6 +136,17 @@ export default function ScientificLottoRecommendationPage() {
           setError(data.error);
         } else {
           if (data.recentDraws) setRecentDrawsForDisplay(data.recentDraws);
+          if (data.latestDrawNo) {
+            setLatestDrawNo(data.latestDrawNo);
+            // Adjust default value if it's now invalid
+            const currentDefault = parseInt(analysisForm.getValues("numberOfDrawsForAnalysis"), 10);
+            if (data.latestDrawNo < currentDefault && data.latestDrawNo >= 5) {
+              analysisForm.setValue("numberOfDrawsForAnalysis", data.latestDrawNo.toString(), { shouldValidate: true });
+            } else if (currentDefault < 5){
+               analysisForm.setValue("numberOfDrawsForAnalysis", "5", { shouldValidate: true });
+            }
+             analysisForm.trigger("numberOfDrawsForAnalysis"); // Re-validate with new latestDrawNo
+          }
         }
       } catch (err) {
         console.error("초기 데이터 로딩 오류:", err);
@@ -131,12 +156,42 @@ export default function ScientificLottoRecommendationPage() {
       }
     }
     loadInitialData();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // analysisForm is not stable in deps array if schema changes
+
+  useEffect(() => {
+    if (latestDrawNo !== null) {
+      const currentValStr = analysisForm.getValues("numberOfDrawsForAnalysis");
+      const currentVal = parseInt(currentValStr, 10);
+      
+      if (!isNaN(currentVal)) {
+        if (currentVal > latestDrawNo) {
+          analysisForm.setValue("numberOfDrawsForAnalysis", latestDrawNo.toString(), { shouldValidate: true });
+        } else if (currentVal < 5) {
+           analysisForm.setValue("numberOfDrawsForAnalysis", "5", { shouldValidate: true });
+        }
+      } else if (currentValStr === "" && analysisForm.formState.isSubmitted) { 
+        // If empty and submitted, let validation handle it
+      } else if (latestDrawNo < 24 && currentValStr === "24"){ // Initial default might be too high
+         analysisForm.setValue("numberOfDrawsForAnalysis", latestDrawNo.toString(), { shouldValidate: true });
+      }
+      analysisForm.trigger("numberOfDrawsForAnalysis");
+    }
+  }, [latestDrawNo, analysisForm]);
+
 
   async function onAnalysisSubmit(values: AnalysisFormValues) {
     setIsLoadingAnalysis(true);
     setError(null);
     setAnalysisResults(null);
+    const numDrawsToAnalyze = parseInt(values.numberOfDrawsForAnalysis, 10);
+    if (latestDrawNo !== null && numDrawsToAnalyze > latestDrawNo) {
+        setError(`분석할 회차 수는 최신 회차(${latestDrawNo}회)를 넘을 수 없습니다.`);
+        setIsLoadingAnalysis(false);
+        analysisForm.setValue("numberOfDrawsForAnalysis", latestDrawNo.toString(), {shouldValidate: true});
+        return;
+    }
+
     setAnalyzedDrawsCountInput(values.numberOfDrawsForAnalysis);
     try {
       const data = await getInitialScientificLottoData(values.numberOfDrawsForAnalysis);
@@ -144,6 +199,7 @@ export default function ScientificLottoRecommendationPage() {
         setError(data.error);
       } else {
         if (data.averages) setAnalysisResults(data.averages);
+        if (data.latestDrawNo && !latestDrawNo) setLatestDrawNo(data.latestDrawNo); // Update if not already set
       }
     } catch (err) {
       console.error("과거 데이터 분석 오류:", err);
@@ -182,7 +238,7 @@ export default function ScientificLottoRecommendationPage() {
       {isInitialLoading && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">최근 당첨 번호 로딩 중...</p>
+          <p className="ml-2 text-muted-foreground">최신 당첨 번호 로딩 중...</p>
         </div>
       )}
       
@@ -246,15 +302,24 @@ export default function ScientificLottoRecommendationPage() {
                 name="numberOfDrawsForAnalysis"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-1"><FileText className="h-4 w-4"/> 분석할 최근 회차 수 (5~100)</FormLabel>
+                    <FormLabel className="flex items-center gap-1">
+                        <FileText className="h-4 w-4"/> 분석할 최근 회차 수 (5 ~ {latestDrawNo ?? '최신회차'})
+                    </FormLabel>
                     <FormControl>
-                      <Input type="number" min="5" max="100" placeholder="예: 24" {...field} />
+                      <Input 
+                        type="number" 
+                        min="5" 
+                        max={latestDrawNo?.toString()}
+                        placeholder={latestDrawNo ? `예: ${Math.min(24, latestDrawNo)}` : "예: 24"} 
+                        {...field} 
+                        disabled={latestDrawNo === null}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isLoadingAnalysis} className="w-full md:w-auto">
+              <Button type="submit" disabled={isLoadingAnalysis || latestDrawNo === null} className="w-full md:w-auto">
                 {isLoadingAnalysis ? <LoadingSpinner size={20} /> : "과거 데이터 분석하기"}
               </Button>
             </form>
@@ -291,8 +356,7 @@ export default function ScientificLottoRecommendationPage() {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="w-[150px]">구분</TableHead>
-                            {/* 최대 7개 번호 + 횟수 열 생성 */}
-                            {Array.from({ length: Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) }).map((_, index) => (
+                            {Array.from({ length: Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0, 1) }).map((_, index) => (
                               <TableHead key={`header-num-${index}`} className="text-center">번호 {index + 1}</TableHead>
                             ))}
                           </TableRow>
@@ -305,14 +369,13 @@ export default function ScientificLottoRecommendationPage() {
                                 {analysisResults.frequentNumbers.map(item => (
                                   <TableCell key={`freq-num-${item.num}`} className="text-center font-medium">{item.num}</TableCell>
                                 ))}
-                                {/* 빈 셀 채우기 */}
-                                {Array.from({ length: Math.max(0, (analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-${i}`} />)}
+                                {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-pad-${i}`} />)}
                               </TableRow>
                               <TableRow>
                                 {analysisResults.frequentNumbers.map(item => (
                                   <TableCell key={`freq-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
                                 ))}
-                                {Array.from({ length: Math.max(0, (analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-count-${i}`} />)}
+                                {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-count-pad-${i}`} />)}
                               </TableRow>
                             </>
                           )}
@@ -323,13 +386,13 @@ export default function ScientificLottoRecommendationPage() {
                                 {analysisResults.leastFrequentNumbers.map(item => (
                                   <TableCell key={`least-num-${item.num}`} className="text-center font-medium">{item.num}</TableCell>
                                 ))}
-                                 {Array.from({ length: Math.max(0, (analysisResults.frequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-${i}`} />)}
+                                 {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-pad-${i}`} />)}
                               </TableRow>
                               <TableRow>
                                 {analysisResults.leastFrequentNumbers.map(item => (
                                   <TableCell key={`least-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
                                 ))}
-                                {Array.from({ length: Math.max(0, (analysisResults.frequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-count-${i}`} />)}
+                                {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-count-pad-${i}`} />)}
                               </TableRow>
                             </>
                           )}
@@ -410,3 +473,4 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
+

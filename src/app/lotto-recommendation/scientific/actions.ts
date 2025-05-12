@@ -217,43 +217,53 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
 export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?: string): Promise<{
   recentDraws?: ProcessedWinningNumber[]; 
   averages?: CalculatedAverages; 
+  latestDrawNo?: number | null;
   error?: string;
 }> {
   try {
     const { draws: rawRecentDrawsForDisplay, latestDrawNo: latestDrawNoForDisplay } = await getMostRecentDraws(5);
     if (latestDrawNoForDisplay === null) {
-      return { error: "최신 회차 정보를 가져올 수 없습니다." };
+      return { error: "최신 회차 정보를 가져올 수 없습니다.", latestDrawNo: null };
     }
     if (rawRecentDrawsForDisplay.length === 0) {
-      return { error: "최근 당첨 번호를 가져올 수 없습니다." };
+      return { error: "최근 당첨 번호를 가져올 수 없습니다.", latestDrawNo: latestDrawNoForDisplay };
     }
     const processedRecentDrawsForDisplay = processRawDraws(rawRecentDrawsForDisplay);
     
     if (numberOfDrawsForAnalysisStr) {
         let numDrawsToAnalyze = parseInt(numberOfDrawsForAnalysisStr, 10);
-        if (isNaN(numDrawsToAnalyze) || numDrawsToAnalyze < 5 || numDrawsToAnalyze > 100) {
-            return { recentDraws: processedRecentDrawsForDisplay, error: "분석할 회차 수는 5에서 100 사이여야 합니다." };
+        if (isNaN(numDrawsToAnalyze) || numDrawsToAnalyze < 5 || numDrawsToAnalyze > latestDrawNoForDisplay) { // Max check against latestDrawNo
+            return { 
+              recentDraws: processedRecentDrawsForDisplay, 
+              error: `분석할 회차 수는 5에서 ${latestDrawNoForDisplay} 사이여야 합니다.`,
+              latestDrawNo: latestDrawNoForDisplay 
+            };
         }
-        const { draws: rawDrawsForAnalysis, latestDrawNo: latestDrawNoForAnalysis } = await getMostRecentDraws(numDrawsToAnalyze);
-        if (latestDrawNoForAnalysis === null) {
-             return { recentDraws: processedRecentDrawsForDisplay, error: "분석을 위한 과거 데이터를 가져오는 중 최신 회차 정보를 확인할 수 없습니다." };
+        const { draws: rawDrawsForAnalysis, latestDrawNo: latestDrawNoForAnalysisInner } = await getMostRecentDraws(numDrawsToAnalyze);
+        if (latestDrawNoForAnalysisInner === null) { // Should not happen if latestDrawNoForDisplay is not null
+             return { 
+               recentDraws: processedRecentDrawsForDisplay, 
+               error: "분석을 위한 과거 데이터를 가져오는 중 최신 회차 정보를 확인할 수 없습니다.",
+               latestDrawNo: latestDrawNoForDisplay 
+              };
         }
         if (rawDrawsForAnalysis.length < 5) { 
             return { 
                 recentDraws: processedRecentDrawsForDisplay, 
-                error: `분석을 위한 과거 당첨 데이터를 충분히 가져올 수 없습니다 (최소 5회차 필요, 현재 ${rawDrawsForAnalysis.length}회차).` 
+                error: `분석을 위한 과거 당첨 데이터를 충분히 가져올 수 없습니다 (최소 5회차 필요, 현재 ${rawDrawsForAnalysis.length}회차).`,
+                latestDrawNo: latestDrawNoForDisplay 
             };
         }
         const processedDrawsForAnalysis = processRawDraws(rawDrawsForAnalysis);
         const averages = calculateAveragesAndSummarize(processedDrawsForAnalysis, numDrawsToAnalyze);
-        return { recentDraws: processedRecentDrawsForDisplay, averages };
+        return { recentDraws: processedRecentDrawsForDisplay, averages, latestDrawNo: latestDrawNoForDisplay };
     }
 
-    return { recentDraws: processedRecentDrawsForDisplay };
+    return { recentDraws: processedRecentDrawsForDisplay, latestDrawNo: latestDrawNoForDisplay };
 
   } catch (error) {
     console.error("Error in getInitialScientificLottoData:", error);
-    return { error: error instanceof Error ? error.message : "데이터를 가져오는 중 오류 발생" };
+    return { error: error instanceof Error ? error.message : "데이터를 가져오는 중 오류 발생", latestDrawNo: null };
   }
 }
 
@@ -269,8 +279,8 @@ export async function getLottoRecommendationsAction({
   numberOfDrawsForAnalysisStr,
 }: GetLottoRecommendationsActionInput): Promise<{
   llmResponse?: ScientificLottoRecommendationOutput;
-  historicalDataSummaryForLLM?: string; // For LLM input
-  analysisDataForUI?: { // For UI display
+  historicalDataSummaryForLLM?: string; 
+  analysisDataForUI?: { 
     analyzedDrawsCount: number;
     averageSum: number;
     averageEvenOddRatio: string;
@@ -281,15 +291,18 @@ export async function getLottoRecommendationsAction({
   error?: string;
 }> {
   try {
-    let numDrawsToAnalyze = parseInt(numberOfDrawsForAnalysisStr, 10);
-    if (isNaN(numDrawsToAnalyze) || numDrawsToAnalyze < 5 || numDrawsToAnalyze > 100) {
-       return { error: "분석할 회차 수는 5회에서 100회 사이여야 합니다." };
-    }
-    
-    const { draws: rawDrawsForAnalysis, latestDrawNo } = await getMostRecentDraws(numDrawsToAnalyze); 
+    const { latestDrawNo } = await getMostRecentDraws(1); // Fetch to get the absolute latest draw number
     if (latestDrawNo === null) {
         return { error: "LLM 추천을 위한 과거 데이터를 가져오는 중 최신 회차 정보를 확인할 수 없습니다." };
     }
+    
+    let numDrawsToAnalyze = parseInt(numberOfDrawsForAnalysisStr, 10);
+    if (isNaN(numDrawsToAnalyze) || numDrawsToAnalyze < 5 || numDrawsToAnalyze > latestDrawNo) {
+       return { error: `분석할 회차 수는 5회에서 ${latestDrawNo}회 사이여야 합니다.` };
+    }
+    
+    const { draws: rawDrawsForAnalysis } = await getMostRecentDraws(numDrawsToAnalyze); 
+    
     if (rawDrawsForAnalysis.length < 5) { 
       return { error: `LLM 추천을 위한 과거 당첨 데이터를 충분히 가져올 수 없습니다 (최소 5회차 필요, 현재 ${rawDrawsForAnalysis.length}회차).` };
     }
@@ -324,8 +337,8 @@ export async function getLottoRecommendationsAction({
     const llmResponse = await recommendScientificLottoNumbers(inputForLLM);
     return { 
         llmResponse, 
-        historicalDataSummaryForLLM: analysisSummary.summaryForDisplay, // For LLM
-        analysisDataForUI: { // For UI
+        historicalDataSummaryForLLM: analysisSummary.summaryForDisplay,
+        analysisDataForUI: { 
             analyzedDrawsCount: analysisSummary.analyzedDrawsCount,
             averageSum: analysisSummary.averageSum,
             averageEvenOddRatio: analysisSummary.averageEvenOddRatio,
