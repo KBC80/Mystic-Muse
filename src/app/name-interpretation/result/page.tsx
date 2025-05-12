@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput, type SuriGyeokSchema as SuriGyeokType } from '@/ai/flows/name-interpretation-flow';
-import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, Award, BarChart3, HelpCircle } from 'lucide-react';
+import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, Award, BarChart3, HelpCircle, Gift } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
@@ -242,13 +242,13 @@ function NameInterpretationResultContent() {
       <Card className="shadow-xl bg-card dark:bg-card/90 border-primary/20">
         <CardHeader className="pb-4 rounded-t-lg">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <Sparkles className="h-8 w-8" /> {bis.koreanName} 님의 이름 풀이 결과
+            <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className="text-md pt-2 p-3 rounded-md bg-background/70 dark:bg-card/80 shadow-sm text-foreground"> 
-              <strong className={cn("px-1 py-0.5 rounded text-foreground", getOverallGradeTextStyle(oa.summaryEvaluation))}>
-                간단 요약: {oa.summaryEvaluation}
+           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm", oa.summaryEvaluation ? "text-foreground bg-card" : "text-muted-foreground")}> 
+              <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
+                간단 요약: {oa.summaryEvaluation || "정보 없음"}
               </strong>
-              <span className="text-foreground"> (종합 점수: <strong className="text-primary">{oa.totalScore}점</strong>). </span>
+              {oa.totalScore !== undefined && <span className="text-foreground"> (종합 점수: <strong className="text-primary">{oa.totalScore}점</strong>). </span>}
               <span className="text-foreground">{oa.overallFortuneSummary}</span>
           </CardDescription>
         </CardHeader>
@@ -268,7 +268,7 @@ function NameInterpretationResultContent() {
             <div className="flex flex-wrap gap-2">
             {[bis.sajuPillars.yearPillar, bis.sajuPillars.monthPillar, bis.sajuPillars.dayPillar, bis.sajuPillars.timePillar].map((pillar, index) => {
                 const isTimePillar = index === 3;
-                const isTimePillarUnknown = isTimePillar && (bis.birthTime.includes("모름") || pillar.cheonGan === "불명" || pillar.jiJi === "불명");
+                const isTimePillarUnknown = isTimePillar && (bis.birthTime.includes("모름") || pillar.cheonGan === "불명" || pillar.jiJi === "불명" || (!pillar.cheonGan && !pillar.jiJi));
                 
                 return (
                     <div key={index} className="text-xs bg-background border border-border px-2 py-1 rounded shadow-sm">
@@ -311,7 +311,7 @@ function NameInterpretationResultContent() {
               <Card key={item.key} className="bg-background/50 p-4 shadow">
                   <CardHeader className="p-0 pb-2">
                     <CardTitle className="text-md text-secondary-foreground flex items-center justify-between">
-                        <span>{item.label.split('(')[0].trim()} ({item.label.match(/\(([^)]+)\)/)?.[1]}) - {item.suriRatingName}</span>
+                        <span>{item.label}</span>
                         <span className={`font-semibold text-sm px-1.5 py-0.5 rounded ${item.colorClass}`}>{item.rating} ({item.suriNumber}수)</span>
                     </CardTitle>
                   </CardHeader>
@@ -398,6 +398,23 @@ function NameInterpretationResultContent() {
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.generalAdvice}</p>
             </>
             )}
+            {car.luckyNumbers && car.luckyNumbers.length > 0 && (
+            <div className="pt-4">
+              <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1">
+                <Gift className="h-4 w-4 text-yellow-500" /> 행운의 숫자
+              </h4>
+              <div className="flex space-x-2">
+                {car.luckyNumbers.map((num) => (
+                  <span
+                    key={num}
+                    className="flex items-center justify-center h-10 w-10 rounded-full bg-accent text-accent-foreground font-bold text-lg shadow-md"
+                  >
+                    {num}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </SectionCard>
 
@@ -430,3 +447,4 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
+
