@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput, type SuriGyeokSchema as SuriGyeokType } from '@/ai/flows/name-interpretation-flow';
-import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, BarChart2, Star as StarIcon, Award, ThumbsUp } from 'lucide-react';
+import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, BarChart2, Award } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
@@ -30,7 +30,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/u
 
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string | React.ReactNode }> = ({ title, icon: Icon, children, className, cardDescription }) => (
-  <Card className={cn("shadow-md", className)}>
+  <Card className={cn("shadow-md w-full", className)}>
     <CardHeader className="pb-3 pt-5">
       <CardTitle className="text-xl text-primary flex items-center gap-2">
         {Icon && <Icon className="h-5 w-5" />}
@@ -57,17 +57,16 @@ const ohaengChartConfig = {
 
 const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: number; maxScore: number }) => {
   const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-  let barColor = 'bg-primary'; // Default color
+  let barColor = 'bg-primary'; 
   if (maxScore > 0) {
-    if (percentage >= 80) barColor = 'bg-green-500'; // Excellent
-    else if (percentage >= 60) barColor = 'bg-blue-500'; // Good
-    else if (percentage >= 40) barColor = 'bg-yellow-500'; // Average
-    else barColor = 'bg-red-500'; // Needs improvement
+    if (percentage >= 80) barColor = 'bg-green-500'; 
+    else if (percentage >= 60) barColor = 'bg-blue-500'; 
+    else if (percentage >= 40) barColor = 'bg-yellow-500'; 
+    else barColor = 'bg-red-500'; 
   }
 
-
   return (
-    <div className="mb-2">
+    <div className="mb-3">
       <div className="flex justify-between text-xs mb-0.5">
         <span className="font-medium text-muted-foreground">{label}</span>
         <span className="text-foreground font-semibold">{score} / {maxScore}점</span>
@@ -82,7 +81,8 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
   );
 };
 
-const getRatingValue = (rating: SuriGyeokType['rating']): number => {
+const getRatingValue = (rating?: SuriGyeokType['rating']): number => {
+  if (!rating) return 0;
   switch (rating) {
     case '대길': return 5;
     case '길': return 4;
@@ -99,17 +99,24 @@ const getRatingColorClass = (ratingValue: number): string => {
   return "text-red-600 dark:text-red-400"; 
 };
 
+const suriGyeokBarColors = [
+  "hsl(var(--chart-1))", // 원격 - 초록 계열
+  "hsl(var(--chart-2))", // 형격 - 빨강 계열
+  "hsl(var(--chart-3))", // 이격 - 노랑/갈색 계열
+  "hsl(var(--chart-4))", // 정격 - 회색/은색 계열
+];
+
 const SuriGyeokAnalysisBarChart = ({ data }: { data: ReturnType<typeof mapSuriGyeokData>}) => {
-  const chartData = data.map(item => ({
+  const chartData = data.map((item, index) => ({
     name: item.name,
     value: item.rating,
     ratingText: item.ratingText,
     suriNumber: item.suriNumber,
-    fill: getRatingColorClass(item.rating).split(' ')[0].replace('text-', 'hsl(var(--chart-').replace('-600', '))').replace('-400', '))') // Simplified color mapping
+    fill: suriGyeokBarColors[index % suriGyeokBarColors.length] 
   }));
   
-  const suriChartConfig = chartData.reduce((acc, item) => {
-    acc[item.name] = { label: item.name, color: item.fill };
+  const suriChartConfig = chartData.reduce((acc, item, index) => {
+    acc[item.name] = { label: item.name, color: suriGyeokBarColors[index % suriGyeokBarColors.length] };
     return acc;
   }, {} as ChartConfig);
 
@@ -145,18 +152,19 @@ const SuriGyeokAnalysisBarChart = ({ data }: { data: ReturnType<typeof mapSuriGy
   );
 };
 
-const mapSuriGyeokData = (suriGilhyungAnalysis: InterpretNameOutput['detailedAnalysis']['suriGilhyungAnalysis']) => {
+const mapSuriGyeokData = (suriGilhyungAnalysis?: InterpretNameOutput['detailedAnalysis']['suriGilhyungAnalysis']) => {
+  if (!suriGilhyungAnalysis) return [];
   return [
     suriGilhyungAnalysis.wonGyeok,
     suriGilhyungAnalysis.hyeongGyeok,
     suriGilhyungAnalysis.iGyeok,
     suriGilhyungAnalysis.jeongGyeok,
   ].map(item => ({
-    name: item.name.split('(')[0].trim(), 
-    agePeriod: item.name.match(/\(([^)]+)\)/)?.[1] || '', 
-    rating: getRatingValue(item.rating),
-    ratingText: item.rating,
-    suriNumber: item.suriNumber
+    name: item?.name?.split('(')[0].trim() || '정보 없음', 
+    agePeriod: item?.name?.match(/\(([^)]+)\)/)?.[1] || '', 
+    rating: getRatingValue(item?.rating),
+    ratingText: item?.rating || '정보 없음',
+    suriNumber: item?.suriNumber || 0
   }));
 };
 
@@ -198,10 +206,11 @@ function NameInterpretationResultContent() {
 
   }, [searchParams]);
 
-  const getOverallGradeStyle = (grade: string) => {
-    if (['매우 좋음', '좋음'].includes(grade)) return 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-800/50';
-    if (['보통'].includes(grade)) return 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-800/50';
-    return 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-800/50';
+  const getOverallGradeTextStyle = (grade?: string) => { 
+    if (!grade) return 'text-foreground font-semibold';
+    if (['매우 좋음', '좋음'].includes(grade)) return 'text-green-600 dark:text-green-400 font-semibold';
+    if (['보통'].includes(grade)) return 'text-yellow-600 dark:text-yellow-400 font-semibold';
+    return 'text-red-600 dark:text-red-400 font-semibold';
   };
 
 
@@ -259,6 +268,14 @@ function NameInterpretationResultContent() {
 
   const suriGyeokChartData = mapSuriGyeokData(da.suriGilhyungAnalysis);
 
+  const suriGyeokItems = [
+    { key: 'wonGyeok', data: da.suriGilhyungAnalysis.wonGyeok, label: '원격(元格) - 초년운 (0-20세)' },
+    { key: 'hyeongGyeok', data: da.suriGilhyungAnalysis.hyeongGyeok, label: '형격(亨格) - 청년운 (21-40세)' },
+    { key: 'iGyeok', data: da.suriGilhyungAnalysis.iGyeok, label: '이격(利格) - 장년운 (41-60세)' },
+    { key: 'jeongGyeok', data: da.suriGilhyungAnalysis.jeongGyeok, label: '정격(貞格) - 말년운/총운 (60세 이후)' },
+  ];
+
+
   return (
     <div className="space-y-6 py-6 flex flex-col flex-1">
       <Card className="shadow-xl border-primary/40">
@@ -266,15 +283,20 @@ function NameInterpretationResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8" /> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-          <CardDescription className={cn("text-md pt-2 p-3 rounded-md", getOverallGradeStyle(oa.summaryEvaluation))}>
-            <strong>간단 요약:</strong> {oa.summaryEvaluation} (종합 점수: <strong className="text-accent-foreground">{oa.totalScore}점</strong>). {oa.overallFortuneSummary}
+           <CardDescription className="text-md pt-2 text-foreground/90"> 
+              <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
+                간단 요약: {oa.summaryEvaluation}
+              </strong>
+              <span className="text-foreground"> (종합 점수: <strong className="text-accent-foreground">{oa.totalScore}점</strong>). </span>
+              {oa.overallFortuneSummary}
           </CardDescription>
         </CardHeader>
       </Card>
 
       <SectionCard title="기본 정보 요약" icon={Info} className="bg-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <p><strong className="text-foreground">이름:</strong> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`}</p>
+          <p><strong className="text-foreground">이름 (한글):</strong> {bis.koreanName}</p>
+          {bis.hanjaName && <p><strong className="text-foreground">이름 (한자):</strong> {bis.hanjaName}</p>}
           <p><strong className="text-foreground">성별:</strong> {bis.gender}</p>
           <p><strong className="text-foreground">양력 생일:</strong> {bis.solarBirthDate}</p>
           <p><strong className="text-foreground">음력 생일:</strong> {bis.lunarBirthDate}</p>
@@ -288,8 +310,8 @@ function NameInterpretationResultContent() {
             {[bis.sajuPillars.yearPillar, bis.sajuPillars.monthPillar, bis.sajuPillars.dayPillar, bis.sajuPillars.timePillar].map((pillar, index) => (
                 <div key={index} className="text-xs bg-background border border-border px-2 py-1 rounded shadow-sm">
                     <span className="font-semibold">{['년주', '월주', '일주', '시주'][index]}:</span>
-                    { (pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi ) ? ' 불명' : ` ${pillar.cheonGan}${pillar.jiJi}`}
-                    { !(pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi ) && <span className="ml-1 text-muted-foreground/80">({pillar.eumYang}, {pillar.ohaeng})</span>}
+                    { (pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi || pillar.eumYang === "불명" || pillar.ohaeng === "불명") && index === 3 && bis.birthTime.includes("모름") ? ' 불명' : ` ${pillar.cheonGan}${pillar.jiJi}`}
+                    { !((pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi || pillar.eumYang === "불명" || pillar.ohaeng === "불명") && index === 3 && bis.birthTime.includes("모름")) && <span className="ml-1 text-muted-foreground/80">({pillar.eumYang}, {pillar.ohaeng})</span>}
                 </div>
             ))}
             </div>
@@ -344,7 +366,7 @@ function NameInterpretationResultContent() {
 
       <SectionCard title="종합 점수 및 평가" icon={Award} className="bg-card">
         <div className="mb-4 text-center">
-            <p className={cn("text-lg font-semibold px-2 py-1 rounded-md inline-block", getOverallGradeStyle(oa.summaryEvaluation))}>
+            <p className={cn("text-lg font-semibold px-2 py-1 rounded-md inline-block", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 종합 평가 등급: {oa.summaryEvaluation}
             </p>
             <p className="text-3xl font-bold mt-2">
@@ -362,19 +384,21 @@ function NameInterpretationResultContent() {
       <SectionCard title="수리길흉 분석 (원형이정 4격)" icon={TrendingUp} className="bg-card" cardDescription={da.suriGilhyungAnalysis.introduction}>
          <SuriGyeokAnalysisBarChart data={suriGyeokChartData} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-           {suriGyeokChartData.map((luckItem, index) => (
-              <Card key={index} className="bg-background/50 p-4 shadow">
+           {suriGyeokItems.map((item) => {
+              const ratingValue = getRatingValue(item.data?.rating);
+              return (
+              <Card key={item.key} className="bg-background/50 p-4 shadow">
                   <CardHeader className="p-0 pb-1">
                     <CardTitle className="text-md text-secondary-foreground flex items-center justify-between">
-                        <span>{luckItem.name} <span className="text-xs text-muted-foreground">({luckItem.agePeriod})</span></span>
-                        <span className={`font-semibold text-sm px-1.5 py-0.5 rounded ${getRatingColorClass(luckItem.rating)}`}>{luckItem.ratingText} ({luckItem.suriNumber}수)</span>
+                        <span>{item.label.split('(')[0].trim()} <span className="text-xs text-muted-foreground">({item.label.match(/\(([^)]+)\)/)?.[1] || ''})</span></span>
+                        {item.data && <span className={`font-semibold text-sm px-1.5 py-0.5 rounded ${getRatingColorClass(ratingValue)}`}>{item.data.rating} ({item.data.suriNumber}수)</span>}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 pt-1">
-                     <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{da.suriGilhyungAnalysis[Object.keys(da.suriGilhyungAnalysis)[index+1] as keyof typeof da.suriGilhyungAnalysis].interpretation}</p>
+                     <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{item.data?.interpretation || "해석 정보가 없습니다."}</p>
                   </CardContent>
               </Card>
-          ))}
+          )})}
         </div>
       </SectionCard>
       
@@ -430,7 +454,7 @@ function NameInterpretationResultContent() {
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.inauspiciousHanja && car.inauspiciousHanja.length > 0 ? car.inauspiciousHanja.join(', ') : "이름에 특별한 불용한자는 발견되지 않았습니다."}</p>
             </div>
              <div>
-                <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><ThumbsUp className="h-4 w-4 text-green-500"/> 길한 한자</h4>
+                <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><CheckCircle className="h-4 w-4 text-green-500"/> 길한 한자</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{car.auspiciousHanja && car.auspiciousHanja.length > 0 ? car.auspiciousHanja.join(', ') : "이름에 특별히 길한 의미를 지닌 한자는 발견되지 않았습니다."}</p>
             </div>
             {car.generalAdvice && (

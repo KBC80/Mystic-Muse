@@ -29,23 +29,23 @@ const SajuPillarSchema = z.object({
 });
 
 const SajuOhaengDistributionSchema = z.object({
-  wood: z.number().describe('목(木)의 개수 또는 상대적 강도 (0-5 범위)'),
-  fire: z.number().describe('화(火)의 개수 또는 상대적 강도 (0-5 범위)'),
-  earth: z.number().describe('토(土)의 개수 또는 상대적 강도 (0-5 범위)'),
-  metal: z.number().describe('금(金)의 개수 또는 상대적 강도 (0-5 범위)'),
-  water: z.number().describe('수(水)의 개수 또는 상대적 강도 (0-5 범위)'),
+  wood: z.number().int().min(0).max(5).describe('목(木)의 개수 또는 상대적 강도 (0-5 범위)'),
+  fire: z.number().int().min(0).max(5).describe('화(火)의 개수 또는 상대적 강도 (0-5 범위)'),
+  earth: z.number().int().min(0).max(5).describe('토(土)의 개수 또는 상대적 강도 (0-5 범위)'),
+  metal: z.number().int().min(0).max(5).describe('금(金)의 개수 또는 상대적 강도 (0-5 범위)'),
+  water: z.number().int().min(0).max(5).describe('수(水)의 개수 또는 상대적 강도 (0-5 범위)'),
 });
 
 const SuriGyeokSchema = z.object({
   name: z.string().describe('격의 이름 (예: 원격(元格) - 초년운, 형격(亨格) - 청년운 등)'),
-  suriNumber: z.number().int().describe('수리 획수 (1-81). 이 값은 1에서 81 사이여야 합니다.'),
+  suriNumber: z.number().int().min(1).max(81).describe('수리 획수 (1-81). 이 값은 1에서 81 사이여야 합니다.'),
   rating: z.enum(['대길', '길', '평', '흉', '대흉']).describe('길흉 등급'),
-  interpretation: z.string().describe('해당 격에 대한 상세 해설 (성격, 운세 등). 해당 시기의 성격적 특징, 주요 운세 흐름, 대인관계, 건강, 재물, 학업/직업 등에 대한 구체적인 내용을 포함해야 합니다.'),
+  interpretation: z.string().describe('해당 격에 대한 상세 해설입니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 대인관계, 건강, 재물, 직업 등)에 대한 구체적이고 심층적인 내용을 포함해야 합니다. 단순한 키워드 나열이 아닌, 삶의 지침이 될 수 있는 통찰력 있는 설명을 제공해야 합니다.'),
 });
 
 const DetailedScoreSchema = z.object({
-  score: z.number().describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
-  maxScore: z.number().int().describe('해당 항목의 만점입니다. 양의 정수여야 합니다.'),
+  score: z.number().int().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
+  maxScore: z.number().int().positive().describe('해당 항목의 만점입니다. 양의 정수여야 합니다.'),
 });
 
 const InterpretNameOutputSchema = z.object({
@@ -72,9 +72,9 @@ const InterpretNameOutputSchema = z.object({
 
   // 2. 종합 점수 및 평가
   overallAssessment: z.object({
-    totalScore: z.number().describe('종합 점수 (100점 만점)'),
+    totalScore: z.number().int().min(0).max(100).describe('종합 점수 (100점 만점)'),
     summaryEvaluation: z.enum(['매우 좋음', '좋음', '보통', '주의 필요', '나쁨']).describe('간단한 요약 평가 문구'),
-    overallFortuneSummary: z.string().describe('간단한 인생 총운 요약입니다.'),
+    overallFortuneSummary: z.string().describe('간단한 인생 총운 요약입니다. 이름의 전반적인 기운과 삶에 미칠 수 있는 영향을 포함해야 합니다.'),
     detailedScores: z.object({
         eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수'),
         suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수'),
@@ -87,7 +87,7 @@ const InterpretNameOutputSchema = z.object({
   detailedAnalysis: z.object({
     // 이름 자체 분석
     nameStructureAnalysis: z.object({
-      hanjaStrokeCounts: z.array(z.object({ character: z.string(), strokes: z.number().optional() })).optional().describe('이름 각 한자/한글의 획수 (한자 우선, 한글은 일반적 방법)'),
+      hanjaStrokeCounts: z.array(z.object({ character: z.string(), strokes: z.number().int().optional() })).optional().describe('이름 각 한자/한글의 획수 (한자 우선, 한글은 일반적 방법)'),
       yinYangHarmony: z.object({
         nameYinYangComposition: z.string().describe('이름의 음양 구성 (예: 陽-陰-陽, 각 글자 획수 기반)'),
         assessment: z.string().describe('음양 조화에 대한 평가 (예: 음양이 조화롭습니다.)'),
@@ -100,11 +100,11 @@ const InterpretNameOutputSchema = z.object({
     }).describe('이름 구조 및 소리 분석'),
     
     suriGilhyungAnalysis: z.object({
-        introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 중년운, 말년운, 인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
-        wonGyeok: SuriGyeokSchema.extend({ name: z.string().describe('원격(元格) - 초년운 (0-20세)에 대한 격의 이름과 운세 시기입니다.') }),
-        hyeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('형격(亨格) - 청년운 (21-40세)에 대한 격의 이름과 운세 시기입니다.') }),
-        iGyeok: SuriGyeokSchema.extend({ name: z.string().describe('이격(利格) - 중년운 (41-60세)에 대한 격의 이름과 운세 시기입니다.') }),
-        jeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 격의 이름과 운세 시기입니다.') })
+        introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 청년운, 장년운, 말년운/인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
+        wonGyeok: SuriGyeokSchema.extend({ name: z.string().default('원격(元格) - 초년운 (0-20세)').describe('원격(元格) - 초년운 (0-20세)에 대한 격의 이름과 운세 시기입니다.') }),
+        hyeongGyeok: SuriGyeokSchema.extend({ name: z.string().default('형격(亨格) - 청년운 (21-40세)').describe('형격(亨格) - 청년운 (21-40세)에 대한 격의 이름과 운세 시기입니다.') }),
+        iGyeok: SuriGyeokSchema.extend({ name: z.string().default('이격(利格) - 장년운 (41-60세)').describe('이격(利格) - 장년운 (41-60세)에 대한 격의 이름과 운세 시기입니다.') }),
+        jeongGyeok: SuriGyeokSchema.extend({ name: z.string().default('정격(貞格) - 말년운/총운 (60세 이후)').describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 격의 이름과 운세 시기입니다.') })
     }).describe('수리길흉 분석 (원형이정 4격 기반)'),
 
     resourceOhaengAnalysis: z.object({
@@ -124,7 +124,7 @@ const InterpretNameOutputSchema = z.object({
   cautionsAndRecommendations: z.object({
     inauspiciousHanja: z.array(z.string()).optional().describe('이름에 사용된 불용한자 목록 및 그 이유 (있는 경우)'),
     auspiciousHanja: z.array(z.string()).optional().describe('이름에 사용된 길한 한자 목록 및 그 이유 (있는 경우)'),
-    generalAdvice: z.string().optional().describe('이름과 관련한 전반적인 조언, 추가적인 주의사항, 운세 개선을 위한 구체적인 해결방안이나 지니면 좋은 물건 등의 조언'),
+    generalAdvice: z.string().optional().describe('이름과 관련한 전반적인 조언, 추가적인 주의사항, 운세 개선을 위한 구체적인 해결방안이나 지니면 좋은 물건 등의 조언. 단순한 격려가 아닌, 실질적이고 구체적인 내용을 담아야 합니다.'),
   }).describe('고려사항 및 조언'),
 });
 
@@ -159,11 +159,11 @@ const nameInterpretationPrompt = ai.definePrompt({
         *   **획수 음양:** 이름 각 글자의 획수를 기준으로 음양(홀수: 양, 짝수: 음)을 판단하고, 이름 전체의 음양 배열(예: 陽-陰-陽)과 조화도를 평가합니다.
         *   **발음오행:** 이름 각 한글 음절의 초성(자음)에 해당하는 오행(예: ㄱ,ㅋ=木 / ㄴ,ㄷ,ㄹ,ㅌ=火 / ㅇ,ㅎ=土 / ㅅ,ㅈ,ㅊ=金 / ㅁ,ㅂ,ㅍ=水)을 분석하고, 초성 오행 간의 상생/상극 관계를 설명하고 평가합니다.
     *   **수리길흉 분석 (81수리 기반 원형이정 4격):**
-        *   **원격(元格, 초년운 0-20세):** (성이 한 글자일 경우) 이름 첫 글자 획수 + 이름 두번째 글자 획수. (성이 두 글자일 경우) 성씨 두번째 글자 획수 + 이름 첫 글자 획수. (이름이 외자일 경우) 이름 첫 글자 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 친구관계 등), 건강, 잠재력에 대해 구체적으로 설명합니다.
-        *   **형격(亨格, 청년운 21-40세):** 성씨 첫 글자 획수 + 이름 첫 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 성씨 두번째 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회생활 시작, 직업, 결혼, 재물 형성, 대인관계 확장 등 청년기의 주요 과업과 운세를 중심으로 상세히 설명합니다.
-        *   **이격(利格, 중년운 41-60세):** 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (외자 이름일 경우) 성씨 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회적 성취의 정점, 가정의 안정, 건강 변화, 자녀와의 관계 등 중년기의 운세 변화와 특징을 심층적으로 분석합니다.
-        *   **정격(貞格, 말년운/총운 60세 이후):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 인생 전체를 아우르는 총운이자 노년기의 건강, 안정, 자손과의 관계, 삶의 마무리 등을 종합적으로 조망합니다.
-        *   각 격(원형이정)에 대해 해당 운세 시기, 수리 번호, 길흉 등급('대길', '길', '평', '흉', '대흉'), 그리고 그 수리가 의미하는 성격, 건강, 재물, 대인관계, 사회적 성취 등에 대한 구체적이고 심층적인 해설을 제공합니다.
+        *   **원격(元格, 초년운 0-20세):** (성이 한 글자일 경우) 이름 첫 글자 획수 + 이름 두번째 글자 획수. (성이 두 글자일 경우) 성씨 두번째 글자 획수 + 이름 첫 글자 획수. (이름이 외자일 경우) 이름 첫 글자 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 친구관계 등), 건강, 잠재력에 대해 **구체적이고 심층적으로 설명**합니다.
+        *   **형격(亨格, 청년운 21-40세):** 성씨 첫 글자 획수 + 이름 첫 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 성씨 두번째 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회생활 시작, 직업, 결혼, 재물 형성, 대인관계 확장 등 청년기의 주요 과업과 운세를 중심으로 **구체적이고 심층적으로 설명**합니다.
+        *   **이격(利格, 장년운 41-60세):** 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (외자 이름일 경우) 성씨 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회적 성취, 가정의 안정, 건강 변화, 자녀 관계 등 장년기의 운세 변화와 특징을 **구체적이고 심층적으로 분석**합니다.
+        *   **정격(貞格, 말년운/총운 60세 이후):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 인생 전체를 아우르는 총운이자 노년기의 건강, 안정, 자손과의 관계, 삶의 마무리 등을 **종합적이고 심층적으로 조망**합니다.
+        *   각 격(원형이정)에 대해 해당 운세 시기, 수리 번호, 길흉 등급('대길', '길', '평', '흉', '대흉'), 그리고 그 수리가 의미하는 성격, 건강, 재물, 대인관계, 사회적 성취 등에 대한 구체적이고 심층적인 해설을 제공합니다. 해석은 단순한 키워드 나열이 아니라, 실제 삶에 적용될 수 있는 통찰력 있는 설명이어야 합니다.
     *   **자원오행 분석 (사주 보완):** 이름에 사용된 한자(한자 이름의 경우)의 본래 뜻(자의)이 가지는 오행(자원오행)을 분석합니다. 이 자원오행이 사용자의 사주에서 부족한 오행(용신/희신)을 효과적으로 보완하는지, 또는 오히려 기신(忌神)을 강화시키는지 등을 심층적으로 평가합니다. (한글 이름일 경우, 해당 분석은 제한되거나 일반론으로 설명합니다.)
     *   **주역 괘 도출 및 해석:** 이름의 전체 획수(총격 수리) 또는 이름의 특성을 고려하여 가장 관련성이 높은 주역 64괘 중 하나를 도출하고, 해당 괘의 기본적인 의미와 그것이 이름의 운명에 미치는 영향을 간략히 해석합니다. (예: "총명격(15획)은 지천태(地天泰) 괘와 유사하여 조화와 안정을 의미합니다.")
 3.  **종합 평가 및 조언:**
@@ -183,7 +183,7 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   solarBirthDate: 양력 생년월일 (YYYY-MM-DD). 입력이 음력이면 양력으로 변환된 날짜, 양력이면 입력된 날짜.
     *   lunarBirthDate: 음력 생년월일 (YYYY-MM-DD). 입력이 양력이면 음력으로 변환된 날짜, 음력이면 입력된 날짜. **사주 분석은 이 날짜를 기준으로 합니다.**
     *   birthTime: 출생 시간 (예: "자시 (23:00-00:59)"). 입력된 {{{birthTime}}} 값과 해당 시간 범위를 함께 표시.
-    *   sajuPillars: (년주, 월주, 일주, 시주 각각의 천간, 지지, 음양, 오행 정보)
+    *   sajuPillars: (년주, 월주, 일주, 시주 각각의 천간, 지지, 음양, 오행 정보. 시주가 '모름'일 경우 '불명'으로 처리)
     *   gapjaYearName: 음력 기준 60갑자 간지 (예: 경신년)
     *   zodiacSign: 음력 기준 띠 (예: 원숭이띠)
     *   zodiacColor: (선택 사항) 띠 색깔 (예: 흰색)
@@ -193,7 +193,7 @@ const nameInterpretationPrompt = ai.definePrompt({
 **2. 종합 점수 및 평가 (overallAssessment):**
     *   totalScore: 종합 점수 (100점 만점)
     *   summaryEvaluation: 종합 등급 ('매우 좋음', '좋음', '보통', '주의 필요', '나쁨')
-    *   overallFortuneSummary: 인생 총운에 대한 간략한 요약.
+    *   overallFortuneSummary: 인생 총운에 대한 간략한 요약. (1~2문장으로, 이름의 전반적인 기운과 삶에 미칠 수 있는 주요 영향을 언급)
     *   detailedScores:
         *   eumYangOhaengScore: { score: number, maxScore: number } (음양오행 조화)
         *   suriGilhyungScore: { score: number, maxScore: number } (수리길흉 - 원형이정)
@@ -211,11 +211,11 @@ const nameInterpretationPrompt = ai.definePrompt({
             *   harmonyRelationship: 초성 오행 간 상생/상극 관계 상세 설명.
             *   assessment: 발음오행에 대한 종합 평가.
     *   **suriGilhyungAnalysis (수리길흉 분석 - 원형이정 4격):**
-        *   introduction: "수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운(0-20세), 청년운(21-40세), 중년운(41-60세), 말년운/총운(60세 이후)으로 길흉을 따져 이름이 갖는 운세를 설명합니다."
-        *   wonGyeok: { name: "원격(元格) - 초년운 (0-20세)", suriNumber: /* 81수리 중 숫자 */ number, rating: '대길'/'길'/'평'/'흉'/'대흉', interpretation: "해당 수리의 상세 해석 (성격, 건강, 재물, 학업, 친구관계 등)..." }
-        *   hyeongGyeok: { name: "형격(亨格) - 청년운 (21-40세)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (사회생활, 직업, 결혼, 재물 형성, 대인관계 등)..." }
-        *   iGyeok: { name: "이격(利格) - 중년운 (41-60세)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (사회적 성취, 가정 안정, 건강 변화, 자녀 관계 등)..." }
-        *   jeongGyeok: { name: "정격(貞格) - 말년운/총운 (60세 이후)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (인생 총운, 노년기 건강, 안정, 자손 관계, 삶의 마무리 등)..." }
+        *   introduction: "수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운(0-20세), 청년운(21-40세), 장년운(41-60세), 말년운/총운(60세 이후)으로 길흉을 따져 이름이 갖는 운세를 설명합니다."
+        *   wonGyeok: { name: "원격(元格) - 초년운 (0-20세)", suriNumber: /* 81수리 중 숫자 */ number, rating: '대길'/'길'/'평'/'흉'/'대흉', interpretation: "해당 수리의 상세 해석 (성격, 건강, 재물, 학업, 친구관계 등 구체적인 내용)..." }
+        *   hyeongGyeok: { name: "형격(亨格) - 청년운 (21-40세)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (사회생활, 직업, 결혼, 재물 형성, 대인관계 등 구체적인 내용)..." }
+        *   iGyeok: { name: "이격(利格) - 장년운 (41-60세)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (사회적 성취, 가정 안정, 건강 변화, 자녀 관계 등 장년기의 운세와 특징에 대한 구체적인 내용)..." }
+        *   jeongGyeok: { name: "정격(貞格) - 말년운/총운 (60세 이후)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (인생 총운, 노년기 건강, 안정, 자손 관계, 삶의 마무리 등 구체적인 내용)..." }
     *   **resourceOhaengAnalysis (자원오행 분석):**
         *   sajuDeficientOhaeng: 사주에서 가장 보충이 필요한 핵심 오행 (용신 또는 희신).
         *   nameHanjaOhaeng: 이름 한자의 자원오행 구성 요약 (한자 이름인 경우). 한글 이름이면 "한글 이름은 자원오행 분석이 제한적입니다." 등으로 기술.
@@ -228,7 +228,7 @@ const nameInterpretationPrompt = ai.definePrompt({
 **4. 주의사항 및 조언 (cautionsAndRecommendations):**
     *   inauspiciousHanja: 불용한자 목록 및 그 이유 (해당되는 경우, 없으면 "이름에 특별한 불용한자는 발견되지 않았습니다." 기술)
     *   auspiciousHanja: 길한 한자 목록 및 그 이유 (해당되는 경우, 없으면 "이름에 특별히 길한 의미를 지닌 한자는 발견되지 않았습니다." 기술)
-    *   generalAdvice: (선택 사항) 이름과 관련한 전반적인 조언이나 추가적인 참고사항, 운세 개선을 위한 구체적인 해결방안이나 지니면 좋은 물건, 추천 활동 등 실질적 조언 포함.
+    *   generalAdvice: (선택 사항) 이름과 관련한 전반적인 조언이나 추가적인 참고사항, 운세 개선을 위한 구체적인 해결방안(예: 특정 색상의 옷 착용, 특정 방향으로 침대 머리 두기, 지니면 좋은 물건 등)이나 추천 활동 등 **실질적이고 구체적인 조언** 포함.
 
 사용자의 미래에 대한 깊은 통찰과 지혜를 담아, 각 항목을 상세하고 정확하게 분석해주십시오. 모든 한자 획수는 **정자(正字)**를 기준으로 하며, 음양오행 및 수리 계산법은 위에 명시된 규칙을 엄격히 따라야 합니다. 특히 수리 4격(원형이정)의 계산 방식을 정확히 이해하고 적용해주십시오.
 `,
@@ -256,7 +256,7 @@ const interpretNameFlow = ai.defineFlow(
         if (err instanceof Error) {
             if (err.message.includes("Service Unavailable") || err.message.includes("503")) {
                 throw new Error("AI 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.");
-            } else if (err.message.includes("Bad Request") || err.message.includes("400")) {
+            } else if (err.message.includes("Bad Request") || err.message.includes("400") || err.message.includes("Invalid JSON payload") || err.message.includes("exclusiveMinimum") || err.message.includes("const")) {
                  throw new Error("AI 서비스 요청에 오류가 발생했습니다. 입력 값을 확인하거나 정의된 스키마를 점검해 주세요. (예: 'exclusiveMinimum' 또는 'const' 관련 오류)");
             }
         }
@@ -264,5 +264,3 @@ const interpretNameFlow = ai.defineFlow(
     }
   }
 );
-
-    
