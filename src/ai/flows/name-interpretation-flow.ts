@@ -145,13 +145,18 @@ const simplifyHexagramPrompt = ai.definePrompt({
   output: { schema: z.object({
     simplifiedInterpretation: z.string().describe("중학생도 이해하기 쉬운 괘의 해설입니다.")
   })},
-  prompt: `당신은 주역 전문가입니다. 다음은 {{{userName}}}님의 이름과 관련된 {{{hexagramName}}} 괘의 원본 해설입니다:
+  prompt: `당신은 주역 전문가이자, 어려운 개념을 청소년에게 쉽게 설명하는 능력이 뛰어난 선생님입니다. 다음은 {{{userName}}}님의 이름과 관련된 주역 {{{hexagramName}}} 괘의 원본 해설입니다:
 
 --- 원본 해설 ---
 {{{originalInterpretation}}}
 --- 원본 해설 끝 ---
 
-이 해설을 중학생도 쉽게 이해할 수 있도록 간결하고 명확하게 다시 작성해주세요. 원본의 핵심 의미는 유지하되, 어려운 용어나 복잡한 문장은 피해주세요.
+이 해설을 **중학교 2학년 학생이 이해할 수 있는 수준**으로, 아주 쉽고 간결하게 다시 설명해주세요.
+- 비유나 일상적인 예를 사용하여 설명하면 좋습니다.
+- 한자어나 전문 용어 사용은 최대한 피하고, 꼭 필요하다면 쉬운 말로 풀어 설명해주세요.
+- 문장은 짧고 명확하게 작성해주세요.
+- 원본 해설의 핵심적인 의미는 반드시 유지해주세요.
+{{{userName}}}님이 이 설명을 통해 자신의 삶에 대한 긍정적인 통찰을 얻을 수 있도록 도와주세요.
 `,
 });
 
@@ -247,7 +252,7 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
       if (hexagramInfo && hexagramInfo.description) {
         const simplifyInput = {
           hexagramName: hexagramName,
-          originalInterpretation: hexagramInfo.description, // Use 'description' field
+          originalInterpretation: hexagramInfo.description, 
           userName: input.name,
         };
         const { output: simplifiedResult } = await simplifyHexagramPrompt(simplifyInput);
