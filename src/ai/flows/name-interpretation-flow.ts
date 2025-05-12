@@ -38,14 +38,14 @@ const SajuOhaengDistributionSchema = z.object({
 
 const SuriGyeokSchema = z.object({
   name: z.string().describe('격의 이름 (예: 원격(元格) - 초년운, 형격(亨格) - 청년운 등)'),
-  suriNumber: z.number().int().min(1).max(81).describe('수리 획수 (1-81)'),
+  suriNumber: z.number().int().describe('수리 획수 (1-81). 이 값은 1에서 81 사이여야 합니다.'),
   rating: z.enum(['대길', '길', '평', '흉', '대흉']).describe('길흉 등급'),
   interpretation: z.string().describe('해당 격에 대한 상세 해설 (성격, 운세 등). 해당 시기의 성격적 특징, 주요 운세 흐름, 대인관계, 건강, 재물, 학업/직업 등에 대한 구체적인 내용을 포함해야 합니다.'),
 });
 
 const DetailedScoreSchema = z.object({
-  score: z.number().min(0).max(100).describe('항목별 점수입니다.'),
-  maxScore: z.number().int().min(1).describe('해당 항목의 만점입니다 (양의 정수).'),
+  score: z.number().describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
+  maxScore: z.number().int().describe('해당 항목의 만점입니다. 양의 정수여야 합니다.'),
 });
 
 const InterpretNameOutputSchema = z.object({
@@ -72,15 +72,15 @@ const InterpretNameOutputSchema = z.object({
 
   // 2. 종합 점수 및 평가
   overallAssessment: z.object({
-    totalScore: z.number().min(0).max(100).describe('종합 점수 (100점 만점)'),
+    totalScore: z.number().describe('종합 점수 (100점 만점)'),
     summaryEvaluation: z.enum(['매우 좋음', '좋음', '보통', '주의 필요', '나쁨']).describe('간단한 요약 평가 문구'),
     overallFortuneSummary: z.string().describe('간단한 인생 총운 요약입니다.'),
     detailedScores: z.object({
-        eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수 (100점 만점 기준 상세)'),
-        suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수 (100점 만점 기준 상세)'),
-        pronunciationOhaengScore: DetailedScoreSchema.describe('발음오행 점수 (100점 만점 기준 상세)'),
-        resourceOhaengScore: DetailedScoreSchema.describe('자원오행 보완 점수 (100점 만점 기준 상세)'),
-    }).describe('세부 항목별 점수 (각 항목 만점 기준은 프롬프트에 명시된 기준을 따름)'),
+        eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수'),
+        suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수'),
+        pronunciationOhaengScore: DetailedScoreSchema.describe('발음오행 점수'),
+        resourceOhaengScore: DetailedScoreSchema.describe('자원오행 보완 점수'),
+    }).describe('세부 항목별 점수'),
   }).describe('이름의 종합적인 평가'),
   
   // 3. 상세 분석 섹션
@@ -100,11 +100,11 @@ const InterpretNameOutputSchema = z.object({
     }).describe('이름 구조 및 소리 분석'),
     
     suriGilhyungAnalysis: z.object({
-        introduction: z.string().describe("수리 4격(원형이정)과 81수리 성명학에 대한 간략한 소개."),
-        wonGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "원격(元格) - 초년운 (0-20세)" 이어야 합니다.') }),
-        hyeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "형격(亨格) - 청년운 (21-40세)" 이어야 합니다.') }),
-        iGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "이격(利格) - 중년운 (41-60세)" 이어야 합니다.') }),
-        jeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "정격(貞格) - 말년운/총운 (60세 이후)" 이어야 합니다.') })
+        introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 중년운, 말년운, 인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
+        wonGyeok: SuriGyeokSchema.extend({ name: z.string().describe('원격(元格) - 초년운 (0-20세)에 대한 격의 이름과 운세 시기입니다.') }),
+        hyeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('형격(亨格) - 청년운 (21-40세)에 대한 격의 이름과 운세 시기입니다.') }),
+        iGyeok: SuriGyeokSchema.extend({ name: z.string().describe('이격(利格) - 중년운 (41-60세)에 대한 격의 이름과 운세 시기입니다.') }),
+        jeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 격의 이름과 운세 시기입니다.') })
     }).describe('수리길흉 분석 (원형이정 4격 기반)'),
 
     resourceOhaengAnalysis: z.object({
@@ -169,7 +169,7 @@ const nameInterpretationPrompt = ai.definePrompt({
 3.  **종합 평가 및 조언:**
     *   위 모든 분석(사주, 음양, 수리, 자원오행, 주역 등)을 종합하여 이름에 대한 최종 점수(100점 만점)와 평가 등급('매우 좋음', '좋음', '보통', '주의 필요', '나쁨')을 산정합니다. 간단한 요약 평가 문구와 함께 인생 총운에 대한 간략한 요약 (overallFortuneSummary)도 포함해주십시오.
     *   이름의 장점, 단점, 그리고 삶에 미치는 영향에 대한 전반적인 조언을 제공합니다.
-    *   세부 항목별 점수(음양오행, 수리길흉, 발음오행, 자원오행 각각)도 제시합니다. (각 점수의 만점 기준은 다음과 같음: 음양오행-100점(획수음양 25, 발음오행 25, 수리오행조화 25, 자원오행조화 25), 수리길흉-100점(원형이정 각 25점), 발음오행-100점, 자원오행-100점. 이 점수들을 가중 평균내어 총점을 산출하거나, 각 항목별 중요도를 감안하여 총점을 산출) -> **프롬프트 수정: 각 세부항목별 점수는 z.object({ score: z.number(), maxScore: z.number() }) 형태로 받고, LLM이 적절한 maxScore를 판단하여 점수를 부여하도록 유도. 예: 음양오행조화 20/20, 발음오행 15/20 등.**
+    *   세부 항목별 점수(음양오행, 수리길흉, 발음오행, 자원오행 각각)도 제시합니다. 
 4.  **주의사항:**
     *   이름에 사용된 한자 중 불용한자(뜻이 나쁘거나, 특정 성별/상황에만 쓰여 부적절한 글자)가 있는지 확인하고, 있다면 그 목록과 이유를 설명합니다. 또한, 이름에 사용된 한자 중 특별히 길한 의미를 가지거나 사주에 긍정적인 영향을 주는 한자가 있다면 그 목록과 이유(auspiciousHanja)도 함께 설명해주십시오.
     *   기타 이름과 관련하여 특별히 주의해야 할 점이나 개선을 위한 제언이 있다면 포함합니다. 전반적인 조언에는 운세를 개선하기 위한 구체적인 해결 방안이나 지니면 좋은 물건, 추천하는 활동 등 실질적인 내용도 포함해주세요. (generalAdvice)
@@ -211,11 +211,11 @@ const nameInterpretationPrompt = ai.definePrompt({
             *   harmonyRelationship: 초성 오행 간 상생/상극 관계 상세 설명.
             *   assessment: 발음오행에 대한 종합 평가.
     *   **suriGilhyungAnalysis (수리길흉 분석 - 원형이정 4격):**
-        *   introduction: "수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한자/한글 획수로 풀이한 81수리 성명학입니다. 초년운(0-20세), 청년운(21-40세), 중년운(41-60세), 말년운/총운(60세 이후)으로 길흉을 따져 이름이 갖는 운세를 설명합니다."
-        *   wonGyeok: { name: "원격(元格) - 초년운 (0-20세)", suriNumber: 81수리 중 숫자, rating: '대길'/'길'/'평'/'흉'/'대흉', interpretation: "해당 수리의 상세 해석 (성격, 건강, 재물, 학업, 친구관계 등)..." }
-        *   hyeongGyeok: { name: "형격(亨格) - 청년운 (21-40세)", suriNumber: ..., rating: ..., interpretation: "해당 수리의 상세 해석 (사회생활, 직업, 결혼, 재물 형성, 대인관계 등)..." }
-        *   iGyeok: { name: "이격(利格) - 중년운 (41-60세)", suriNumber: ..., rating: ..., interpretation: "해당 수리의 상세 해석 (사회적 성취, 가정 안정, 건강 변화, 자녀 관계 등)..." }
-        *   jeongGyeok: { name: "정격(貞格) - 말년운/총운 (60세 이후)", suriNumber: ..., rating: ..., interpretation: "해당 수리의 상세 해석 (인생 총운, 노년기 건강, 안정, 자손 관계, 삶의 마무리 등)..." }
+        *   introduction: "수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운(0-20세), 청년운(21-40세), 중년운(41-60세), 말년운/총운(60세 이후)으로 길흉을 따져 이름이 갖는 운세를 설명합니다."
+        *   wonGyeok: { name: "원격(元格) - 초년운 (0-20세)", suriNumber: /* 81수리 중 숫자 */ number, rating: '대길'/'길'/'평'/'흉'/'대흉', interpretation: "해당 수리의 상세 해석 (성격, 건강, 재물, 학업, 친구관계 등)..." }
+        *   hyeongGyeok: { name: "형격(亨格) - 청년운 (21-40세)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (사회생활, 직업, 결혼, 재물 형성, 대인관계 등)..." }
+        *   iGyeok: { name: "이격(利格) - 중년운 (41-60세)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (사회적 성취, 가정 안정, 건강 변화, 자녀 관계 등)..." }
+        *   jeongGyeok: { name: "정격(貞格) - 말년운/총운 (60세 이후)", suriNumber: /* 81수리 중 숫자 */ number, rating: /* 길흉 등급 */ string, interpretation: "해당 수리의 상세 해석 (인생 총운, 노년기 건강, 안정, 자손 관계, 삶의 마무리 등)..." }
     *   **resourceOhaengAnalysis (자원오행 분석):**
         *   sajuDeficientOhaeng: 사주에서 가장 보충이 필요한 핵심 오행 (용신 또는 희신).
         *   nameHanjaOhaeng: 이름 한자의 자원오행 구성 요약 (한자 이름인 경우). 한글 이름이면 "한글 이름은 자원오행 분석이 제한적입니다." 등으로 기술.
@@ -241,14 +241,28 @@ const interpretNameFlow = ai.defineFlow(
     outputSchema: InterpretNameOutputSchema,
   },
   async input => {
-    const {output} = await nameInterpretationPrompt(input);
-    if (!output) {
-      throw new Error("이름 풀이 결과를 생성하지 못했습니다.");
+    try {
+      const {output} = await nameInterpretationPrompt(input);
+      if (!output) {
+        throw new Error("이름 풀이 결과를 생성하지 못했습니다. AI 모델로부터 응답을 받지 못했습니다.");
+      }
+      // Ensure gender output matches input as a fallback
+      if (output.basicInfoSummary && output.basicInfoSummary.gender !== (input.gender === 'male' ? '남자' : '여자')) {
+          output.basicInfoSummary.gender = (input.gender === 'male' ? '남자' : '여자');
+      }
+      return output;
+    } catch (err) {
+        console.error("Error during nameInterpretationPrompt call:", err);
+        if (err instanceof Error) {
+            if (err.message.includes("Service Unavailable") || err.message.includes("503")) {
+                throw new Error("AI 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+            } else if (err.message.includes("Bad Request") || err.message.includes("400")) {
+                 throw new Error("AI 서비스 요청에 오류가 발생했습니다. 입력 값을 확인하거나 정의된 스키마를 점검해 주세요. (예: 'exclusiveMinimum' 또는 'const' 관련 오류)");
+            }
+        }
+        throw new Error("이름 풀이 중 예상치 못한 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     }
-    // Ensure gender output matches input as a fallback
-    if (output.basicInfoSummary && output.basicInfoSummary.gender !== (input.gender === 'male' ? '남자' : '여자')) {
-        output.basicInfoSummary.gender = (input.gender === 'male' ? '남자' : '여자');
-    }
-    return output;
   }
 );
+
+    
