@@ -285,49 +285,60 @@ export default function ScientificLottoRecommendationPage() {
                     가장 흔한 짝수:홀수 비율: <strong className="text-foreground">{analysisResults.averageEvenOddRatio}</strong>
                 </p>
 
-                {analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0 && (
+                 {(analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0) || (analysisResults.leastFrequentNumbers && analysisResults.leastFrequentNumbers.length > 0) ? (
                     <div className="mt-3">
-                      <h4 className="font-semibold text-md mb-1">자주 당첨된 번호 (최근 {analysisResults.analyzedDrawsCount}회)</h4>
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[80px]">번호</TableHead>
-                            <TableHead>출현 횟수</TableHead>
+                            <TableHead className="w-[150px]">구분</TableHead>
+                            {/* 최대 7개 번호 + 횟수 열 생성 */}
+                            {Array.from({ length: Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) }).map((_, index) => (
+                              <TableHead key={`header-num-${index}`} className="text-center">번호 {index + 1}</TableHead>
+                            ))}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {analysisResults.frequentNumbers.map(item => (
-                            <TableRow key={`freq-${item.num}`}>
-                              <TableCell className="font-medium">{item.num}</TableCell>
-                              <TableCell>{item.count}회</TableCell>
-                            </TableRow>
-                          ))}
+                          {analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0 && (
+                            <>
+                              <TableRow>
+                                <TableCell rowSpan={2} className="font-semibold align-middle text-foreground">자주 당첨된 번호</TableCell>
+                                {analysisResults.frequentNumbers.map(item => (
+                                  <TableCell key={`freq-num-${item.num}`} className="text-center font-medium">{item.num}</TableCell>
+                                ))}
+                                {/* 빈 셀 채우기 */}
+                                {Array.from({ length: Math.max(0, (analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-${i}`} />)}
+                              </TableRow>
+                              <TableRow>
+                                {analysisResults.frequentNumbers.map(item => (
+                                  <TableCell key={`freq-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
+                                ))}
+                                {Array.from({ length: Math.max(0, (analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-count-${i}`} />)}
+                              </TableRow>
+                            </>
+                          )}
+                          {analysisResults.leastFrequentNumbers && analysisResults.leastFrequentNumbers.length > 0 && (
+                             <>
+                              <TableRow>
+                                <TableCell rowSpan={2} className="font-semibold align-middle text-foreground">가장 적게 당첨된 번호</TableCell>
+                                {analysisResults.leastFrequentNumbers.map(item => (
+                                  <TableCell key={`least-num-${item.num}`} className="text-center font-medium">{item.num}</TableCell>
+                                ))}
+                                 {Array.from({ length: Math.max(0, (analysisResults.frequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-${i}`} />)}
+                              </TableRow>
+                              <TableRow>
+                                {analysisResults.leastFrequentNumbers.map(item => (
+                                  <TableCell key={`least-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
+                                ))}
+                                {Array.from({ length: Math.max(0, (analysisResults.frequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-count-${i}`} />)}
+                              </TableRow>
+                            </>
+                          )}
                         </TableBody>
                       </Table>
                     </div>
-                )}
-
-                {analysisResults.leastFrequentNumbers && analysisResults.leastFrequentNumbers.length > 0 && (
-                    <div className="mt-3">
-                      <h4 className="font-semibold text-md mb-1">가장 적게 당첨된 번호 (최근 {analysisResults.analyzedDrawsCount}회)</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[80px]">번호</TableHead>
-                            <TableHead>출현 횟수</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {analysisResults.leastFrequentNumbers.map(item => (
-                            <TableRow key={`infreq-${item.num}`}>
-                              <TableCell className="font-medium">{item.num}</TableCell>
-                              <TableCell>{item.count}회</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground">번호 빈도수 데이터를 표시할 수 없습니다.</p>
+                  )}
             </CardContent>
         </Card>
       )}
@@ -399,4 +410,3 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
-
