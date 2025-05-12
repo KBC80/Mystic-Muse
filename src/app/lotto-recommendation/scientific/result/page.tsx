@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
 import { getLottoRecommendationsAction } from '@/app/lotto-recommendation/scientific/actions';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; 
-import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle, Info } from 'lucide-react';
+import { Home, TestTubeDiagonal, Sparkles, Hash, FileText, ExternalLink, RotateCcw, Newspaper, AlertTriangle, Info } from 'lucide-react';
 
 const getLottoBallColorClass = (number: number): string => {
   if (number >= 1 && number <= 10) return 'bg-yellow-400 text-black';
@@ -41,8 +41,7 @@ function ScientificLottoResultContent() {
   const [includeNumbersStr, setIncludeNumbersStr] = useState<string>("");
   const [excludeNumbersStr, setExcludeNumbersStr] = useState<string>("");
   const [numberOfDrawsAnalyzed, setNumberOfDrawsAnalyzed] = useState<number | null>(null);
-  const [inputAnalysisAverageSum, setInputAnalysisAverageSum] = useState<number | null>(null);
-  const [inputAnalysisEvenOddRatio, setInputAnalysisEvenOddRatio] = useState<string | null>(null);
+  const [historicalDataSummaryForLLM, setHistoricalDataSummaryForLLM] = useState<string | null>(null);
 
 
   const [latestDraw, setLatestDraw] = useState<LatestWinningNumber | null>(null);
@@ -61,8 +60,7 @@ function ScientificLottoResultContent() {
         setIsLoadingLatestDraw(false);
         return;
     }
-    setAnalyzedDrawsCountInput(numDrawsParam);
-
+    
     setIncludeNumbersStr(includeParam || "없음");
     setExcludeNumbersStr(excludeParam || "없음");
 
@@ -79,11 +77,8 @@ function ScientificLottoResultContent() {
         if(result.analyzedDrawsCount) {
             setNumberOfDrawsAnalyzed(result.analyzedDrawsCount);
         }
-        if(result.inputAnalysisAverageSum !== undefined) {
-            setInputAnalysisAverageSum(result.inputAnalysisAverageSum);
-        }
-        if(result.inputAnalysisEvenOddRatio) {
-            setInputAnalysisEvenOddRatio(result.inputAnalysisEvenOddRatio);
+        if (result.historicalDataSummaryForLLM) {
+            setHistoricalDataSummaryForLLM(result.historicalDataSummaryForLLM);
         }
       }
     })
@@ -111,11 +106,8 @@ function ScientificLottoResultContent() {
     Promise.all([fetchRecommendation, fetchLatestLotto]).finally(() => {
       setIsLoading(false);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
-  // Helper state setter for analyzedDrawsCountInput to satisfy TypeScript
-  const [analyzedDrawsCountInputState, setAnalyzedDrawsCountInput] = useState<string>("");
+  }, [searchParams]);
 
 
   if (isLoading || isLoadingLatestDraw) {
@@ -165,7 +157,7 @@ function ScientificLottoResultContent() {
            <CardDescription className="text-md pt-1 flex items-start gap-1">
               <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
               <span>
-                AI가 과거 데이터 통계 (최근 {numberOfDrawsAnalyzed || analyzedDrawsCountInputState}회차 기준)와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
+                AI가 과거 데이터 통계 (최근 {numberOfDrawsAnalyzed || "지정된"}회차 기준)와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
               </span>
             </CardDescription>
             {(includeNumbersStr !== "없음" || excludeNumbersStr !== "없음") && (
@@ -202,21 +194,21 @@ function ScientificLottoResultContent() {
             </div>
           )}
 
-          <Card className="p-6 bg-secondary/30 shadow-md">
-              <CardHeader className="p-0 pb-3">
-                  <CardTitle className="text-xl text-secondary-foreground flex items-center gap-2">
-                      <HelpCircle className="h-5 w-5" /> AI 입력 분석 요약 (다음 회차)
-                  </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 space-y-1 text-base">
-                  <p className="text-muted-foreground">
-                      <strong className="text-secondary-foreground">분석된 평균 당첨 번호 합계:</strong> {inputAnalysisAverageSum !== null ? `약 ${inputAnalysisAverageSum.toFixed(0)}` : '정보 없음'}
-                  </p>
-                  <p className="text-muted-foreground">
-                      <strong className="text-secondary-foreground">분석된 가장 흔한 짝수:홀수 비율:</strong> {inputAnalysisEvenOddRatio || '정보 없음'}
-                  </p>
-              </CardContent>
-          </Card>
+          {historicalDataSummaryForLLM && (
+            <Card className="p-6 bg-secondary/30 shadow-md">
+                <CardHeader className="p-0 pb-3">
+                    <CardTitle className="text-xl text-secondary-foreground flex items-center gap-2">
+                        <FileText className="h-5 w-5" /> AI 추천에 사용된 과거 데이터 분석 요약
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-sans">
+                        {historicalDataSummaryForLLM}
+                    </pre>
+                </CardContent>
+            </Card>
+          )}
+
 
           {llmResult.recommendedSets.map((set, index) => (
             <Card key={index} className="p-6 bg-secondary/30 shadow-md">

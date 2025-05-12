@@ -264,9 +264,8 @@ export async function getLottoRecommendationsAction({
   numberOfDrawsForAnalysisStr,
 }: GetLottoRecommendationsActionInput): Promise<{
   llmResponse?: ScientificLottoRecommendationOutput;
+  historicalDataSummaryForLLM?: string;
   analyzedDrawsCount?: number;
-  inputAnalysisAverageSum?: number;
-  inputAnalysisEvenOddRatio?: string;
   error?: string;
 }> {
   try {
@@ -313,9 +312,8 @@ export async function getLottoRecommendationsAction({
     const llmResponse = await recommendScientificLottoNumbers(inputForLLM);
     return { 
         llmResponse, 
+        historicalDataSummaryForLLM: analysisSummary.summaryForDisplay,
         analyzedDrawsCount: analysisSummary.analyzedDrawsCount,
-        inputAnalysisAverageSum: analysisSummary.averageSum,
-        inputAnalysisEvenOddRatio: analysisSummary.averageEvenOddRatio,
     };
 
   } catch (error) {
