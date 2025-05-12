@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview 사용자의 이름, 생년월일시, 성별을 바탕으로 동서양 철학, 사주명리학, 성명학(한자 수리획수법, 음양오행, 발음오행, 자원오행), 주역 등을 종합적으로 분석하고 인생 조언을 제공합니다.
@@ -50,7 +49,7 @@ export type SuriGyeokSchema = z.infer<typeof SuriGyeokSchema>;
 
 
 const DetailedScoreSchema = z.object({
-  score: z.number().int().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
+  score: z.number().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
   maxScore: z.number().int().min(1).describe('해당 항목의 만점입니다. 1 이상의 정수여야 합니다.'),
 });
 
@@ -96,12 +95,12 @@ const InterpretNameOutputSchema = z.object({
       yinYangHarmony: z.object({
         nameYinYangComposition: z.string().describe('이름의 음양 구성 (예: 陽-陰-陽, 각 글자 획수 기반)'),
         assessment: z.string().describe('음양 조화에 대한 평가 (예: 음양이 조화롭습니다.)'),
-      }).describe('이름의 음양 조화 분석'),
+      }).describe('이름의 음양 조화 분석 (획수오행)'),
       pronunciationOhaeng: z.object({
         initialConsonants: z.array(z.object({ character: z.string(), consonant: z.string(), ohaeng: z.string()})).describe('이름 각 글자의 초성 및 오행'),
         harmonyRelationship: z.string().describe('초성 오행 간의 상생 또는 상극 관계 설명'),
         assessment: z.string().describe('발음오행에 대한 평가'),
-      }).describe('발음 오행 분석 (획수오행, 자의오행 포함)'),
+      }).describe('발음 오행 분석'),
     }).describe('오행 및 음양 상세 분석 (이름 구조, 소리, 한자 뜻 포함)'),
     
     suriGilhyungAnalysis: z.object({
@@ -196,9 +195,9 @@ const nameInterpretationPrompt = ai.definePrompt({
         *   **정격(貞格, 말년운/총운 60세 이후):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 인생 전체를 아우르는 총운이자 노년기의 건강, 안정, 자손과의 관계, 삶의 마무리 등을 **81수리 이론의 해당 번호 설명을 참고하여 종합적이고 심층적으로 조망**합니다. name 필드 값은 "정격(貞格) - 말년운/총운 (60세 이후)" 이어야 합니다.
         *   각 격(원형이정)에 대해 해당 운세 시기, 수리 번호, 길흉 등급('대길', '길', '평', '흉', '대흉', 또는 '양운수', '상운수' 등 81수리 이론의 분류에 따름), 그리고 그 수리가 의미하는 성격, 건강, 재물, 대인관계, 사회적 성취 등에 대한 구체적이고 심층적인 해설을 제공합니다. 해석은 단순한 키워드 나열이 아니라, 실제 삶에 적용될 수 있는 통찰력 있는 설명이어야 합니다.
     *   **자원오행 분석 (사주 보완):** 이름에 사용된 한자(한자 이름의 경우)의 본래 뜻(자의)이 가지는 오행(자원오행)을 분석합니다. 이 자원오행이 사용자의 사주에서 부족한 오행(용신/희신)을 효과적으로 보완하는지, 또는 오히려 기신(忌神)을 강화시키는지 등을 심층적으로 평가합니다. (한글 이름일 경우, 해당 분석은 제한되거나 일반론으로 설명합니다.)
-    *   **주역 괘 도출 및 해석:** 이름의 전체 획수(총격 수리) 또는 이름의 특성을 고려하여 가장 관련성이 높은 주역 64괘 중 하나를 도출하고, 해당 괘의 기본적인 의미와 그것이 이름의 운명에 미치는 영향을 간략히 해석합니다. (예: "총명격(15획)은 지천태(地天泰) 괘와 유사하여 조화와 안정을 의미합니다.") 'interpretation' 필드는 비워두십시오.
+    *   **주역 괘 도출:** 이름의 전체 획수(총격 수리) 또는 이름의 특성을 고려하여 가장 관련성이 높은 주역 64괘 중 하나를 도출하고, 해당 괘의 기본적인 이름 (예: "지천태")과 괘의 이미지(선택 사항)만 기록합니다. 'interpretation' 필드는 비워두십시오.
 3.  **종합 평가 및 조언:**
-    *   위 모든 분석(사주, 음양, 수리, 자원오행, 주역 등)을 종합하여 이름에 대한 최종 점수(100점 만점)와 평가 등급('매우 좋음', '좋음', '보통', '주의 필요', '나쁨')을 산정합니다. 간단한 요약 평가 문구와 함께 인생 총운에 대한 간략한 요약 (overallFortuneSummary)도 포함해주십시오.
+    *   위 모든 분석(사주, 음양, 수리, 자원오행 등)을 종합하여 이름에 대한 최종 점수(100점 만점)와 평가 등급('매우 좋음', '좋음', '보통', '주의 필요', '나쁨')을 산정합니다. 간단한 요약 평가 문구와 함께 인생 총운에 대한 간략한 요약 (overallFortuneSummary)도 포함해주십시오.
     *   이름의 장점, 단점, 그리고 삶에 미치는 영향에 대한 전반적인 조언을 제공합니다.
     *   세부 항목별 점수(음양오행(만점 20점), 수리길흉(만점 35점), 발음오행(만점 25점), 자원오행(만점 20점) 각각)도 제시합니다. 
 4.  **주의사항:**
@@ -244,25 +243,32 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
     }
 
     if (initialOutput.detailedAnalysis?.iChingHexagram?.hexagramName) {
-      const hexagramName = initialOutput.detailedAnalysis.iChingHexagram.hexagramName;
-      
-      const typedIchingData = ichingData as Array<{ name: string; description: string }>;
-      const hexagramInfo = typedIchingData.find(item => item.name === hexagramName);
+      let hexagramNameFromLLM = initialOutput.detailedAnalysis.iChingHexagram.hexagramName;
+      // "괘" 접미사 제거
+      let cleanedHexagramName = hexagramNameFromLLM.endsWith("괘")
+        ? hexagramNameFromLLM.slice(0, -1)
+        : hexagramNameFromLLM;
+
+      const typedIchingData = ichingData as Array<{ id: number; name: string; symbol: string; hexagram: string; number?: string; description: string; summary: { keyword: string; positive: string; caution: string; advice: string; } }>;
+      const hexagramInfo = typedIchingData.find(item => item.name === cleanedHexagramName);
 
       if (hexagramInfo && hexagramInfo.description) {
         const simplifyInput = {
-          hexagramName: hexagramName,
-          originalInterpretation: hexagramInfo.description, 
+          hexagramName: cleanedHexagramName,
+          originalInterpretation: hexagramInfo.description,
           userName: input.name,
         };
         const { output: simplifiedResult } = await simplifyHexagramPrompt(simplifyInput);
         if (simplifiedResult?.simplifiedInterpretation) {
           finalOutput.detailedAnalysis.iChingHexagram.interpretation = simplifiedResult.simplifiedInterpretation;
+          finalOutput.detailedAnalysis.iChingHexagram.hexagramName = cleanedHexagramName; // Update to cleaned name
         } else {
-          finalOutput.detailedAnalysis.iChingHexagram.interpretation = "주역 괘의 의미를 간결하게 요약하는 데 실패했습니다. 원본 해석을 참고해주세요.";
+          console.warn(`주역 괘 단순화 실패: ${cleanedHexagramName}`);
+          finalOutput.detailedAnalysis.iChingHexagram.interpretation = `"${cleanedHexagramName}" 괘의 의미를 요약하는 데 실패했습니다. 원본 해설의 일부: ${hexagramInfo.description.substring(0,100)}...`;
         }
       } else {
-        finalOutput.detailedAnalysis.iChingHexagram.interpretation = `"${hexagramName}" 괘에 대한 상세 정보를 찾을 수 없어 해석을 제공할 수 없습니다.`;
+        console.warn(`주역 괘 정보 찾기 실패: ${cleanedHexagramName} (원본: ${hexagramNameFromLLM})`);
+        finalOutput.detailedAnalysis.iChingHexagram.interpretation = `"${cleanedHexagramName}" 괘에 대한 상세 정보를 찾을 수 없어 해석을 제공할 수 없습니다.`;
       }
     } else if (finalOutput.detailedAnalysis?.iChingHexagram) {
          finalOutput.detailedAnalysis.iChingHexagram.interpretation = "관련된 주역 괘를 찾지 못했습니다.";
