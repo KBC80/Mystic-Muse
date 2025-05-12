@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ScientificLottoRecommendationOutput } from '@/ai/flows/scientific-lotto-recommendation-flow';
-import { getLottoRecommendationsAction, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
+import { getLottoRecommendationsAction } from '@/app/lotto-recommendation/scientific/actions';
 import { getLatestLottoDraw, type LatestWinningNumber } from '@/app/lotto-recommendation/saju/actions'; 
 import { Home, TestTubeDiagonal, Sparkles, Hash, HelpCircle, ExternalLink, RotateCcw, Newspaper, AlertTriangle, Info } from 'lucide-react';
 
@@ -41,6 +41,8 @@ function ScientificLottoResultContent() {
   const [includeNumbersStr, setIncludeNumbersStr] = useState<string>("");
   const [excludeNumbersStr, setExcludeNumbersStr] = useState<string>("");
   const [numberOfDrawsAnalyzed, setNumberOfDrawsAnalyzed] = useState<number | null>(null);
+  const [inputAnalysisAverageSum, setInputAnalysisAverageSum] = useState<number | null>(null);
+  const [inputAnalysisEvenOddRatio, setInputAnalysisEvenOddRatio] = useState<string | null>(null);
 
 
   const [latestDraw, setLatestDraw] = useState<LatestWinningNumber | null>(null);
@@ -76,6 +78,12 @@ function ScientificLottoResultContent() {
         setLlmResult(result.llmResponse || null);
         if(result.analyzedDrawsCount) {
             setNumberOfDrawsAnalyzed(result.analyzedDrawsCount);
+        }
+        if(result.inputAnalysisAverageSum !== undefined) {
+            setInputAnalysisAverageSum(result.inputAnalysisAverageSum);
+        }
+        if(result.inputAnalysisEvenOddRatio) {
+            setInputAnalysisEvenOddRatio(result.inputAnalysisEvenOddRatio);
         }
       }
     })
@@ -197,15 +205,15 @@ function ScientificLottoResultContent() {
           <Card className="p-6 bg-secondary/30 shadow-md">
               <CardHeader className="p-0 pb-3">
                   <CardTitle className="text-xl text-secondary-foreground flex items-center gap-2">
-                      <HelpCircle className="h-5 w-5" /> AI 예측 (다음 회차)
+                      <HelpCircle className="h-5 w-5" /> AI 입력 분석 요약 (다음 회차)
                   </CardTitle>
               </CardHeader>
               <CardContent className="p-0 space-y-1 text-base">
                   <p className="text-muted-foreground">
-                      <strong className="text-secondary-foreground">예상 당첨 번호 합계 범위:</strong> {llmResult.predictedSumRange}
+                      <strong className="text-secondary-foreground">분석된 평균 당첨 번호 합계:</strong> {inputAnalysisAverageSum !== null ? `약 ${inputAnalysisAverageSum.toFixed(0)}` : '정보 없음'}
                   </p>
                   <p className="text-muted-foreground">
-                      <strong className="text-secondary-foreground">예상 짝수:홀수 비율:</strong> {llmResult.predictedEvenOddRatio}
+                      <strong className="text-secondary-foreground">분석된 가장 흔한 짝수:홀수 비율:</strong> {inputAnalysisEvenOddRatio || '정보 없음'}
                   </p>
               </CardContent>
           </Card>
@@ -277,3 +285,4 @@ export default function ScientificLottoResultPage() {
     </Suspense>
   );
 }
+

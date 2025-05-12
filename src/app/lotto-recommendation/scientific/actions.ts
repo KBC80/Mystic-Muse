@@ -1,3 +1,4 @@
+
 'use server';
 
 import { unstable_cache as cache } from 'next/cache';
@@ -264,6 +265,8 @@ export async function getLottoRecommendationsAction({
 }: GetLottoRecommendationsActionInput): Promise<{
   llmResponse?: ScientificLottoRecommendationOutput;
   analyzedDrawsCount?: number;
+  inputAnalysisAverageSum?: number;
+  inputAnalysisEvenOddRatio?: string;
   error?: string;
 }> {
   try {
@@ -308,7 +311,12 @@ export async function getLottoRecommendationsAction({
     };
 
     const llmResponse = await recommendScientificLottoNumbers(inputForLLM);
-    return { llmResponse, analyzedDrawsCount: analysisSummary.analyzedDrawsCount };
+    return { 
+        llmResponse, 
+        analyzedDrawsCount: analysisSummary.analyzedDrawsCount,
+        inputAnalysisAverageSum: analysisSummary.averageSum,
+        inputAnalysisEvenOddRatio: analysisSummary.averageEvenOddRatio,
+    };
 
   } catch (error) {
     console.error("Error in getLottoRecommendationsAction:", error);
