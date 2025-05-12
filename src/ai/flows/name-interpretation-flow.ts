@@ -10,8 +10,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-// Removed direct import of suri_81_data.json as it will be handled by the LLM or flow logic if needed.
-// The LLM should now use the 81 Suri theory knowledge embedded in its training or provided in the prompt.
+import suri81Data from '@/lib/suri_81_data.json';
+import ichingData from '@/lib/iching_64_data.json';
+
 
 const InterpretNameInputSchema = z.object({
   name: z.string().describe('해석할 이름입니다. AI가 한글, 한자(제공된 경우)를 판단하여 분석합니다. 예: 홍길동 또는 홍길동(洪吉童)'),
@@ -48,7 +49,7 @@ const SuriGyeokSchema = z.object({
 
 const DetailedScoreSchema = z.object({
   score: z.number().int().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
-  maxScore: z.number().int().positive().describe('해당 항목의 만점입니다. 0보다 큰 양의 정수여야 합니다.'),
+  maxScore: z.number().int().min(1).describe('해당 항목의 만점입니다. 1 이상의 정수여야 합니다.'),
 });
 
 const InterpretNameOutputSchema = z.object({
@@ -88,7 +89,6 @@ const InterpretNameOutputSchema = z.object({
   
   // 3. 상세 분석 섹션
   detailedAnalysis: z.object({
-    // 이름 자체 분석
     nameStructureAnalysis: z.object({
       hanjaStrokeCounts: z.array(z.object({ character: z.string(), strokes: z.number().int().optional() })).optional().describe('이름 각 한자/한글의 획수 (한자 우선, 한글은 일반적 방법)'),
       yinYangHarmony: z.object({
@@ -104,10 +104,10 @@ const InterpretNameOutputSchema = z.object({
     
     suriGilhyungAnalysis: z.object({
         introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 청년운, 장년운, 말년운/인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
-        wonGyeok: SuriGyeokSchema.describe('원격(元格) - 초년운 (0-20세)에 대한 분석입니다. 이 객체의 name 필드에는 반드시 "원격(元格) - 초년운 (0-20세)"를 포함해야 합니다.'),
-        hyeongGyeok: SuriGyeokSchema.describe('형격(亨格) - 청년운 (21-40세)에 대한 분석입니다. 이 객체의 name 필드에는 반드시 "형격(亨格) - 청년운 (21-40세)"를 포함해야 합니다.'),
-        iGyeok: SuriGyeokSchema.describe('이격(利格) - 장년운 (41-60세)에 대한 분석입니다. 이 객체의 name 필드에는 반드시 "이격(利格) - 장년운 (41-60세)"를 포함해야 합니다.'),
-        jeongGyeok: SuriGyeokSchema.describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 분석입니다. 이 객체의 name 필드에는 반드시 "정격(貞格) - 말년운/총운 (60세 이후)"를 포함해야 합니다.')
+        wonGyeok: SuriGyeokSchema.describe('원격(元格) - 초년운 (0-20세)에 대한 분석입니다. (예상 이름 필드 값: "원격(元格) - 초년운 (0-20세)")'),
+        hyeongGyeok: SuriGyeokSchema.describe('형격(亨格) - 청년운 (21-40세)에 대한 분석입니다. (예상 이름 필드 값: "형격(亨格) - 청년운 (21-40세)")'),
+        iGyeok: SuriGyeokSchema.describe('이격(利格) - 장년운 (41-60세)에 대한 분석입니다. (예상 이름 필드 값: "이격(利格) - 장년운 (41-60세)")'),
+        jeongGyeok: SuriGyeokSchema.describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 분석입니다. (예상 이름 필드 값: "정격(貞格) - 말년운/총운 (60세 이후)")')
     }).describe('수리길흉 분석 (원형이정 4격 기반)'),
 
     resourceOhaengAnalysis: z.object({
@@ -157,7 +157,6 @@ const simplifyHexagramPrompt = ai.definePrompt({
 const nameInterpretationPrompt = ai.definePrompt({
   name: 'nameInterpretationPrompt',
   input: {schema: InterpretNameInputSchema},
-  // The main prompt will now exclude iChingHexagram.interpretation, as it will be handled in the flow
   output: {schema: InterpretNameOutputSchema.extend({
     detailedAnalysis: InterpretNameOutputSchema.shape.detailedAnalysis.extend({
       iChingHexagram: InterpretNameOutputSchema.shape.detailedAnalysis.shape.iChingHexagram.omit({ interpretation: true })
@@ -184,10 +183,10 @@ const nameInterpretationPrompt = ai.definePrompt({
         *   **획수 음양:** 이름 각 글자의 획수를 기준으로 음양(홀수: 양, 짝수: 음)을 판단하고, 이름 전체의 음양 배열(예: 陽-陰-陽)과 조화도를 평가합니다.
         *   **발음오행:** 이름 각 한글 음절의 초성(자음)에 해당하는 오행(예: ㄱ,ㅋ=木 / ㄴ,ㄷ,ㄹ,ㅌ=火 / ㅇ,ㅎ=土 / ㅅ,ㅈ,ㅊ=金 / ㅁ,ㅂ,ㅍ=水)을 분석하고, 초성 오행 간의 상생/상극 관계를 설명하고 평가합니다.
     *   **수리길흉 분석 (81수리 이론 기반 원형이정 4격):**
-        *   **원격(元格, 초년운 0-20세):** (성이 한 글자일 경우) 이름 첫 글자 획수 + 이름 두번째 글자 획수. (성이 두 글자일 경우) 성씨 두번째 글자 획수 + 이름 첫 글자 획수. (이름이 외자일 경우) 이름 첫 글자 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 친구관계 등), 건강, 잠재력에 대해 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 설명**합니다. 이 객체의 name 필드에는 반드시 "원격(元格) - 초년운 (0-20세)"를 포함해야 합니다.
-        *   **형격(亨格, 청년운 21-40세):** 성씨 첫 글자 획수 + 이름 첫 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 성씨 두번째 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회생활 시작, 직업, 결혼, 재물 형성, 대인관계 확장 등 청년기의 주요 과업과 운세를 중심으로 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 설명**합니다. 이 객체의 name 필드에는 반드시 "형격(亨格) - 청년운 (21-40세)"를 포함해야 합니다.
-        *   **이격(利格, 장년운 41-60세):** 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (외자 이름일 경우) 성씨 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회적 성취, 가정의 안정, 건강 변화, 자녀 관계 등 장년기의 운세 변화와 특징을 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 분석**합니다. 이 객체의 name 필드에는 반드시 "이격(利格) - 장년운 (41-60세)"를 포함해야 합니다.
-        *   **정격(貞格, 말년운/총운 60세 이후):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 인생 전체를 아우르는 총운이자 노년기의 건강, 안정, 자손과의 관계, 삶의 마무리 등을 **81수리 이론의 해당 번호 설명을 참고하여 종합적이고 심층적으로 조망**합니다. 이 객체의 name 필드에는 반드시 "정격(貞格) - 말년운/총운 (60세 이후)"를 포함해야 합니다.
+        *   **원격(元格, 초년운 0-20세):** (성이 한 글자일 경우) 이름 첫 글자 획수 + 이름 두번째 글자 획수. (성이 두 글자일 경우) 성씨 두번째 글자 획수 + 이름 첫 글자 획수. (이름이 외자일 경우) 이름 첫 글자 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 친구관계 등), 건강, 잠재력에 대해 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 설명**합니다. name 필드 값은 "원격(元格) - 초년운 (0-20세)" 이어야 합니다.
+        *   **형격(亨格, 청년운 21-40세):** 성씨 첫 글자 획수 + 이름 첫 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 성씨 두번째 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회생활 시작, 직업, 결혼, 재물 형성, 대인관계 확장 등 청년기의 주요 과업과 운세를 중심으로 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 설명**합니다. name 필드 값은 "형격(亨格) - 청년운 (21-40세)" 이어야 합니다.
+        *   **이격(利格, 장년운 41-60세):** 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (외자 이름일 경우) 성씨 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 사회적 성취, 가정의 안정, 건강 변화, 자녀 관계 등 장년기의 운세 변화와 특징을 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 분석**합니다. name 필드 값은 "이격(利格) - 장년운 (41-60세)" 이어야 합니다.
+        *   **정격(貞格, 말년운/총운 60세 이후):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 인생 전체를 아우르는 총운이자 노년기의 건강, 안정, 자손과의 관계, 삶의 마무리 등을 **81수리 이론의 해당 번호 설명을 참고하여 종합적이고 심층적으로 조망**합니다. name 필드 값은 "정격(貞格) - 말년운/총운 (60세 이후)" 이어야 합니다.
         *   각 격(원형이정)에 대해 해당 운세 시기, 수리 번호, 길흉 등급('대길', '길', '평', '흉', '대흉', 또는 '양운수', '상운수' 등 81수리 이론의 분류에 따름), 그리고 그 수리가 의미하는 성격, 건강, 재물, 대인관계, 사회적 성취 등에 대한 구체적이고 심층적인 해설을 제공합니다. 해석은 단순한 키워드 나열이 아니라, 실제 삶에 적용될 수 있는 통찰력 있는 설명이어야 합니다.
     *   **자원오행 분석 (사주 보완):** 이름에 사용된 한자(한자 이름의 경우)의 본래 뜻(자의)이 가지는 오행(자원오행)을 분석합니다. 이 자원오행이 사용자의 사주에서 부족한 오행(용신/희신)을 효과적으로 보완하는지, 또는 오히려 기신(忌神)을 강화시키는지 등을 심층적으로 평가합니다. (한글 이름일 경우, 해당 분석은 제한되거나 일반론으로 설명합니다.)
     *   **주역 괘 도출 및 해석:** 이름의 전체 획수(총격 수리) 또는 이름의 특성을 고려하여 가장 관련성이 높은 주역 64괘 중 하나를 도출하고, 해당 괘의 기본적인 의미와 그것이 이름의 운명에 미치는 영향을 간략히 해석합니다. (예: "총명격(15획)은 지천태(地天泰) 괘와 유사하여 조화와 안정을 의미합니다.") 'interpretation' 필드는 비워두십시오.
@@ -200,7 +199,6 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   기타 이름과 관련하여 특별히 주의해야 할 점이나 개선을 위한 제언이 있다면 포함합니다. 전반적인 조언에는 운세를 개선하기 위한 구체적인 해결 방안(예: 특정 색상의 옷 착용, 특정 방향으로 침대 머리 두기, 지니면 좋은 물건 등)이나 추천 활동 등 **실질적이고 구체적인 조언** 포함. (generalAdvice)
 
 **이름풀이 결과 페이지 구성안 (아래 모든 항목을 반드시 채워주십시오. 단, 주역 괘 분석의 'interpretation'은 제외):**
-(기존 프롬프트의 결과 페이지 구성안 내용과 동일하게 유지, 단 iChingHexagram.interpretation 제외 명시)
 ... (기존 프롬프트의 상세 구성안 내용 참조) ...
 **3. 상세 분석 섹션 (detailedAnalysis):**
     *   ... (다른 항목들) ...
@@ -229,26 +227,20 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
             iChingHexagram: {
                 hexagramName: initialOutput.detailedAnalysis.iChingHexagram.hexagramName,
                 hexagramImage: initialOutput.detailedAnalysis.iChingHexagram.hexagramImage,
-                interpretation: "", // Initialize with empty string
+                interpretation: "", 
             }
         }
     };
     
-    // Ensure gender output matches input as a fallback for basicInfoSummary
     if (finalOutput.basicInfoSummary && finalOutput.basicInfoSummary.gender !== (input.gender === 'male' ? '남자' : '여자')) {
         finalOutput.basicInfoSummary.gender = (input.gender === 'male' ? '남자' : '여자');
     }
 
-
     if (initialOutput.detailedAnalysis?.iChingHexagram?.hexagramName) {
       const hexagramName = initialOutput.detailedAnalysis.iChingHexagram.hexagramName;
       
-      // Dynamically import the JSON data
-      // Make sure the path to iching_64_data.json is correct relative to the built output
-      // or adjust build process to include JSON files.
-      const ichingDataModule = await import('@/lib/iching_64_data.json');
-      const ichingData = ichingDataModule.default as Record<string, { symbol: string; originalInterpretation: string }>;
-      const hexagramInfo = ichingData[hexagramName];
+      const typedIchingData = ichingData as Record<string, { symbol: string; originalInterpretation: string }>;
+      const hexagramInfo = typedIchingData[hexagramName];
 
       if (hexagramInfo && hexagramInfo.originalInterpretation) {
         const simplifyInput = {
@@ -269,6 +261,35 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
          finalOutput.detailedAnalysis.iChingHexagram.interpretation = "관련된 주역 괘를 찾지 못했습니다.";
     }
 
+    // Ensure all SuriGyeok fields have default values if missing from LLM
+    const suriGyeokKeys: (keyof typeof finalOutput.detailedAnalysis.suriGilhyungAnalysis)[] = ['wonGyeok', 'hyeongGyeok', 'iGyeok', 'jeongGyeok'];
+    suriGyeokKeys.forEach(key => {
+        if (key === 'introduction') return; // Skip introduction
+        if (!finalOutput.detailedAnalysis.suriGilhyungAnalysis[key]) {
+            const defaultName = key === 'wonGyeok' ? "원격(元格) - 초년운 (0-20세)" :
+                                key === 'hyeongGyeok' ? "형격(亨格) - 청년운 (21-40세)" :
+                                key === 'iGyeok' ? "이격(利格) - 장년운 (41-60세)" :
+                                "정격(貞格) - 말년운/총운 (60세 이후)";
+            (finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as any) = {
+                name: defaultName,
+                suriNumber: 0,
+                rating: "정보 없음",
+                interpretation: "해석 정보를 생성하지 못했습니다."
+            };
+        } else {
+            const gyeok = finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as typeof SuriGyeokSchema._type;
+            if (!gyeok.name) {
+                 gyeok.name = key === 'wonGyeok' ? "원격(元格) - 초년운 (0-20세)" :
+                                key === 'hyeongGyeok' ? "형격(亨格) - 청년운 (21-40세)" :
+                                key === 'iGyeok' ? "이격(利格) - 장년운 (41-60세)" :
+                                "정격(貞格) - 말년운/총운 (60세 이후)";
+            }
+            if (gyeok.suriNumber === undefined) gyeok.suriNumber = 0;
+            if (!gyeok.rating) gyeok.rating = "정보 없음";
+            if (!gyeok.interpretation) gyeok.interpretation = "해석 정보를 생성하지 못했습니다.";
+        }
+    });
+
 
     return finalOutput;
 
@@ -285,12 +306,11 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
   }
 }
 
-// Keep the flow definition separate if interpretName is the main exported function
 const interpretNameFlow = ai.defineFlow(
   {
     name: 'interpretNameFlow',
     inputSchema: InterpretNameInputSchema,
     outputSchema: InterpretNameOutputSchema,
   },
-  interpretName // Use the exported async function directly
+  interpretName 
 );
