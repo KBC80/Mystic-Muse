@@ -46,6 +46,8 @@ const SuriGyeokSchema = z.object({
   rating: z.string().describe('81수리 이론에 따른 해당 수리의 길흉 등급 (예: 대길, 길, 평, 흉, 대흉, 양운수, 상운수 등)'),
   interpretation: z.string().describe('해당 격에 대한 81수리 이론 기반의 상세 해설입니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 대인관계, 건강, 재물, 직업 등)에 대한 구체적이고 심층적인 내용을 포함해야 합니다. 단순한 키워드 나열이 아닌, 삶의 지침이 될 수 있는 통찰력 있는 설명을 제공해야 합니다.'),
 });
+export type SuriGyeokSchema = z.infer<typeof SuriGyeokSchema>;
+
 
 const DetailedScoreSchema = z.object({
   score: z.number().int().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
@@ -143,10 +145,10 @@ const simplifyHexagramPrompt = ai.definePrompt({
   output: { schema: z.object({
     simplifiedInterpretation: z.string().describe("중학생도 이해하기 쉬운 괘의 해설입니다.")
   })},
-  prompt: `당신은 주역 전문가입니다. 다음은 {userName}님의 이름과 관련된 {hexagramName} 괘의 원본 해설입니다:
+  prompt: `당신은 주역 전문가입니다. 다음은 {{{userName}}}님의 이름과 관련된 {{{hexagramName}}} 괘의 원본 해설입니다:
 
 --- 원본 해설 ---
-{originalInterpretation}
+{{{originalInterpretation}}}
 --- 원본 해설 끝 ---
 
 이 해설을 중학생도 쉽게 이해할 수 있도록 간결하고 명확하게 다시 작성해주세요. 원본의 핵심 의미는 유지하되, 어려운 용어나 복잡한 문장은 피해주세요.
@@ -239,13 +241,13 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
     if (initialOutput.detailedAnalysis?.iChingHexagram?.hexagramName) {
       const hexagramName = initialOutput.detailedAnalysis.iChingHexagram.hexagramName;
       
-      const typedIchingData = ichingData as Record<string, { symbol: string; originalInterpretation: string }>;
-      const hexagramInfo = typedIchingData[hexagramName];
+      const typedIchingData = ichingData as Array<{ name: string; description: string }>;
+      const hexagramInfo = typedIchingData.find(item => item.name === hexagramName);
 
-      if (hexagramInfo && hexagramInfo.originalInterpretation) {
+      if (hexagramInfo && hexagramInfo.description) {
         const simplifyInput = {
           hexagramName: hexagramName,
-          originalInterpretation: hexagramInfo.originalInterpretation,
+          originalInterpretation: hexagramInfo.description, // Use 'description' field
           userName: input.name,
         };
         const { output: simplifiedResult } = await simplifyHexagramPrompt(simplifyInput);
@@ -265,25 +267,23 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
     const suriGyeokKeys: (keyof typeof finalOutput.detailedAnalysis.suriGilhyungAnalysis)[] = ['wonGyeok', 'hyeongGyeok', 'iGyeok', 'jeongGyeok'];
     suriGyeokKeys.forEach(key => {
         if (key === 'introduction') return; // Skip introduction
-        if (!finalOutput.detailedAnalysis.suriGilhyungAnalysis[key]) {
-            const defaultName = key === 'wonGyeok' ? "원격(元格) - 초년운 (0-20세)" :
-                                key === 'hyeongGyeok' ? "형격(亨格) - 청년운 (21-40세)" :
-                                key === 'iGyeok' ? "이격(利格) - 장년운 (41-60세)" :
-                                "정격(貞格) - 말년운/총운 (60세 이후)";
-            (finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as any) = {
+        const gyeok = finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as SuriGyeokSchema | undefined;
+
+        let defaultName = "";
+        if (key === 'wonGyeok') defaultName = "원격(元格) - 초년운 (0-20세)";
+        else if (key === 'hyeongGyeok') defaultName = "형격(亨格) - 청년운 (21-40세)";
+        else if (key === 'iGyeok') defaultName = "이격(利格) - 장년운 (41-60세)";
+        else defaultName = "정격(貞格) - 말년운/총운 (60세 이후)";
+
+        if (!gyeok) {
+            (finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as SuriGyeokSchema) = {
                 name: defaultName,
                 suriNumber: 0,
                 rating: "정보 없음",
                 interpretation: "해석 정보를 생성하지 못했습니다."
             };
         } else {
-            const gyeok = finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as typeof SuriGyeokSchema._type;
-            if (!gyeok.name) {
-                 gyeok.name = key === 'wonGyeok' ? "원격(元格) - 초년운 (0-20세)" :
-                                key === 'hyeongGyeok' ? "형격(亨格) - 청년운 (21-40세)" :
-                                key === 'iGyeok' ? "이격(利格) - 장년운 (41-60세)" :
-                                "정격(貞格) - 말년운/총운 (60세 이후)";
-            }
+            if (!gyeok.name) gyeok.name = defaultName;
             if (gyeok.suriNumber === undefined) gyeok.suriNumber = 0;
             if (!gyeok.rating) gyeok.rating = "정보 없음";
             if (!gyeok.interpretation) gyeok.interpretation = "해석 정보를 생성하지 못했습니다.";
@@ -314,3 +314,4 @@ const interpretNameFlow = ai.defineFlow(
   },
   interpretName 
 );
+

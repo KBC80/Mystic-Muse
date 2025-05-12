@@ -49,7 +49,7 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
   
   const colorMap: { [key: string]: string } = {
     "음양오행 조화": "bg-blue-500",
-    "수리길흉 (원형이정)": "bg-green-500",
+    "수리길흉": "bg-green-500",
     "발음오행": "bg-yellow-500",
     "자원오행 (사주보완)": "bg-purple-500",
   };
@@ -57,13 +57,13 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
 
   return (
     <div className="mb-3">
-      <div className="flex justify-between text-xs mb-0.5">
-        <span className="font-medium text-foreground">{label}</span>
-        <span className="text-foreground font-semibold">{score} / {maxScore}점</span>
+      <div className="flex justify-between text-sm font-medium text-foreground mb-0.5">
+        <span>{label}</span>
+        <span className="font-semibold">{score} / {maxScore}점</span>
       </div>
-      <div className="w-full bg-muted rounded-full h-2.5 dark:bg-muted/30 overflow-hidden">
+      <div className="w-full bg-muted rounded-full h-3.5 dark:bg-muted/30 overflow-hidden shadow-inner">
         <div
-          className={cn(barColor, "h-2.5 rounded-full transition-all duration-500 ease-out")}
+          className={cn(barColor, "h-3.5 rounded-full transition-all duration-500 ease-out shadow")}
           style={{ width: `${percentage}%` }}
         ></div>
       </div>
@@ -73,7 +73,7 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
 
 const getRatingValue = (rating?: string): number => {
     if (!rating) return 0;
-    const ratingString = rating.toString(); // Ensure it's a string
+    const ratingString = rating.toString(); 
     if (suri81Data.numberClassifications.choiSangUnSu.some(r => ratingString.includes(r.toString()))) return 5;
     if (suri81Data.numberClassifications.sangUnSu.some(r => ratingString.includes(r.toString()))) return 4;
     if (suri81Data.numberClassifications.yangUnSu.some(r => ratingString.includes(r.toString()))) return 3; 
@@ -194,7 +194,7 @@ function NameInterpretationResultContent() {
   const birthTimeLabel = EAST_ASIAN_BIRTH_TIMES.find(time => time.value === bis.birthTime)?.label || bis.birthTime;
   
   const suriGyeokItems = suriGyeokItemsConfig.map(config => {
-    const gyeokData = da.suriGilhyungAnalysis[config.dataKey];
+    const gyeokData = da.suriGilhyungAnalysis[config.dataKey] as SuriGyeokType | undefined; // Type assertion
     const suriRatingName = suri81Data.suriInterpretations[gyeokData?.suriNumber?.toString() as keyof typeof suri81Data.suriInterpretations]?.name || "정보 없음";
     const suriRatingText = suri81Data.suriInterpretations[gyeokData?.suriNumber?.toString() as keyof typeof suri81Data.suriInterpretations]?.rating || gyeokData?.rating || "정보 없음";
     
@@ -221,20 +221,20 @@ function NameInterpretationResultContent() {
   return (
     <div className="space-y-6 py-6 flex flex-col flex-1">
       <Card className="shadow-xl border-primary/40">
-        <CardHeader className="pb-4 bg-secondary/10 dark:bg-secondary/20 rounded-t-lg">
+        <CardHeader className="pb-4 bg-card dark:bg-secondary/20 rounded-t-lg">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className="text-md pt-2 p-3 rounded-md bg-card dark:bg-card/80 shadow-sm text-card-foreground"> 
-              <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
+           <CardDescription className="text-md pt-2 p-3 rounded-md bg-background dark:bg-card/80 shadow-sm "> 
+              <strong className={cn("px-1 py-0.5 rounded text-foreground", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation}
               </strong>
-              <span className="text-card-foreground"> (종합 점수: <strong className="text-primary">{oa.totalScore}점</strong>). </span>
-              {oa.overallFortuneSummary}
+              <span className="text-foreground"> (종합 점수: <strong className="text-primary">{oa.totalScore}점</strong>). </span>
+              <span className="text-foreground">{oa.overallFortuneSummary}</span>
           </CardDescription>
         </CardHeader>
       </Card>
-      
+
       <SectionCard title="기본 정보 요약" icon={Info} className="bg-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <p><strong className="text-foreground">이름:</strong> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`}</p>
@@ -264,7 +264,7 @@ function NameInterpretationResultContent() {
           </div>
         </div>
       </SectionCard>
-
+      
       <SectionCard title="종합 점수 및 평가" icon={Award} className="bg-card">
         <div className="mb-4 text-center">
             <p className={cn("text-lg font-semibold px-2 py-1 rounded-md inline-block", getOverallGradeTextStyle(oa.summaryEvaluation))}>
@@ -276,7 +276,7 @@ function NameInterpretationResultContent() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
             <ScoreBarHorizontal label="음양오행 조화" score={oa.detailedScores.eumYangOhaengScore.score} maxScore={oa.detailedScores.eumYangOhaengScore.maxScore} />
-            <ScoreBarHorizontal label="수리길흉 (원형이정)" score={oa.detailedScores.suriGilhyungScore.score} maxScore={oa.detailedScores.suriGilhyungScore.maxScore} />
+            <ScoreBarHorizontal label="수리길흉" score={oa.detailedScores.suriGilhyungScore.score} maxScore={oa.detailedScores.suriGilhyungScore.maxScore} />
             <ScoreBarHorizontal label="발음오행" score={oa.detailedScores.pronunciationOhaengScore.score} maxScore={oa.detailedScores.pronunciationOhaengScore.maxScore} />
             <ScoreBarHorizontal label="자원오행 (사주보완)" score={oa.detailedScores.resourceOhaengScore.score} maxScore={oa.detailedScores.resourceOhaengScore.maxScore} />
         </div>
