@@ -9,24 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { interpretName, type InterpretNameInput, type InterpretNameOutput, type SuriGyeokSchema as SuriGyeokType } from '@/ai/flows/name-interpretation-flow';
-import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, BarChart2, Award } from 'lucide-react';
+import { Home, Sparkles, User, CalendarDays, Clock, Info, Palette, BookOpen, TrendingUp, Mic, Gem, Filter, CheckCircle, AlertTriangle, RotateCcw, PieChartIcon, Award } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
-import {
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  BarChart as RechartsBarChart,
-  XAxis,
-  YAxis,
-  Bar,
-  Legend,
-  CartesianGrid,
-} from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartConfig } from '@/components/ui/chart';
 
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string | React.ReactNode }> = ({ title, icon: Icon, children, className, cardDescription }) => (
@@ -99,74 +86,14 @@ const getRatingColorClass = (ratingValue: number): string => {
   return "text-red-600 dark:text-red-400"; 
 };
 
-const suriGyeokBarColors = [
-  "hsl(var(--chart-1))", // 원격 - 초록 계열
-  "hsl(var(--chart-2))", // 형격 - 빨강 계열
-  "hsl(var(--chart-3))", // 이격 - 노랑/갈색 계열
-  "hsl(var(--chart-4))", // 정격 - 회색/은색 계열
-];
 
-const SuriGyeokAnalysisBarChart = ({ data }: { data: ReturnType<typeof mapSuriGyeokData>}) => {
-  const chartData = data.map((item, index) => ({
-    name: item.name,
-    value: item.rating,
-    ratingText: item.ratingText,
-    suriNumber: item.suriNumber,
-    fill: suriGyeokBarColors[index % suriGyeokBarColors.length] 
-  }));
-  
-  const suriChartConfig = chartData.reduce((acc, item, index) => {
-    acc[item.name] = { label: item.name, color: suriGyeokBarColors[index % suriGyeokBarColors.length] };
-    return acc;
-  }, {} as ChartConfig);
+const suriGyeokItemsConfig = [
+  { key: 'wonGyeok', dataKey: 'wonGyeok', defaultName: '원격(元格) - 초년운 (0-20세)' },
+  { key: 'hyeongGyeok', dataKey: 'hyeongGyeok', defaultName: '형격(亨格) - 청년운 (21-40세)' },
+  { key: 'iGyeok', dataKey: 'iGyeok', defaultName: '이격(利格) - 장년운 (41-60세)' },
+  { key: 'jeongGyeok', dataKey: 'jeongGyeok', defaultName: '정격(貞格) - 말년운/총운 (60세 이후)' },
+] as const;
 
-
-  return (
-    <ChartContainer config={suriChartConfig} className="h-[220px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <RechartsBarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-          <XAxis 
-            type="number" 
-            domain={[0, 5]} 
-            ticks={[1,2,3,4,5]} 
-            tickFormatter={(value) => ['대흉','흉','평','길','대길'][value-1] || ''} 
-            style={{ fontSize: '10px' }} 
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis dataKey="name" type="category" width={60} style={{ fontSize: '11px' }} interval={0} axisLine={false} tickLine={false} />
-          <RechartsTooltip 
-            cursor={{fill: 'hsl(var(--muted))'}}
-            contentStyle={{fontSize: '12px', padding: '5px'}} 
-            formatter={(value, name, props) => [`${props.payload.ratingText} (${props.payload.suriNumber}수)`, name]}
-          />
-          <Bar dataKey="value" barSize={20} radius={[4, 4, 0, 0]}>
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-          </Bar>
-        </RechartsBarChart>
-      </ResponsiveContainer>
-    </ChartContainer>
-  );
-};
-
-const mapSuriGyeokData = (suriGilhyungAnalysis?: InterpretNameOutput['detailedAnalysis']['suriGilhyungAnalysis']) => {
-  if (!suriGilhyungAnalysis) return [];
-  return [
-    suriGilhyungAnalysis.wonGyeok,
-    suriGilhyungAnalysis.hyeongGyeok,
-    suriGilhyungAnalysis.iGyeok,
-    suriGilhyungAnalysis.jeongGyeok,
-  ].map(item => ({
-    name: item?.name?.split('(')[0].trim() || '정보 없음', 
-    agePeriod: item?.name?.match(/\(([^)]+)\)/)?.[1] || '', 
-    rating: getRatingValue(item?.rating),
-    ratingText: item?.rating || '정보 없음',
-    suriNumber: item?.suriNumber || 0
-  }));
-};
 
 function NameInterpretationResultContent() {
   const searchParams = useSearchParams();
@@ -258,22 +185,19 @@ function NameInterpretationResultContent() {
 
   const birthTimeLabel = EAST_ASIAN_BIRTH_TIMES.find(time => time.value === bis.birthTime)?.label || bis.birthTime;
   
-  const ohaengPieData = [
-    { nameKey: "wood", name: ohaengChartConfig.wood.label, value: bis.sajuOhaengDistribution.wood, fill: ohaengChartConfig.wood.color },
-    { nameKey: "fire", name: ohaengChartConfig.fire.label, value: bis.sajuOhaengDistribution.fire, fill: ohaengChartConfig.fire.color },
-    { nameKey: "earth", name: ohaengChartConfig.earth.label, value: bis.sajuOhaengDistribution.earth, fill: ohaengChartConfig.earth.color },
-    { nameKey: "metal", name: ohaengChartConfig.metal.label, value: bis.sajuOhaengDistribution.metal, fill: ohaengChartConfig.metal.color },
-    { nameKey: "water", name: ohaengChartConfig.water.label, value: bis.sajuOhaengDistribution.water, fill: ohaengChartConfig.water.color },
-  ].filter(item => item.value > 0); 
-
-  const suriGyeokChartData = mapSuriGyeokData(da.suriGilhyungAnalysis);
-
-  const suriGyeokItems = [
-    { key: 'wonGyeok', data: da.suriGilhyungAnalysis.wonGyeok, label: '원격(元格) - 초년운 (0-20세)' },
-    { key: 'hyeongGyeok', data: da.suriGilhyungAnalysis.hyeongGyeok, label: '형격(亨格) - 청년운 (21-40세)' },
-    { key: 'iGyeok', data: da.suriGilhyungAnalysis.iGyeok, label: '이격(利格) - 장년운 (41-60세)' },
-    { key: 'jeongGyeok', data: da.suriGilhyungAnalysis.jeongGyeok, label: '정격(貞格) - 말년운/총운 (60세 이후)' },
-  ];
+  const suriGyeokItems = suriGyeokItemsConfig.map(config => {
+    const gyeokData = da.suriGilhyungAnalysis[config.dataKey];
+    const ratingValue = getRatingValue(gyeokData?.rating);
+    return {
+      key: config.key,
+      label: gyeokData?.name || config.defaultName, // Use name from data if available
+      rating: gyeokData?.rating || '정보 없음',
+      suriNumber: gyeokData?.suriNumber || 0,
+      interpretation: gyeokData?.interpretation || "해석 정보가 없습니다.",
+      ratingValue: ratingValue,
+      colorClass: getRatingColorClass(ratingValue)
+    };
+  });
 
 
   return (
@@ -283,16 +207,16 @@ function NameInterpretationResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8" /> {bis.koreanName} {bis.hanjaName && `(${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className="text-md pt-2 text-foreground/90"> 
+           <CardDescription className="text-md pt-2 p-3 rounded-md text-foreground"> 
               <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation}
               </strong>
-              <span className="text-foreground"> (종합 점수: <strong className="text-accent-foreground">{oa.totalScore}점</strong>). </span>
+              <span className="text-foreground"> (종합 점수: <strong className="text-foreground">{oa.totalScore}점</strong>). </span>
               {oa.overallFortuneSummary}
           </CardDescription>
         </CardHeader>
       </Card>
-
+      
       <SectionCard title="기본 정보 요약" icon={Info} className="bg-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <p><strong className="text-foreground">이름 (한글):</strong> {bis.koreanName}</p>
@@ -310,56 +234,16 @@ function NameInterpretationResultContent() {
             {[bis.sajuPillars.yearPillar, bis.sajuPillars.monthPillar, bis.sajuPillars.dayPillar, bis.sajuPillars.timePillar].map((pillar, index) => (
                 <div key={index} className="text-xs bg-background border border-border px-2 py-1 rounded shadow-sm">
                     <span className="font-semibold">{['년주', '월주', '일주', '시주'][index]}:</span>
-                    { (pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi || pillar.eumYang === "불명" || pillar.ohaeng === "불명") && index === 3 && bis.birthTime.includes("모름") ? ' 불명' : ` ${pillar.cheonGan}${pillar.jiJi}`}
-                    { !((pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi || pillar.eumYang === "불명" || pillar.ohaeng === "불명") && index === 3 && bis.birthTime.includes("모름")) && <span className="ml-1 text-muted-foreground/80">({pillar.eumYang}, {pillar.ohaeng})</span>}
+                    { (pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi ) && index === 3 && bis.birthTime.includes("모름") 
+                      ? ' 불명' 
+                      : ` ${pillar.cheonGan}${pillar.jiJi}`
+                    }
+                    { !((pillar.cheonGan === "불명" || !pillar.cheonGan || pillar.jiJi === "불명" || !pillar.jiJi) && index === 3 && bis.birthTime.includes("모름")) && 
+                      <span className="ml-1 text-muted-foreground/80">({pillar.eumYang}, {pillar.ohaeng})</span>
+                    }
                 </div>
             ))}
             </div>
-          </div>
-           <div className="md:col-span-2 mt-2">
-            <h4 className="font-semibold text-md mt-2 mb-1 text-secondary-foreground flex items-center gap-1">
-              <PieChartIcon className="h-4 w-4" /> 사주 오행 분포
-            </h4>
-            {ohaengPieData.length > 0 ? (
-              <ChartContainer config={ohaengChartConfig} className="mx-auto aspect-square h-[180px] w-full max-w-xs">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart margin={{ top:5, right:5, bottom:5, left:5}}>
-                    <RechartsTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel indicator="dot" nameKey="name" />}
-                    />
-                    <Pie
-                      data={ohaengPieData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={50}
-                      label={({ name, percent, value }) => value > 0 ? `${name.substring(0,1)}: ${(percent * 100).toFixed(0)}%` : null}
-                      fontSize={10}
-                    >
-                      {ohaengPieData.map((entry) => (
-                        <Cell key={`cell-${entry.nameKey}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                      <Legend content={({ payload }) => (
-                        <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs mt-2">
-                          {payload?.map((entry, index) => (
-                            <div key={`legend-${index}`} className="flex items-center">
-                              <div className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: entry.color }}></div>
-                              <span>{entry.value} ({bis.sajuOhaengDistribution[entry.payload.nameKey as keyof typeof bis.sajuOhaengDistribution]})</span>
-                            </div>
-                          ))}
-                        </div>
-                      )} />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <p className="text-sm text-muted-foreground">오행 비율 데이터가 없습니다.</p>
-            )}
-             <p className="text-xs text-center mt-1 text-muted-foreground">사주에서 필요한 오행: <strong className="text-primary">{bis.neededOhaengInSaju}</strong></p>
           </div>
         </div>
       </SectionCard>
@@ -370,7 +254,7 @@ function NameInterpretationResultContent() {
                 종합 평가 등급: {oa.summaryEvaluation}
             </p>
             <p className="text-3xl font-bold mt-2">
-                종합 점수: <span className="text-accent-foreground">{oa.totalScore}점</span> / 100점
+                종합 점수: <span className="text-foreground">{oa.totalScore}점</span> / 100점
             </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
@@ -382,28 +266,39 @@ function NameInterpretationResultContent() {
       </SectionCard>
       
       <SectionCard title="수리길흉 분석 (원형이정 4격)" icon={TrendingUp} className="bg-card" cardDescription={da.suriGilhyungAnalysis.introduction}>
-         <SuriGyeokAnalysisBarChart data={suriGyeokChartData} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-           {suriGyeokItems.map((item) => {
-              const ratingValue = getRatingValue(item.data?.rating);
-              return (
+           {suriGyeokItems.map((item) => (
               <Card key={item.key} className="bg-background/50 p-4 shadow">
                   <CardHeader className="p-0 pb-1">
                     <CardTitle className="text-md text-secondary-foreground flex items-center justify-between">
-                        <span>{item.label.split('(')[0].trim()} <span className="text-xs text-muted-foreground">({item.label.match(/\(([^)]+)\)/)?.[1] || ''})</span></span>
-                        {item.data && <span className={`font-semibold text-sm px-1.5 py-0.5 rounded ${getRatingColorClass(ratingValue)}`}>{item.data.rating} ({item.data.suriNumber}수)</span>}
+                        <span>{item.label}</span>
+                        <span className={`font-semibold text-sm px-1.5 py-0.5 rounded ${item.colorClass}`}>{item.rating} ({item.suriNumber}수)</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 pt-1">
-                     <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{item.data?.interpretation || "해석 정보가 없습니다."}</p>
+                     <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{item.interpretation}</p>
                   </CardContent>
               </Card>
-          )})}
+          ))}
         </div>
       </SectionCard>
       
       <SectionCard title="오행 및 음양 상세 분석" icon={Palette} className="bg-card" cardDescription="이름의 소리, 글자 모양, 한자 뜻에 담긴 오행과 음양의 조화를 분석합니다.">
         <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-md mt-2 mb-1 text-secondary-foreground flex items-center gap-1">
+                <PieChartIcon className="h-4 w-4" /> 사주 오행 분포 (개수 또는 상대적 강도)
+              </h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground pl-4">
+                  <li>{ohaengChartConfig.wood.label}: {bis.sajuOhaengDistribution.wood}</li>
+                  <li>{ohaengChartConfig.fire.label}: {bis.sajuOhaengDistribution.fire}</li>
+                  <li>{ohaengChartConfig.earth.label}: {bis.sajuOhaengDistribution.earth}</li>
+                  <li>{ohaengChartConfig.metal.label}: {bis.sajuOhaengDistribution.metal}</li>
+                  <li>{ohaengChartConfig.water.label}: {bis.sajuOhaengDistribution.water}</li>
+              </ul>
+              <p className="text-sm text-muted-foreground mt-1 pl-4">사주에서 필요한 오행: <strong className="text-primary">{bis.neededOhaengInSaju}</strong></p>
+            </div>
+            <Separator className="my-3"/>
             <div>
                 <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground flex items-center gap-1"><BookOpen className="h-4 w-4"/> 이름의 음양 조화 (획수 기반)</h4>
                  <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">
@@ -495,3 +390,4 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
+
