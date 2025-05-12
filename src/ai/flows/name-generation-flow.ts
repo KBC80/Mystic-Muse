@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import namingRulesData from '@/lib/naming_rules.json';
 
 const GenerateAuspiciousNameInputSchema = z.object({
   fatherName: z.string().describe('아버지의 성함입니다.'),
@@ -40,6 +41,8 @@ export async function generateAuspiciousName(input: GenerateAuspiciousNameInput)
   return generateAuspiciousNameFlow(input);
 }
 
+const formattedNamingRules = namingRulesData.map(rule => `${rule.번호}. ${rule.제목}: ${rule.설명}`).join('\n');
+
 const auspiciousNamePrompt = ai.definePrompt({
   name: 'auspiciousNamePrompt',
   input: {schema: GenerateAuspiciousNameInputSchema},
@@ -52,6 +55,9 @@ const auspiciousNamePrompt = ai.definePrompt({
 3.  단순히 예쁜 이름이 아니라, **깊고 좋은 의미**를 담고 있어야 합니다.
 4.  각 이름에는 가능한 경우 **한자 표기 (이름 부분)**, 이름의 **의미와 풀이 (성씨와의 조화 및 세련된 느낌 포함)**, 그리고 **음양오행 및 사주와의 조화**에 대한 분석을 포함해야 합니다.
 5.  모든 답변은 **한국어**로 해주세요.
+
+**추가 작명 원칙 (반드시 고려해주세요):**
+${formattedNamingRules}
 
 부모 정보:
 - 아버지 성함: {{{fatherName}}}
