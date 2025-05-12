@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -22,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Home, TestTubeDiagonal, BarChart, CheckSquare, XSquare, TrendingUp, Info, ExternalLink, FileText, Sigma, HelpCircle } from 'lucide-react';
-import { getInitialScientificLottoData, type ProcessedWinningNumber, type CalculatedAverages, getLottoRecommendationsAction } from '@/app/lotto-recommendation/scientific/actions';
+import { getInitialScientificLottoData, type ProcessedWinningNumber, type CalculatedAverages } from '@/app/lotto-recommendation/scientific/actions';
 import { cn } from '@/lib/utils';
 
 const analysisFormSchema = z.object({
@@ -118,12 +117,11 @@ export default function ScientificLottoRecommendationPage() {
       setIsInitialLoading(true);
       setError(null);
       try {
-        const data = await getInitialScientificLottoData(); // Fetches top 5 for display, and default analysis for LLM summary
+        const data = await getInitialScientificLottoData(); 
         if (data.error) {
           setError(data.error);
         } else {
           if (data.recentDraws) setRecentDrawsForDisplay(data.recentDraws);
-          // Initially, we don't display analysis results until user submits N
         }
       } catch (err) {
         console.error("초기 데이터 로딩 오류:", err);
@@ -160,7 +158,7 @@ export default function ScientificLottoRecommendationPage() {
     const queryParams = new URLSearchParams();
     if (values.includeNumbers) queryParams.append('includeNumbers', values.includeNumbers);
     if (values.excludeNumbers) queryParams.append('excludeNumbers', values.excludeNumbers);
-    queryParams.append('numberOfDrawsForAnalysis', analyzedDrawsCountInput); // Use the N from analysis step
+    queryParams.append('numberOfDrawsForAnalysis', analyzedDrawsCountInput); 
     
     router.push(`/lotto-recommendation/scientific/result?${queryParams.toString()}`);
   }
@@ -279,29 +277,62 @@ export default function ScientificLottoRecommendationPage() {
                 과거 데이터 분석 (최근 {analysisResults.analyzedDrawsCount}회차 기준)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
                 <p className="text-base text-muted-foreground">
-                    평균 당첨 번호 합계: <strong className="text-foreground">{analysisResults.averageSum.toFixed(1)}</strong>
+                    평균 당첨 번호 합계: <strong className="text-foreground">{analysisResults.averageSum.toFixed(1)}</strong> (일반적인 범위: 100-180)
                 </p>
                 <p className="text-base text-muted-foreground">
                     가장 흔한 짝수:홀수 비율: <strong className="text-foreground">{analysisResults.averageEvenOddRatio}</strong>
                 </p>
+
                 {analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0 && (
-                    <p className="text-base text-muted-foreground">
-                        자주 당첨된 번호 (횟수): <strong className="text-foreground">{analysisResults.frequentNumbers.map(item => `${item.num}(${item.count})`).join(', ')}</strong>
-                    </p>
+                    <div className="mt-3">
+                      <h4 className="font-semibold text-md mb-1">자주 당첨된 번호 (최근 {analysisResults.analyzedDrawsCount}회)</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[80px]">번호</TableHead>
+                            <TableHead>출현 횟수</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {analysisResults.frequentNumbers.map(item => (
+                            <TableRow key={`freq-${item.num}`}>
+                              <TableCell className="font-medium">{item.num}</TableCell>
+                              <TableCell>{item.count}회</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                 )}
-                {analysisResults.infrequentNumbers && analysisResults.infrequentNumbers.length > 0 && (
-                     <p className="text-base text-muted-foreground">
-                        가장 적게 나온 번호: <strong className="text-foreground">{analysisResults.infrequentNumbers.join(', ')}</strong>
-                    </p>
+
+                {analysisResults.leastFrequentNumbers && analysisResults.leastFrequentNumbers.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="font-semibold text-md mb-1">가장 적게 당첨된 번호 (최근 {analysisResults.analyzedDrawsCount}회)</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[80px]">번호</TableHead>
+                            <TableHead>출현 횟수</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {analysisResults.leastFrequentNumbers.map(item => (
+                            <TableRow key={`infreq-${item.num}`}>
+                              <TableCell className="font-medium">{item.num}</TableCell>
+                              <TableCell>{item.count}회</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                 )}
-                <p className="text-sm text-muted-foreground pt-1">{analysisResults.summaryForDisplay}</p>
             </CardContent>
         </Card>
       )}
 
-      {analysisResults && !isLoadingAnalysis && ( // Show recommendation inputs only after analysis
+      {analysisResults && !isLoadingAnalysis && ( 
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl flex items-center gap-2">
@@ -368,3 +399,4 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
+

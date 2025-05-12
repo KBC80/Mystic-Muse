@@ -1,4 +1,3 @@
-
 'use server';
 
 import { unstable_cache as cache } from 'next/cache';
@@ -47,7 +46,7 @@ export interface CalculatedAverages {
   averageEvenOddRatio: string;
   summaryForDisplay: string; // Text summary for LLM input
   frequentNumbers: { num: number; count: number }[]; // For UI display
-  infrequentNumbers: number[]; // For UI display
+  leastFrequentNumbers: { num: number; count: number }[]; // For UI display
   analyzedDrawsCount: number;
 }
 
@@ -68,7 +67,7 @@ const fetchLottoDraw = cache(
       return null;
     }
   },
-  ['lotto-draw-scientific-v2'], // Updated cache key
+  ['lotto-draw-scientific-v3'], 
   { revalidate: 3600 * 3 } 
 );
 
@@ -94,7 +93,6 @@ async function getMostRecentDraws(count: number): Promise<{ draws: WinningNumber
   }
   
   if (latestDrawNo === null) {
-     // Return empty if latest draw cannot be found, error handled by caller
      return { draws, latestDrawNo: null };
   }
 
@@ -118,8 +116,6 @@ async function getMostRecentDraws(count: number): Promise<{ draws: WinningNumber
         drwtNo6: data.drwtNo6,
         bnusNo: data.bnusNo,
       });
-    } else {
-      // console.warn(`회차 ${currentDrawToFetch} 데이터 가져오기 실패 또는 데이터 형식 불일치. (최신회차: ${latestDrawNo})`);
     }
   }
   return { draws, latestDrawNo };
@@ -143,7 +139,7 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
       averageEvenOddRatio: "0:0", 
       summaryForDisplay: "분석할 데이터가 충분하지 않습니다.", 
       frequentNumbers: [],
-      infrequentNumbers: [],
+      leastFrequentNumbers: [],
       analyzedDrawsCount: 0 
     };
   }
@@ -174,42 +170,47 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
 
   const sortedNumberCounts = Object.entries(numberCounts)
     .map(([numStr, count]) => ({ num: parseInt(numStr), count }))
-    .sort((a,b) => b.count - a.count); 
+    .sort((a,b) => b.count - a.count); // Most frequent first
   
-  const frequentNumbersForUI = sortedNumberCounts.slice(0, 7);
+  const frequentNumbersForUI = sortedNumberCounts.slice(0, 7); // Top 7 frequent
   
-  const allPossibleNumbers = Array.from({ length: 45 }, (_, i) => i + 1);
-  const appearingNumbers = new Set(allNumbers);
-  const notAppearedNumbersForUI = allPossibleNumbers.filter(num => !appearingNumbers.has(num)).slice(0,10);
+  const appearingSortedByCountAsc = [...sortedNumberCounts].sort((a,b) => a.count - b.count);
+  const leastFrequentNumbersForUI = appearingSortedByCountAsc.slice(0, 7);
 
-  let summaryForDisplay = `최근 ${relevantDraws.length}회차 (${relevantDraws.length > 0 ? relevantDraws[relevantDraws.length-1].drwNo : 'N/A'}회 ~ ${relevantDraws.length > 0 ? relevantDraws[0].drwNo : 'N/A'}회) 분석:\n`;
+
+  let summaryForDisplay = `최근 ${relevantDraws.length}회차 (${relevantDraws.length > 0 ? relevantDraws[relevantDraws.length-1].drwNo : 'N/A'}회 ~ ${relevantDraws.length > 0 ? relevantDraws[0].drwNo : 'N/A'}회) 분석 요약:\n`;
   summaryForDisplay += `- 평균 당첨 번호 합계: 약 ${averageSum.toFixed(0)} (일반적인 범위: 100-180)\n`;
   summaryForDisplay += `- 가장 흔한 짝수:홀수 비율: ${mostCommonRatio}\n`;
-  if (frequentNumbersForUI.length > 0) summaryForDisplay += `- 최근 자주 등장한 숫자(출현횟수): ${frequentNumbersForUI.map(item => `${item.num}(${item.count}회)`).join(', ')}\n`;
+  if (frequentNumbersForUI.length > 0) {
+    summaryForDisplay += `- 최근 자주 등장한 주요 숫자 (상위 ${frequentNumbersForUI.length}개, 출현횟수): ${frequentNumbersForUI.map(item => `${item.num}(${item.count}회)`).join(', ')}\n`;
+  }
   
-  if (notAppearedNumbersForUI.length > 0) {
-    summaryForDisplay += `- 최근 ${lastN}회 동안 미출현: ${notAppearedNumbersForUI.join(', ')}${allPossibleNumbers.filter(num => !appearingNumbers.has(num)).length > 10 ? ' 등' : ''}\n`;
-  } else if (sortedNumberCounts.length > 0) {
-    const leastFrequent = sortedNumberCounts.slice(-7).reverse().map(item => `${item.num}(${item.count}회)`).join(', ');
-    summaryForDisplay += `- 최근 가장 드물게 등장: ${leastFrequent}\n`;
+  if (leastFrequentNumbersForUI.length > 0) {
+    summaryForDisplay += `- 최근 가장 드물게 등장한 주요 숫자 (하위 ${leastFrequentNumbersForUI.length}개, 출현횟수): ${leastFrequentNumbersForUI.map(item => `${item.num}(${item.count}회)`).join(', ')}\n`;
+  }
+  
+  const allPossibleNumbers = Array.from({ length: 45 }, (_, i) => i + 1);
+  const appearingNumbersSet = new Set(allNumbers);
+  const notAppearedNumbers = allPossibleNumbers.filter(num => !appearingNumbersSet.has(num));
+  if (notAppearedNumbers.length > 0) {
+      summaryForDisplay += `- 최근 ${relevantDraws.length}회 동안 미출현한 주요 숫자: ${notAppearedNumbers.slice(0, 7).join(', ')}${notAppearedNumbers.length > 7 ? ' 등' : ''}\n`;
   }
 
-  // ... (other summary parts from your original generateHistoricalDataSummaryForLLM)
 
   return { 
     averageSum, 
     averageEvenOddRatio: mostCommonRatio, 
     summaryForDisplay, 
     frequentNumbers: frequentNumbersForUI,
-    infrequentNumbers: notAppearedNumbersForUI,
+    leastFrequentNumbers: leastFrequentNumbersForUI,
     analyzedDrawsCount: relevantDraws.length
   };
 }
 
 
 export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?: string): Promise<{
-  recentDraws?: ProcessedWinningNumber[]; // For display (top 5)
-  averages?: CalculatedAverages; // For analysis display (based on N)
+  recentDraws?: ProcessedWinningNumber[]; 
+  averages?: CalculatedAverages; 
   error?: string;
 }> {
   try {
@@ -222,7 +223,6 @@ export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?
     }
     const processedRecentDrawsForDisplay = processRawDraws(rawRecentDrawsForDisplay);
     
-    // If numberOfDrawsForAnalysisStr is provided, perform analysis
     if (numberOfDrawsForAnalysisStr) {
         let numDrawsToAnalyze = parseInt(numberOfDrawsForAnalysisStr, 10);
         if (isNaN(numDrawsToAnalyze) || numDrawsToAnalyze < 5 || numDrawsToAnalyze > 100) {
@@ -232,7 +232,7 @@ export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?
         if (latestDrawNoForAnalysis === null) {
              return { recentDraws: processedRecentDrawsForDisplay, error: "분석을 위한 과거 데이터를 가져오는 중 최신 회차 정보를 확인할 수 없습니다." };
         }
-        if (rawDrawsForAnalysis.length < 5) {
+        if (rawDrawsForAnalysis.length < 5) { 
             return { 
                 recentDraws: processedRecentDrawsForDisplay, 
                 error: `분석을 위한 과거 당첨 데이터를 충분히 가져올 수 없습니다 (최소 5회차 필요, 현재 ${rawDrawsForAnalysis.length}회차).` 
@@ -243,8 +243,6 @@ export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?
         return { recentDraws: processedRecentDrawsForDisplay, averages };
     }
 
-    // If no specific N is given for analysis (e.g. initial page load before user input N),
-    // just return the recent draws for display.
     return { recentDraws: processedRecentDrawsForDisplay };
 
   } catch (error) {
@@ -256,7 +254,7 @@ export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?
 interface GetLottoRecommendationsActionInput {
   includeNumbersStr?: string;
   excludeNumbersStr?: string;
-  numberOfDrawsForAnalysisStr: string; // Now mandatory for this action
+  numberOfDrawsForAnalysisStr: string; 
 }
 
 export async function getLottoRecommendationsAction({
@@ -317,3 +315,4 @@ export async function getLottoRecommendationsAction({
     return { error: error instanceof Error ? error.message : "로또 번호 추천 중 오류 발생" };
   }
 }
+
