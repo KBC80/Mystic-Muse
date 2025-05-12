@@ -37,15 +37,15 @@ const SajuOhaengDistributionSchema = z.object({
 });
 
 const SuriGyeokSchema = z.object({
-  name: z.string().describe('격의 이름 (원격, 형격, 이격, 정격)'),
+  name: z.string().describe('격의 이름 (예: 원격(元格) - 초년운, 형격(亨格) - 청년운 등)'),
   suriNumber: z.number().int().min(1).max(81).describe('수리 획수 (1-81)'),
   rating: z.enum(['대길', '길', '평', '흉', '대흉']).describe('길흉 등급'),
   interpretation: z.string().describe('해당 격에 대한 상세 해설 (성격, 운세 등)'),
 });
 
 const DetailedScoreSchema = z.object({
-  score: z.number().min(0).max(100),
-  maxScore: z.number().positive(),
+  score: z.number().min(0).max(100).describe('항목별 점수입니다.'),
+  maxScore: z.number().int().min(1).describe('해당 항목의 만점입니다 (양의 정수).'),
 });
 
 const InterpretNameOutputSchema = z.object({
@@ -100,10 +100,10 @@ const InterpretNameOutputSchema = z.object({
     
     suriGilhyungAnalysis: z.object({
         introduction: z.string().describe("수리 4격(원형이정)과 81수리 성명학에 대한 간략한 소개."),
-        wonGyeok: SuriGyeokSchema.extend({ name: z.literal('원격(元格) - 초년운') }),
-        hyeongGyeok: SuriGyeokSchema.extend({ name: z.literal('형격(亨格) - 청년운') }),
-        iGyeok: SuriGyeokSchema.extend({ name: z.literal('이격(利格) - 중년운') }),
-        jeongGyeok: SuriGyeokSchema.extend({ name: z.literal('정격(貞格) - 말년운/총운') })
+        wonGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "원격(元格) - 초년운" 이어야 합니다.') }),
+        hyeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "형격(亨格) - 청년운" 이어야 합니다.') }),
+        iGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "이격(利格) - 중년운" 이어야 합니다.') }),
+        jeongGyeok: SuriGyeokSchema.extend({ name: z.string().describe('격의 이름과 해당 운세 시기입니다. 이 값은 "정격(貞格) - 말년운/총운" 이어야 합니다.') })
     }).describe('수리길흉 분석 (원형이정 4격 기반)'),
 
     resourceOhaengAnalysis: z.object({
@@ -157,10 +157,10 @@ const nameInterpretationPrompt = ai.definePrompt({
         *   **획수 음양:** 이름 각 글자의 획수를 기준으로 음양(홀수: 양, 짝수: 음)을 판단하고, 이름 전체의 음양 배열(예: 陽-陰-陽)과 조화도를 평가합니다.
         *   **발음오행:** 이름 각 한글 음절의 초성(자음)에 해당하는 오행(예: ㄱ,ㅋ=木 / ㄴ,ㄷ,ㄹ,ㅌ=火 / ㅇ,ㅎ=土 / ㅅ,ㅈ,ㅊ=金 / ㅁ,ㅂ,ㅍ=水)을 분석하고, 초성 오행 간의 상생/상극 관계를 설명하고 평가합니다.
     *   **수리길흉 분석 (81수리 기반 원형이정 4격):**
-        *   **원격(元格, 초년운):** (성이 한 글자일 경우) 성씨 획수 + 이름 첫 글자 획수. (성이 두 글자일 경우) 두 글자 성씨 획수 합 + 이름 첫 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다.
-        *   **형격(亨格, 청년운/중년운 전반):** 성씨 마지막 글자 획수 + 이름 첫 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. (외자 이름일 경우 이름 글자 획수 + 1로 계산)
-        *   **이격(利格, 중년운 후반/장년운):** 이름 첫 글자 획수 + 이름 마지막 글자 획수. (외자 이름일 경우 이름 글자 획수 + 1로 계산) 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다.
-        *   **정격(貞格, 말년운/인생 총운):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다.
+        *   **원격(元格, 초년운):** (성이 한 글자일 경우) 이름 첫 글자 획수 + 이름 두번째 글자 획수. (성이 두 글자일 경우) 성씨 두번째 글자 획수 + 이름 첫 글자 획수. (이름이 외자일 경우) 이름 첫 글자 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. (20세 이전)
+        *   **형격(亨格, 청년운/중년운 전반):** 성씨 첫 글자 획수 + 이름 첫 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 성씨 두번째 글자 획수. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. (20세~40세)
+        *   **이격(利格, 중년운 후반/장년운):** 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (성이 두 글자일 경우) 성씨 첫 글자 획수 + 이름 마지막 글자 획수. (외자 이름일 경우) 성씨 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. (40세~60세)
+        *   **정격(貞格, 말년운/인생 총운):** 성씨와 이름의 모든 글자 획수의 총합. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. (60세 이후)
         *   각 격(원형이정)에 대해 해당 운세 시기, 수리 번호, 길흉 등급('대길', '길', '평', '흉', '대흉'), 그리고 그 수리가 의미하는 성격, 건강, 재물, 대인관계, 사회적 성취 등에 대한 구체적이고 심층적인 해설을 제공합니다.
     *   **자원오행 분석 (사주 보완):** 이름에 사용된 한자(한자 이름의 경우)의 본래 뜻(자의)이 가지는 오행(자원오행)을 분석합니다. 이 자원오행이 사용자의 사주에서 부족한 오행(용신/희신)을 효과적으로 보완하는지, 또는 오히려 기신(忌神)을 강화시키는지 등을 심층적으로 평가합니다. (한글 이름일 경우, 해당 분석은 제한되거나 일반론으로 설명합니다.)
     *   **주역 괘 도출 및 해석:** 이름의 전체 획수(총격 수리) 또는 이름의 특성을 고려하여 가장 관련성이 높은 주역 64괘 중 하나를 도출하고, 해당 괘의 기본적인 의미와 그것이 이름의 운명에 미치는 영향을 간략히 해석합니다. (예: "총명격(15획)은 지천태(地天泰) 괘와 유사하여 조화와 안정을 의미합니다.")
@@ -208,7 +208,7 @@ const nameInterpretationPrompt = ai.definePrompt({
             *   harmonyRelationship: 초성 오행 간 상생/상극 관계 상세 설명.
             *   assessment: 발음오행에 대한 종합 평가.
     *   **suriGilhyungAnalysis (수리길흉 분석 - 원형이정 4격):**
-        *   introduction: "수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한자/한글 획수로 풀이한 81수리 성명학입니다. 초년운, 청년운(중년운 전반), 중년운(장년운), 말년운(인생 총운)으로 길흉을 따져 이름이 갖는 운세를 설명합니다."
+        *   introduction: "수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한자/한글 획수로 풀이한 81수리 성명학입니다. 초년운(20세 이전), 청년운(20~40세), 중년운(40~60세), 말년운(60세 이후)으로 길흉을 따져 이름이 갖는 운세를 설명합니다."
         *   wonGyeok: { name: "원격(元格) - 초년운", suriNumber: 81수리 중 숫자, rating: '대길'/'길'/'평'/'흉'/'대흉', interpretation: "해당 수리의 상세 해석..." }
         *   hyeongGyeok: { name: "형격(亨格) - 청년운", suriNumber: ..., rating: ..., interpretation: "..." }
         *   iGyeok: { name: "이격(利格) - 중년운", suriNumber: ..., rating: ..., interpretation: "..." }
