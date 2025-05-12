@@ -194,9 +194,14 @@ function NameInterpretationResultContent() {
   const birthTimeLabel = EAST_ASIAN_BIRTH_TIMES.find(time => time.value === bis.birthTime)?.label || bis.birthTime;
   
   const suriGyeokItems = suriGyeokItemsConfig.map(config => {
-    const gyeokData = da.suriGilhyungAnalysis[config.dataKey] as SuriGyeokType | undefined; // Type assertion
-    const suriRatingName = suri81Data.suriInterpretations[gyeokData?.suriNumber?.toString() as keyof typeof suri81Data.suriInterpretations]?.name || "정보 없음";
-    const suriRatingText = suri81Data.suriInterpretations[gyeokData?.suriNumber?.toString() as keyof typeof suri81Data.suriInterpretations]?.rating || gyeokData?.rating || "정보 없음";
+    const gyeokData = da.suriGilhyungAnalysis[config.dataKey] as SuriGyeokType | undefined; 
+    let suriRatingName = "정보 없음";
+    let suriRatingText = gyeokData?.rating || "정보 없음";
+
+    if (gyeokData?.suriNumber && suri81Data.suriInterpretations[gyeokData.suriNumber.toString() as keyof typeof suri81Data.suriInterpretations]) {
+        suriRatingName = suri81Data.suriInterpretations[gyeokData.suriNumber.toString() as keyof typeof suri81Data.suriInterpretations].name;
+        suriRatingText = suri81Data.suriInterpretations[gyeokData.suriNumber.toString() as keyof typeof suri81Data.suriInterpretations].rating;
+    }
     
     return {
       key: config.key,
@@ -215,18 +220,18 @@ function NameInterpretationResultContent() {
     { name: "토", value: bis.sajuOhaengDistribution.earth, fill: ohaengChartConfig.earth.color },
     { name: "금", value: bis.sajuOhaengDistribution.metal, fill: ohaengChartConfig.metal.color },
     { name: "수", value: bis.sajuOhaengDistribution.water, fill: ohaengChartConfig.water.color },
-  ].filter(item => item.value > 0);
+  ].filter(item => item.value >= 0); // Ensure all values are displayed, even 0
 
 
   return (
     <div className="space-y-6 py-6 flex flex-col flex-1">
-      <Card className="shadow-xl border-primary/40">
-        <CardHeader className="pb-4 bg-card dark:bg-secondary/20 rounded-t-lg">
+      <Card className="shadow-xl border-primary/40 bg-primary/5 dark:bg-primary/10">
+        <CardHeader className="pb-4 rounded-t-lg">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
-            <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
+            <Sparkles className="h-8 w-8" /> {bis.koreanName} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className="text-md pt-2 p-3 rounded-md bg-background dark:bg-card/80 shadow-sm "> 
-              <strong className={cn("px-1 py-0.5 rounded text-foreground", getOverallGradeTextStyle(oa.summaryEvaluation))}>
+           <CardDescription className="text-md pt-2 p-3 rounded-md bg-background dark:bg-card/80 shadow-sm text-foreground"> 
+              <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation}
               </strong>
               <span className="text-foreground"> (종합 점수: <strong className="text-primary">{oa.totalScore}점</strong>). </span>

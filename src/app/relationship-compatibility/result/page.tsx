@@ -176,13 +176,13 @@ function RelationshipCompatibilityResultContent() {
 
   return (
     <div className="space-y-6 py-6 flex flex-col flex-1">
-      <Card className="shadow-lg border-primary/30">
+      <Card className="shadow-lg border-primary/30 bg-primary/5 dark:bg-primary/10">
         <CardHeader className="pb-4">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Heart className="h-8 w-8" /> {person1Name}님과 {person2Name}님의 천생연분 궁합
           </CardTitle>
           <CardDescription className="text-md pt-2 text-primary">
-            <strong>궁합 총점: {overallScore}점</strong> / <strong className={`px-2 py-1 rounded-md text-lg ${getGradeColor(overallGrade)}`}>{overallGrade}</strong>
+            <strong>궁합 총점: {overallScore}점</strong> / <strong className={`font-semibold px-1 py-0.5 rounded-md text-lg ${getGradeColor(overallGrade)}`}>{overallGrade}</strong>
           </CardDescription>
         </CardHeader>
       </Card>
