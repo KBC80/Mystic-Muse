@@ -45,10 +45,11 @@ export interface ProcessedWinningNumber extends WinningNumber {
 export interface CalculatedAverages {
   averageSum: number;
   averageEvenOddRatio: string;
-  summaryForDisplay: string; // Text summary for LLM input
-  frequentNumbers: { num: number; count: number }[]; // For UI display
-  leastFrequentNumbers: { num: number; count: number }[]; // For UI display
+  summaryForDisplay: string; 
+  frequentNumbers: { num: number; count: number }[];
+  leastFrequentNumbers: { num: number; count: number }[];
   analyzedDrawsCount: number;
+  notAppearedNumbers: number[];
 }
 
 // Helper to fetch a single lotto draw with caching
@@ -141,7 +142,8 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
       summaryForDisplay: "분석할 데이터가 충분하지 않습니다.", 
       frequentNumbers: [],
       leastFrequentNumbers: [],
-      analyzedDrawsCount: 0 
+      analyzedDrawsCount: 0,
+      notAppearedNumbers: []
     };
   }
 
@@ -171,12 +173,17 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
 
   const sortedNumberCounts = Object.entries(numberCounts)
     .map(([numStr, count]) => ({ num: parseInt(numStr), count }))
-    .sort((a,b) => b.count - a.count); // Most frequent first
+    .sort((a,b) => b.count - a.count); 
   
-  const frequentNumbersForUI = sortedNumberCounts.slice(0, 7); // Top 7 frequent
+  const frequentNumbersForUI = sortedNumberCounts.slice(0, 7); 
   
   const appearingSortedByCountAsc = [...sortedNumberCounts].sort((a,b) => a.count - b.count);
   const leastFrequentNumbersForUI = appearingSortedByCountAsc.slice(0, 7);
+
+  const allPossibleNumbers = Array.from({ length: 45 }, (_, i) => i + 1);
+  const appearingNumbersSet = new Set(allNumbers);
+  const notAppearedNumbersRaw = allPossibleNumbers.filter(num => !appearingNumbersSet.has(num));
+  const notAppearedNumbersForUI = notAppearedNumbersRaw.slice(0, 7);
 
 
   let summaryForDisplay = `최근 ${relevantDraws.length}회차 (${relevantDraws.length > 0 ? relevantDraws[relevantDraws.length-1].drwNo : 'N/A'}회 ~ ${relevantDraws.length > 0 ? relevantDraws[0].drwNo : 'N/A'}회) 분석 요약:\n`;
@@ -190,11 +197,8 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
     summaryForDisplay += `- 최근 가장 드물게 등장한 주요 숫자 (하위 ${leastFrequentNumbersForUI.length}개, 출현횟수): ${leastFrequentNumbersForUI.map(item => `${item.num}(${item.count}회)`).join(', ')}\n`;
   }
   
-  const allPossibleNumbers = Array.from({ length: 45 }, (_, i) => i + 1);
-  const appearingNumbersSet = new Set(allNumbers);
-  const notAppearedNumbers = allPossibleNumbers.filter(num => !appearingNumbersSet.has(num));
-  if (notAppearedNumbers.length > 0) {
-      summaryForDisplay += `- 최근 ${relevantDraws.length}회 동안 미출현한 주요 숫자: ${notAppearedNumbers.slice(0, 7).join(', ')}${notAppearedNumbers.length > 7 ? ' 등' : ''}\n`;
+  if (notAppearedNumbersRaw.length > 0) {
+      summaryForDisplay += `- 최근 ${relevantDraws.length}회 동안 미출현한 주요 숫자: ${notAppearedNumbersForUI.join(', ')}${notAppearedNumbersRaw.length > 7 ? ' 등' : ''}\n`;
   }
 
 
@@ -204,7 +208,8 @@ function calculateAveragesAndSummarize(processedDraws: ProcessedWinningNumber[],
     summaryForDisplay, 
     frequentNumbers: frequentNumbersForUI,
     leastFrequentNumbers: leastFrequentNumbersForUI,
-    analyzedDrawsCount: relevantDraws.length
+    analyzedDrawsCount: relevantDraws.length,
+    notAppearedNumbers: notAppearedNumbersForUI
   };
 }
 
@@ -264,8 +269,15 @@ export async function getLottoRecommendationsAction({
   numberOfDrawsForAnalysisStr,
 }: GetLottoRecommendationsActionInput): Promise<{
   llmResponse?: ScientificLottoRecommendationOutput;
-  historicalDataSummaryForLLM?: string;
-  analyzedDrawsCount?: number;
+  historicalDataSummaryForLLM?: string; // For LLM input
+  analysisDataForUI?: { // For UI display
+    analyzedDrawsCount: number;
+    averageSum: number;
+    averageEvenOddRatio: string;
+    frequentNumbers: { num: number; count: number }[];
+    leastFrequentNumbers: { num: number; count: number }[];
+    notAppearedNumbers: number[];
+  };
   error?: string;
 }> {
   try {
@@ -312,8 +324,15 @@ export async function getLottoRecommendationsAction({
     const llmResponse = await recommendScientificLottoNumbers(inputForLLM);
     return { 
         llmResponse, 
-        historicalDataSummaryForLLM: analysisSummary.summaryForDisplay,
-        analyzedDrawsCount: analysisSummary.analyzedDrawsCount,
+        historicalDataSummaryForLLM: analysisSummary.summaryForDisplay, // For LLM
+        analysisDataForUI: { // For UI
+            analyzedDrawsCount: analysisSummary.analyzedDrawsCount,
+            averageSum: analysisSummary.averageSum,
+            averageEvenOddRatio: analysisSummary.averageEvenOddRatio,
+            frequentNumbers: analysisSummary.frequentNumbers,
+            leastFrequentNumbers: analysisSummary.leastFrequentNumbers,
+            notAppearedNumbers: analysisSummary.notAppearedNumbers || [],
+        },
     };
 
   } catch (error) {
