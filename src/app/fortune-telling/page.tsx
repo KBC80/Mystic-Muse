@@ -44,7 +44,7 @@ export default function FortuneTellingLandingPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <Sparkles className="text-primary h-6 w-6" /> 운세보기
+            <Sparkles className="text-primary h-6 w-6" /> 재미로 보는 운세
           </CardTitle>
           <CardDescription>
             다양한 운세 서비스를 통해 당신의 오늘, 올해, 별자리, 타로, 룬 문자의 기운을 확인해보세요.

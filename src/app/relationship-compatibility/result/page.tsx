@@ -163,15 +163,15 @@ function RelationshipCompatibilityResultContent() {
   }
   
   const { 
-    overallScore, overallGrade, sajuCompatibility, ohaengAnalysis, 
+ overallScore, overallGrade, sajuCompatibility, ohaengAnalysis, 
     sibsinYukchinAnalysis, nameHanjaHarmony, overallInterpretation, 
-    strengths, weaknesses, improvementAdvice, luckyNumbers 
+ strengths, weaknesses, improvementAdvice, luckyNumbers 
   } = result;
 
   const getGradeColor = (grade: string) => {
-    if (['최상', '상'].includes(grade)) return 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-900';
-    if (['중상', '중'].includes(grade)) return 'text-yellow-600 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900';
-    return 'text-red-600 bg-red-100 dark:text-red-300 dark:bg-red-900';
+    if (['최상', '상'].includes(grade)) return 'text-green-600 dark:text-green-400';
+    if (['중상', '중'].includes(grade)) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   return (
@@ -181,7 +181,7 @@ function RelationshipCompatibilityResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Heart className="h-8 w-8" /> {person1Name}님과 {person2Name}님의 천생연분 궁합
           </CardTitle>
-          <CardDescription className="text-md pt-2 bg-accent/10 p-3 rounded-md text-primary">
+          <CardDescription className="text-md pt-2 text-primary">
             <strong>궁합 총점: {overallScore}점</strong> / <strong className={`px-2 py-1 rounded-md text-lg ${getGradeColor(overallGrade)}`}>{overallGrade}</strong>
           </CardDescription>
         </CardHeader>
@@ -280,3 +280,4 @@ export default function RelationshipCompatibilityResultPage() {
     </Suspense>
   );
 }
+

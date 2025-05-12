@@ -239,8 +239,7 @@ function NameInterpretationResultContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <p><strong className="text-foreground">이름:</strong> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`}</p>
           <p><strong className="text-foreground">성별:</strong> {bis.gender}</p>
-          <p><strong className="text-foreground">양력 생일:</strong> {bis.solarBirthDate}</p>
-          <p><strong className="text-foreground">음력 생일:</strong> {bis.lunarBirthDate}</p>
+          <p><strong className="text-foreground">생일(양력/음력):</strong> {bis.solarBirthDate} / {bis.lunarBirthDate}</p>
           <p><strong className="text-foreground">출생 시간:</strong> {birthTimeLabel}</p>
           <p className="pt-1">
             <strong className="text-foreground">사주 정보:</strong> {bis.gapjaYearName} ({bis.zodiacColor && `${bis.zodiacColor} `}{bis.zodiacSign})
@@ -359,7 +358,7 @@ function NameInterpretationResultContent() {
         </div>
       </SectionCard>
       
-      <SectionCard title="한자 필터링 및 주의사항" icon={Filter} className="bg-card">
+      <SectionCard title="한자 필터링 및 종합조언" icon={Filter} className="bg-card">
         <div className="space-y-3">
             <div>
                 <h4 className="font-semibold text-md mb-1 text-secondary-foreground flex items-center gap-1"><AlertTriangle className="h-4 w-4 text-red-500"/> 불용한자 여부</h4>

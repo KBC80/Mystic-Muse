@@ -32,7 +32,7 @@ export const navItems: NavItem[] = [
     icon: Baby,
   },
   {
-    title: '운세보기', 
+    title: '재미로 보는 운세', 
     href: '/fortune-telling', 
     icon: Sparkles, 
     // Sub-items for fortune telling can be listed on the /fortune-telling page itself as cards.
