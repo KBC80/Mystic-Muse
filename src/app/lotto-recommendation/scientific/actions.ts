@@ -46,6 +46,7 @@ export interface CalculatedAverages {
   averageSum: number;
   averageEvenOddRatio: string;
   summaryForDisplay: string; 
+  analyzedDrawsCount: number;
 }
 
 // Helper to fetch a single lotto draw with caching
@@ -54,23 +55,19 @@ const fetchLottoDraw = cache(
     try {
       const response = await fetch(`${LOTTO_API_URL}${drawNo}`);
       if (!response.ok) {
-        // Don't treat as critical error for finding latest draw, just return null
-        // console.warn(`API 요청 실패 (회차 ${drawNo}): ${response.status}`);
         return null;
       }
       const data = await response.json() as WinningNumberApiData;
       if (data.returnValue !== 'success') {
-        // This means the draw number doesn't exist or there was an issue
         return null; 
       }
       return data;
     } catch (error) {
-      // console.error(`API 호출 중 오류 발생 (회차 ${drawNo}):`, error);
       return null;
     }
   },
   ['lotto-draw'],
-  { revalidate: 3600 * 3 } // Cache for 3 hours
+  { revalidate: 3600 * 3 } 
 );
 
 
@@ -79,15 +76,13 @@ async function getMostRecentDraws(count: number): Promise<{ draws: WinningNumber
   let latestDrawNo = 0;
   const draws: WinningNumber[] = [];
 
-  // 1. Estimate current draw number
   const now = new Date();
-  const startDate = new Date("2002-12-07"); // Lotto Draw 1 date
+  const startDate = new Date("2002-12-07"); 
   const weeksSinceStart = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
-  let estimatedCurrentDraw = weeksSinceStart + 1; // Rough estimate
+  let estimatedCurrentDraw = weeksSinceStart + 1; 
 
-  // 2. Find the actual latest draw number by fetching downwards from estimate + a buffer
-  const searchBuffer = 10; // Look a bit ahead of the estimate
-  for (let i = 0; i <= searchBuffer * 2; i++) { // Search around estimate
+  const searchBuffer = 10; 
+  for (let i = 0; i <= searchBuffer * 2; i++) { 
     const drawToTry = estimatedCurrentDraw + searchBuffer - i;
     if (drawToTry <= 0) continue;
     const data = await fetchLottoDraw(drawToTry);
@@ -101,7 +96,6 @@ async function getMostRecentDraws(count: number): Promise<{ draws: WinningNumber
      throw new Error("최신 회차 번호를 확인할 수 없습니다. API 서비스 상태를 확인해주세요.");
   }
 
-  // 3. Fetch 'count' draws downwards from the latest
   for (let i = 0; i < count; i++) {
     const currentDrawToFetch = latestDrawNo - i;
     if (currentDrawToFetch <= 0) break;
@@ -123,11 +117,8 @@ async function getMostRecentDraws(count: number): Promise<{ draws: WinningNumber
         bnusNo: data.bnusNo,
       });
     } else {
-      // If a draw is missing in the sequence (shouldn't happen for recent ones if latestDrawNo is correct)
       console.warn(`회차 ${currentDrawToFetch} 데이터 가져오기 실패 또는 데이터 형식 불일치. (최신회차: ${latestDrawNo})`);
-       if (draws.length < count && i < count -1) { // if not enough draws collected and it's not the last one expected
-         // This could indicate a problem with the API or our latestDrawNo detection
-         // For now, we continue, but this could be an error condition
+       if (draws.length < count && i < count -1) { 
        }
     }
   }
@@ -150,18 +141,17 @@ function processRawDraws(rawDraws: WinningNumber[]): ProcessedWinningNumber[] {
 function calculateAveragesFromProcessed(processedDraws: ProcessedWinningNumber[], lastN: number): CalculatedAverages {
   const relevantDraws = processedDraws.slice(0, lastN);
   if (relevantDraws.length === 0) {
-    return { averageSum: 0, averageEvenOddRatio: "0:0", summaryForDisplay: "분석할 데이터가 충분하지 않습니다." };
+    return { averageSum: 0, averageEvenOddRatio: "0:0", summaryForDisplay: "분석할 데이터가 충분하지 않습니다.", analyzedDrawsCount: 0 };
   }
 
   const totalSum = relevantDraws.reduce((acc, d) => acc + d.sum, 0);
   
-  // Calculate mode for even/odd ratio
   const evenOddRatios: { [key: string]: number } = {};
   relevantDraws.forEach(d => {
     const ratioKey = `${d.evenCount}:${d.oddCount}`;
     evenOddRatios[ratioKey] = (evenOddRatios[ratioKey] || 0) + 1;
   });
-  let mostCommonRatio = "3:3"; // Default
+  let mostCommonRatio = "3:3"; 
   let maxCount = 0;
   for (const ratio in evenOddRatios) {
     if (evenOddRatios[ratio] > maxCount) {
@@ -175,7 +165,7 @@ function calculateAveragesFromProcessed(processedDraws: ProcessedWinningNumber[]
   
   const summaryForDisplay = `최근 ${relevantDraws.length}회차 (${relevantDraws[relevantDraws.length-1].drwNo}회 ~ ${relevantDraws[0].drwNo}회) 분석: 평균 번호 합계는 ${averageSum.toFixed(1)}이며, 가장 흔한 짝수:홀수 비율은 ${averageEvenOddRatio}입니다.`;
 
-  return { averageSum, averageEvenOddRatio, summaryForDisplay };
+  return { averageSum, averageEvenOddRatio, summaryForDisplay, analyzedDrawsCount: relevantDraws.length };
 }
 
 
@@ -193,11 +183,10 @@ function generateHistoricalDataSummaryForLLM(processedDraws: ProcessedWinningNum
 
   const sortedNumberCounts = Object.entries(numberCounts)
     .map(([numStr, count]) => ({ num: parseInt(numStr), count }))
-    .sort((a,b) => b.count - a.count); // Sort by count desc
+    .sort((a,b) => b.count - a.count); 
   
   const frequentNumbers = sortedNumberCounts.slice(0, 7).map(item => `${item.num}(${item.count}회)`).join(', ');
   
-  // For infrequent, consider numbers that appeared 0 or 1 time in lastN draws
   const allPossibleNumbers = Array.from({ length: 45 }, (_, i) => i + 1);
   const appearingNumbers = new Set(allNumbers);
   const notAppearedNumbers = allPossibleNumbers.filter(num => !appearingNumbers.has(num));
@@ -209,7 +198,6 @@ function generateHistoricalDataSummaryForLLM(processedDraws: ProcessedWinningNum
     const leastFrequent = sortedNumberCounts.slice(-7).reverse().map(item => `${item.num}(${item.count}회)`).join(', ');
     infrequentSummary = `최근 가장 드물게 등장: ${leastFrequent}`;
   }
-
 
   let summary = `최근 ${relevantDraws.length}회차 (${relevantDraws[relevantDraws.length-1].drwNo}회 ~ ${relevantDraws[0].drwNo}회) 당첨 번호 분석:\n`;
   summary += `- 평균 당첨 번호 합계: 약 ${averageSum.toFixed(0)} (일반적인 범위: 100-180)\n`;
@@ -228,7 +216,6 @@ function generateHistoricalDataSummaryForLLM(processedDraws: ProcessedWinningNum
     summary += `- 높은 숫자(31-45) 출현 비율: 약 ${(highNumbersCount / totalNumbersAnalyzed * 100).toFixed(0)}%\n`;
   }
   
-  // Consecutive numbers
   let consecutivePairs = 0;
   relevantDraws.forEach(d => {
     for (let i = 0; i < d.numbers.length - 1; i++) {
@@ -243,18 +230,39 @@ function generateHistoricalDataSummaryForLLM(processedDraws: ProcessedWinningNum
 }
 
 
-export async function getInitialScientificLottoData(): Promise<{
+export async function getInitialScientificLottoData(numberOfDrawsForAnalysisStr?: string): Promise<{
   recentDraws?: ProcessedWinningNumber[];
+  averages?: CalculatedAverages;
   error?: string;
 }> {
   try {
-    // Fetch 5 for display, they are already sorted newest to oldest by getMostRecentDraws
-    const { draws: rawRecentDraws } = await getMostRecentDraws(5); 
-    if (rawRecentDraws.length === 0) {
+    const defaultNumDrawsForInitialSummary = 24;
+    let numDrawsForSummary = defaultNumDrawsForInitialSummary;
+    if (numberOfDrawsForAnalysisStr) {
+        const parsedNum = parseInt(numberOfDrawsForAnalysisStr, 10);
+        if (!isNaN(parsedNum) && parsedNum > 0 && parsedNum <= 100) { // Max 100 for analysis
+            numDrawsForSummary = parsedNum;
+        }
+    }
+
+    const { draws: rawRecentDrawsForDisplay } = await getMostRecentDraws(5); 
+    if (rawRecentDrawsForDisplay.length === 0) {
       return { error: "최근 당첨 번호를 가져올 수 없습니다." };
     }
-    const processedRecentDraws = processRawDraws(rawRecentDraws);
-    return { recentDraws: processedRecentDraws };
+    const processedRecentDrawsForDisplay = processRawDraws(rawRecentDrawsForDisplay);
+    
+    // Fetch draws for analysis summary
+    const { draws: rawDrawsForAnalysis } = await getMostRecentDraws(numDrawsForSummary);
+    if (rawDrawsForAnalysis.length < 5) { // Need at least some data for meaningful analysis
+        return { 
+            recentDraws: processedRecentDrawsForDisplay, 
+            error: `분석을 위한 과거 당첨 데이터를 충분히 가져올 수 없습니다 (최소 5회차 필요, 현재 ${rawDrawsForAnalysis.length}회차).` 
+        };
+    }
+    const processedDrawsForAnalysis = processRawDraws(rawDrawsForAnalysis);
+    const averages = calculateAveragesFromProcessed(processedDrawsForAnalysis, numDrawsForSummary);
+
+    return { recentDraws: processedRecentDrawsForDisplay, averages };
   } catch (error) {
     console.error("Error in getInitialScientificLottoData:", error);
     return { error: error instanceof Error ? error.message : "데이터를 가져오는 중 오류 발생" };
@@ -264,33 +272,41 @@ export async function getInitialScientificLottoData(): Promise<{
 interface GetLottoRecommendationsActionInput {
   includeNumbersStr?: string;
   excludeNumbersStr?: string;
+  numberOfDrawsForAnalysisStr?: string;
 }
 
 export async function getLottoRecommendationsAction({
   includeNumbersStr,
   excludeNumbersStr,
+  numberOfDrawsForAnalysisStr,
 }: GetLottoRecommendationsActionInput): Promise<{
   llmResponse?: ScientificLottoRecommendationOutput;
-  averages?: CalculatedAverages; // This will contain the summary for display from 24 draws
+  averages?: CalculatedAverages; 
   error?: string;
 }> {
   try {
-    // Fetch last 24 for analysis, sorted newest to oldest
-    const { draws: rawDrawsForAnalysis } = await getMostRecentDraws(24); 
-    if (rawDrawsForAnalysis.length < 5) { // Need at least some data for meaningful analysis
+    let numDrawsToAnalyze = 24; // Default if not provided or invalid
+    if (numberOfDrawsForAnalysisStr) {
+        const parsedNum = parseInt(numberOfDrawsForAnalysisStr, 10);
+        if (!isNaN(parsedNum) && parsedNum >= 5 && parsedNum <= 100) { // Min 5, Max 100 for analysis
+            numDrawsToAnalyze = parsedNum;
+        } else {
+           return { error: "분석할 회차 수는 5회에서 100회 사이여야 합니다." };
+        }
+    }
+    
+    const { draws: rawDrawsForAnalysis } = await getMostRecentDraws(numDrawsToAnalyze); 
+    if (rawDrawsForAnalysis.length < 5) { 
       return { error: `분석을 위한 과거 당첨 데이터를 충분히 가져올 수 없습니다 (최소 5회차 필요, 현재 ${rawDrawsForAnalysis.length}회차).` };
     }
     const processedDrawsForAnalysis = processRawDraws(rawDrawsForAnalysis);
     
-    // Use all available (up to 24) draws for calculating averages and LLM summary
-    const numDrawsToAnalyze = processedDrawsForAnalysis.length;
     const averages = calculateAveragesFromProcessed(processedDrawsForAnalysis, numDrawsToAnalyze);
     const historicalDataSummary = generateHistoricalDataSummaryForLLM(processedDrawsForAnalysis, numDrawsToAnalyze);
 
     const parseNumbers = (str: string | undefined): number[] | undefined => {
       if (!str) return undefined;
       const nums = str.split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n) && n >= 1 && n <= 45);
-      // Remove duplicates
       return nums.length > 0 ? Array.from(new Set(nums)) : undefined;
     };
 
@@ -300,14 +316,12 @@ export async function getLottoRecommendationsAction({
     if (includeNumbers && includeNumbers.length > 6) {
         return { error: "포함할 숫자는 최대 6개까지 지정할 수 있습니다."};
     }
-    if (excludeNumbers && excludeNumbers.length > 39) { // 45 - 6 = 39
+    if (excludeNumbers && excludeNumbers.length > 39) { 
         return { error: "제외할 숫자가 너무 많습니다."};
     }
-
     if (includeNumbers && excludeNumbers && includeNumbers.some(n => excludeNumbers.includes(n))) {
         return { error: "포함할 숫자와 제외할 숫자에 중복된 값이 있습니다." };
     }
-
 
     const input: ScientificLottoRecommendationInput = {
       historicalDataSummary: historicalDataSummary,
@@ -323,5 +337,5 @@ export async function getLottoRecommendationsAction({
     return { error: error instanceof Error ? error.message : "로또 번호 추천 중 오류 발생" };
   }
 }
-
     
+

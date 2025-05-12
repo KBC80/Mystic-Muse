@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -40,6 +41,8 @@ function ScientificLottoResultContent() {
   
   const [includeNumbersStr, setIncludeNumbersStr] = useState<string>("");
   const [excludeNumbersStr, setExcludeNumbersStr] = useState<string>("");
+  const [numberOfDrawsAnalyzed, setNumberOfDrawsAnalyzed] = useState<number | null>(null);
+
 
   const [latestDraw, setLatestDraw] = useState<LatestWinningNumber | null>(null);
   const [isLoadingLatestDraw, setIsLoadingLatestDraw] = useState(true);
@@ -49,6 +52,7 @@ function ScientificLottoResultContent() {
   useEffect(() => {
     const includeParam = searchParams.get('includeNumbers');
     const excludeParam = searchParams.get('excludeNumbers');
+    const numDrawsParam = searchParams.get('numberOfDrawsForAnalysis');
     
     setIncludeNumbersStr(includeParam || "");
     setExcludeNumbersStr(excludeParam || "");
@@ -56,6 +60,7 @@ function ScientificLottoResultContent() {
     const fetchRecommendation = getLottoRecommendationsAction({
       includeNumbersStr: includeParam || undefined,
       excludeNumbersStr: excludeParam || undefined,
+      numberOfDrawsForAnalysisStr: numDrawsParam || undefined,
     })
     .then(result => {
       if (result.error) {
@@ -63,6 +68,9 @@ function ScientificLottoResultContent() {
       } else {
         setLlmResult(result.llmResponse || null);
         setAnalysisAverages(result.averages || null);
+        if (result.averages?.analyzedDrawsCount) {
+            setNumberOfDrawsAnalyzed(result.averages.analyzedDrawsCount);
+        }
       }
     })
     .catch(err => {
@@ -137,7 +145,7 @@ function ScientificLottoResultContent() {
             <Sparkles className="h-8 w-8 text-primary" /> AI 분석 기반 추천 번호
           </CardTitle>
            <CardDescription className="text-md pt-1">
-              AI가 과거 데이터 통계와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
+              AI가 과거 데이터 통계 (최근 {numberOfDrawsAnalyzed ?? '24'}회차 기준)와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
               {(includeNumbersStr || excludeNumbersStr) && (
                 <div className="mt-2 text-xs text-muted-foreground">
                     {includeNumbersStr && <span>포함된 숫자: {includeNumbersStr}</span>}
@@ -210,7 +218,7 @@ function ScientificLottoResultContent() {
           ))}
         </CardContent>
          <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center gap-4">
-           {/* ShareButton removed */}
+          
         </CardFooter>
       </Card>
       
@@ -250,3 +258,4 @@ export default function ScientificLottoResultPage() {
     </Suspense>
   );
 }
+
