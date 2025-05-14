@@ -10,132 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import suri81DataJson from '@/lib/suri_81_data.json'; // Direct import
-import iching64DataJson from '@/lib/iching_64_data.json'; // Direct import
 
-
-const InterpretNameInputSchema = z.object({
-  name: z.string().describe('해석할 이름입니다. AI가 한글, 한자(제공된 경우)를 판단하여 분석합니다. 예: 홍길동 또는 홍길동(洪吉童)'),
-  birthDate: z.string().describe('생년월일입니다 (YYYY-MM-DD 형식).'),
-  calendarType: z.enum(['solar', 'lunar']).describe('달력 유형입니다 (solar: 양력, lunar: 음력).'),
-  birthTime: z.string().describe('태어난 시간입니다 (예: 자시, 축시 등 12지신 시간 또는 "모름").'),
-  gender: z.enum(['male', 'female']).describe('성별입니다 (male: 남자, female: 여자).'),
-});
-export type InterpretNameInput = z.infer<typeof InterpretNameInputSchema>;
-
-// --- Schema Definitions for Output ---
-
-const SajuPillarSchema = z.object({
-  cheonGan: z.string().describe('천간 (예: 甲, 乙)'),
-  jiJi: z.string().describe('지지 (예: 子, 丑)'),
-  eumYang: z.string().describe('음양 (예: 陽, 陰)'),
-  ohaeng: z.string().describe('오행 (예: 木, 火)'),
-});
-
-const SajuOhaengDistributionSchema = z.object({
-  wood: z.number().int().describe('목(木)의 개수 또는 상대적 강도 (0-5 범위)'),
-  fire: z.number().int().describe('화(火)의 개수 또는 상대적 강도 (0-5 범위)'),
-  earth: z.number().int().describe('토(土)의 개수 또는 상대적 강도 (0-5 범위)'),
-  metal: z.number().int().describe('금(金)의 개수 또는 상대적 강도 (0-5 범위)'),
-  water: z.number().int().describe('수(水)의 개수 또는 상대적 강도 (0-5 범위)'),
-});
-
-const SuriGyeokSchema = z.object({
-  name: z.string().describe('격의 이름 및 해당 운세 시기 (예: 원격(元格) - 초년운 (0-20세)). 정확한 나이 구간을 명시해야 합니다.'),
-  suriNumber: z.number().int().describe('수리 획수 (1-81).'),
-  rating: z.string().describe('81수리 이론에 따른 해당 수리의 길흉 등급 (예: 대길, 길, 평, 흉, 대흉, 양운수, 상운수 등)'),
-  interpretation: z.string().describe('해당 격에 대한 81수리 이론 기반의 상세 해설입니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 대인관계, 건강, 재물, 직업 등)에 대한 구체적이고 심층적인 내용을 포함해야 합니다. 단순한 키워드 나열이 아닌, 삶의 지침이 될 수 있는 통찰력 있는 설명을 제공해야 합니다.'),
-});
-export type SuriGyeokSchema = z.infer<typeof SuriGyeokSchema>;
-
-
-const DetailedScoreSchema = z.object({
-  score: z.number().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
-  maxScore: z.number().int().gte(1).describe('해당 항목의 만점입니다. 1 이상의 정수여야 합니다.'),
-});
-
-const InterpretNameOutputSchema = z.object({
-  // 1. 기본 정보 요약
-  basicInfoSummary: z.object({
-    koreanName: z.string().describe('이름 (한글)'),
-    hanjaName: z.string().optional().describe('이름 (한자, 제공된 경우)'),
-    gender: z.string().describe('성별 (남자/여자)'),
-    solarBirthDate: z.string().describe('양력 생년월일 (YYYY-MM-DD)'),
-    lunarBirthDate: z.string().describe('음력 생년월일 (YYYY-MM-DD) - 사주 분석의 기준'),
-    birthTime: z.string().describe('출생 시간 (예: 자시 (23:00-00:59))'),
-    sajuPillars: z.object({
-      yearPillar: SajuPillarSchema.describe('년주'),
-      monthPillar: SajuPillarSchema.describe('월주'),
-      dayPillar: SajuPillarSchema.describe('일주'),
-      timePillar: SajuPillarSchema.describe('시주 (모를 경우 불명확하게 표시)'),
-    }).describe('사주팔자 구성'),
-    gapjaYearName: z.string().describe('음력 기준 60갑자 간지 (예: 경신년)'),
-    zodiacSign: z.string().describe('음력 기준 띠 (예: 원숭이띠)'),
-    zodiacColor: z.string().optional().describe('띠 색깔 (예: 흰색, 선택 사항)'),
-    sajuOhaengDistribution: SajuOhaengDistributionSchema.describe('사주 오행 분포 (각 오행별 상대적 강도 또는 개수)'),
-    neededOhaengInSaju: z.string().describe('사주에서 보충이 필요한 오행'),
-  }).describe('사용자 기본 정보 및 사주 요약'),
-
-  // 2. 종합 점수 및 평가
-  overallAssessment: z.object({
-    totalScore: z.number().int().min(0).max(100).describe('종합 점수 (100점 만점)'),
-    summaryEvaluation: z.enum(['매우 좋음', '좋음', '보통', '주의 필요', '나쁨']).describe('간단한 요약 평가 문구'),
-    overallFortuneSummary: z.string().describe('간단한 인생 총운 요약입니다. 이름의 전반적인 기운과 삶에 미칠 수 있는 영향을 포함해야 합니다.'),
-    detailedScores: z.object({
-        eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수 (만점: 20점)'),
-        suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수 (만점: 35점)'),
-        pronunciationOhaengScore: DetailedScoreSchema.describe('발음오행 점수 (만점: 25점)'),
-        resourceOhaengScore: DetailedScoreSchema.describe('자원오행 보완 점수 (만점: 20점)'),
-    }).describe('세부 항목별 점수'),
-  }).describe('이름의 종합적인 평가'),
-  
-  // 3. 상세 분석 섹션
-  detailedAnalysis: z.object({
-    nameStructureAnalysis: z.object({
-      hanjaStrokeCounts: z.array(z.object({ character: z.string(), strokes: z.number().int().optional(), yinYang: z.string().describe("해당 글자의 획수에 따른 음양 (예: 양(陽) 또는 음(陰))") })).optional().describe("이름의 각 글자(한글, 또는 제공된 경우 한자)에 대한 획수와 그에 따른 음양입니다. 한자가 명시된 경우(예: '洪'), 해당 한자의 **정자(正字) 획수**를 사용합니다. 한글만 있는 음절의 경우, 일반적인 한글 획수 계산법을 적용합니다. 각 항목은 { character: \"글자\", strokes: 획수, yinYang: \"음양표기 (예: 양(陽) 또는 음(陰))\" } 형태로 제공되어야 합니다."),
-      yinYangHarmony: z.object({
-        nameYinYangComposition: z.string().describe('이름의 음양 구성 (예: 陽(양)-陰(음)-陽(양), 각 글자 획수 기반). `hanjaStrokeCounts`의 `yinYang` 값과 반드시 일치해야 합니다.'),
-        assessment: z.string().describe('음양 조화에 대한 평가 (예: 음양이 조화롭습니다.)'),
-      }).describe('이름의 음양 조화 분석 (획수오행)'),
-      pronunciationOhaeng: z.object({
-        initialConsonants: z.array(z.object({ character: z.string(), consonant: z.string(), ohaeng: z.string()})).describe('이름 각 글자의 초성 및 오행'),
-        harmonyRelationship: z.string().describe('초성 오행 간의 상생 또는 상극 관계 설명'),
-        assessment: z.string().describe('발음오행에 대한 평가'),
-      }).describe('발음 오행 분석'),
-    }).describe('오행 및 음양 상세 분석 (이름 구조, 소리, 한자 뜻 포함)'),
-    
-    suriGilhyungAnalysis: z.object({
-        introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 청년운, 장년운, 말년운/인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
-        wonGyeok: SuriGyeokSchema.describe('원격(元格) - 초년운 (0-20세)에 대한 분석입니다. (예상 이름 필드 값: "원격(元格) - 초년운 (0-20세)")'),
-        hyeongGyeok: SuriGyeokSchema.describe('형격(亨格) - 청년운 (21-40세)에 대한 분석입니다. (예상 이름 필드 값: "형격(亨格) - 청년운 (21-40세)")'),
-        iGyeok: SuriGyeokSchema.describe('이격(利格) - 장년운 (41-60세) 대한 분석입니다. (예상 이름 필드 값: "이격(利格) - 장년운 (41-60세)")'),
-        jeongGyeok: SuriGyeokSchema.describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 분석입니다. (예상 이름 필드 값: "정격(貞格) - 말년운/총운 (60세 이후)")')
-    }).describe('수리길흉 분석 (원형이정 4격 기반)'),
-
-    resourceOhaengAnalysis: z.object({
-      sajuDeficientOhaeng: z.string().describe('사주에서 가장 보충이 필요한 오행 (용신 또는 희신)'),
-      nameHanjaOhaeng: z.string().describe('이름 한자의 자원오행(한자 뜻 오행) 구성 요약'),
-      complementAssessment: z.string().describe('이름의 자원오행이 사주의 부족한 오행을 얼마나 잘 보완하는지에 대한 심층 평가'),
-    }).describe('자원오행 분석 (사주 보완 여부)'),
-
-    iChingHexagram: z.object({
-      hexagramName: z.string().describe('이름의 수리 또는 특성을 바탕으로 도출된 주역 64괘 중 관련성이 높은 괘의 이름 (예: 건위천, 곤위지 등)'),
-      hexagramImage: z.string().optional().describe('괘의 이미지 (예: ䷀ (중천건), ䷁ (중지곤) - 텍스트 또는 이미지 URL)'),
-      interpretation: z.string().describe('해당 괘의 의미와 이름의 운명에 대한 간략하고 이해하기 쉬운 해석입니다 (중학생 수준).'),
-    }).describe('주역 괘 분석'),
-  }).describe('상세 이름 분석 결과'),
-
-  // 주의사항
-  cautionsAndRecommendations: z.object({
-    inauspiciousHanja: z.array(z.string()).optional().describe('이름에 사용된 불용한자 목록 및 그 이유 (있는 경우)'),
-    auspiciousHanja: z.array(z.string()).optional().describe('이름에 사용된 길한 한자 목록 및 그 이유 (있는 경우)'),
-    generalAdvice: z.string().optional().describe('이름과 관련한 전반적인 조언, 추가적인 주의사항, 운세 개선을 위한 구체적인 해결방안이나 지니면 좋은 물건 등의 조언. 단순한 격려가 아닌, 실질적이고 구체적인 내용을 담아야 합니다.'),
-    luckyNumbers: z.array(z.number().int().min(1).max(45)).length(3).optional().describe('이름 풀이를 바탕으로 한 행운의 숫자 세 개 (1-45 사이).'),
-  }).describe('고려사항 및 조언'),
-});
-export type InterpretNameOutput = z.infer<typeof InterpretNameOutputSchema>;
-
-
+// JSON data will be fetched from public folder
 interface Suri81Data {
   description: string;
   suriGyeokMeaning: {
@@ -173,14 +49,136 @@ interface IchingDataEntry {
 type IchingData = IchingDataEntry[];
 
 
-function getSuri81Data(): Suri81Data {
-  return suri81DataJson as Suri81Data;
+const InterpretNameInputSchema = z.object({
+  name: z.string().describe('해석할 이름입니다. AI가 한글, 한자(제공된 경우)를 판단하여 분석합니다. 예: 홍길동 또는 홍길동(洪吉童)'),
+  birthDate: z.string().describe('생년월일입니다 (YYYY-MM-DD 형식).'),
+  calendarType: z.enum(['solar', 'lunar']).describe('달력 유형입니다 (solar: 양력, lunar: 음력).'),
+  birthTime: z.string().describe('태어난 시간입니다 (예: 자시, 축시 등 12지신 시간 또는 "모름").'),
+  gender: z.enum(['male', 'female']).describe('성별입니다 (male: 남자, female: 여자).'),
+});
+export type InterpretNameInput = z.infer<typeof InterpretNameInputSchema>;
+
+const SajuPillarSchema = z.object({
+  cheonGan: z.string().describe('천간 (예: 甲, 乙)'),
+  jiJi: z.string().describe('지지 (예: 子, 丑)'),
+  eumYang: z.string().describe('음양 (예: 陽, 陰)'),
+  ohaeng: z.string().describe('오행 (예: 木, 火)'),
+});
+
+const SajuOhaengDistributionSchema = z.object({
+  wood: z.number().int().describe('목(木)의 개수 또는 상대적 강도 (0-5 범위)'),
+  fire: z.number().int().describe('화(火)의 개수 또는 상대적 강도 (0-5 범위)'),
+  earth: z.number().int().describe('토(土)의 개수 또는 상대적 강도 (0-5 범위)'),
+  metal: z.number().int().describe('금(金)의 개수 또는 상대적 강도 (0-5 범위)'),
+  water: z.number().int().describe('수(水)의 개수 또는 상대적 강도 (0-5 범위)'),
+});
+
+const SuriGyeokSchema = z.object({
+  name: z.string().describe('격의 이름 및 해당 운세 시기 (예: 원격(元格) - 초년운 (0-20세)). 정확한 나이 구간을 명시해야 합니다.'),
+  suriNumber: z.number().int().describe('수리 획수 (1-81).'),
+  rating: z.string().describe('81수리 이론에 따른 해당 수리의 길흉 등급 (예: 대길, 길, 평, 흉, 대흉, 양운수, 상운수 등)'),
+  interpretation: z.string().describe('해당 격에 대한 81수리 이론 기반의 상세 해설입니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 대인관계, 건강, 재물, 직업 등)에 대한 구체적이고 심층적인 내용을 포함해야 합니다. 단순한 키워드 나열이 아닌, 삶의 지침이 될 수 있는 통찰력 있는 설명을 제공해야 합니다.'),
+});
+export type SuriGyeokSchema = z.infer<typeof SuriGyeokSchema>;
+
+
+const DetailedScoreSchema = z.object({
+  score: z.number().min(0).max(100).describe('항목별 점수입니다. 0에서 100 사이의 값이어야 합니다.'),
+  maxScore: z.number().int().gte(1).describe('해당 항목의 만점입니다. 1 이상의 정수여야 합니다.'),
+});
+
+const InterpretNameOutputSchema = z.object({
+  basicInfoSummary: z.object({
+    koreanName: z.string().describe('이름 (한글)'),
+    hanjaName: z.string().optional().describe('이름 (한자, 제공된 경우)'),
+    gender: z.string().describe('성별 (남자/여자)'),
+    solarBirthDate: z.string().describe('양력 생년월일 (YYYY-MM-DD)'),
+    lunarBirthDate: z.string().describe('음력 생년월일 (YYYY-MM-DD) - 사주 분석의 기준'),
+    birthTime: z.string().describe('출생 시간 (예: 자시 (23:00-00:59))'),
+    sajuPillars: z.object({
+      yearPillar: SajuPillarSchema.describe('년주'),
+      monthPillar: SajuPillarSchema.describe('월주'),
+      dayPillar: SajuPillarSchema.describe('일주'),
+      timePillar: SajuPillarSchema.describe('시주 (모를 경우 불명확하게 표시)'),
+    }).describe('사주팔자 구성'),
+    gapjaYearName: z.string().describe('음력 기준 60갑자 간지 (예: 경신년)'),
+    zodiacSign: z.string().describe('음력 기준 띠 (예: 원숭이띠)'),
+    zodiacColor: z.string().optional().describe('띠 색깔 (예: 흰색, 선택 사항)'),
+    sajuOhaengDistribution: SajuOhaengDistributionSchema.describe('사주 오행 분포 (각 오행별 상대적 강도 또는 개수)'),
+    neededOhaengInSaju: z.string().describe('사주에서 보충이 필요한 오행'),
+  }).describe('사용자 기본 정보 및 사주 요약'),
+
+  overallAssessment: z.object({
+    totalScore: z.number().int().min(0).max(100).describe('종합 점수 (100점 만점)'),
+    summaryEvaluation: z.enum(['매우 좋음', '좋음', '보통', '주의 필요', '나쁨']).describe('간단한 요약 평가 문구'),
+    overallFortuneSummary: z.string().describe('간단한 인생 총운 요약입니다. 이름의 전반적인 기운과 삶에 미칠 수 있는 영향을 포함해야 합니다.'),
+    detailedScores: z.object({
+        eumYangOhaengScore: DetailedScoreSchema.describe('음양오행 조화 점수 (만점: 20점)'),
+        suriGilhyungScore: DetailedScoreSchema.describe('수리길흉 점수 (만점: 35점)'),
+        pronunciationOhaengScore: DetailedScoreSchema.describe('발음오행 점수 (만점: 25점)'),
+        resourceOhaengScore: DetailedScoreSchema.describe('자원오행 보완 점수 (만점: 20점)'),
+    }).describe('세부 항목별 점수'),
+  }).describe('이름의 종합적인 평가'),
+  
+  detailedAnalysis: z.object({
+    nameStructureAnalysis: z.object({
+      hanjaStrokeCounts: z.array(z.object({ character: z.string(), strokes: z.number().int().optional(), yinYang: z.string().describe("해당 글자의 획수에 따른 음양 (예: 양(陽) 또는 음(陰))") })).optional().describe("이름의 각 글자(한글, 또는 제공된 경우 한자)에 대한 획수와 그에 따른 음양입니다. 한자가 명시된 경우(예: '洪'), 해당 한자의 **정자(正字) 획수**를 사용합니다. 한글만 있는 음절의 경우, 일반적인 한글 획수 계산법을 적용합니다. 각 항목은 { character: \"글자\", strokes: 획수, yinYang: \"음양표기 (예: 양(陽) 또는 음(陰))\" } 형태로 제공되어야 합니다."),
+      yinYangHarmony: z.object({
+        nameYinYangComposition: z.string().describe('이름의 음양 구성 (예: 陽(양)-陰(음)-陽(양), 각 글자 획수 기반). `hanjaStrokeCounts`의 `yinYang` 값과 반드시 일치해야 합니다.'),
+        assessment: z.string().describe('음양 조화에 대한 평가 (예: 음양이 조화롭습니다.)'),
+      }).describe('이름의 음양 조화 분석 (획수오행)'),
+      pronunciationOhaeng: z.object({
+        initialConsonants: z.array(z.object({ character: z.string(), consonant: z.string(), ohaeng: z.string()})).describe('이름 각 글자의 초성 및 오행'),
+        harmonyRelationship: z.string().describe('초성 오행 간의 상생 또는 상극 관계 설명'),
+        assessment: z.string().describe('발음오행에 대한 평가'),
+      }).describe('발음 오행 분석'),
+    }).describe('오행 및 음양 상세 분석 (이름 구조, 소리, 한자 뜻 포함)'),
+    
+    suriGilhyungAnalysis: z.object({
+        introduction: z.string().describe("수리길흉은 원형이정(元亨利貞)의 수리 4격을 구성한 후, 한문획수, 한자획수로 풀이한 81수리 성명학입니다. 초년운, 청년운, 장년운, 말년운/인생 총운으로 길흉을 따져 이름이 갖는 운세를 설명합니다."),
+        wonGyeok: SuriGyeokSchema.describe('원격(元格) - 초년운 (0-20세)에 대한 분석입니다. (예상 이름 필드 값: "원격(元格) - 초년운 (0-20세)")'),
+        hyeongGyeok: SuriGyeokSchema.describe('형격(亨格) - 청년운 (21-40세)에 대한 분석입니다. (예상 이름 필드 값: "형격(亨格) - 청년운 (21-40세)")'),
+        iGyeok: SuriGyeokSchema.describe('이격(利格) - 장년운 (41-60세) 대한 분석입니다. (예상 이름 필드 값: "이격(利格) - 장년운 (41-60세)")'),
+        jeongGyeok: SuriGyeokSchema.describe('정격(貞格) - 말년운/총운 (60세 이후)에 대한 분석입니다. (예상 이름 필드 값: "정격(貞格) - 말년운/총운 (60세 이후)")')
+    }).describe('수리길흉 분석 (원형이정 4격 기반)'),
+
+    resourceOhaengAnalysis: z.object({
+      sajuDeficientOhaeng: z.string().describe('사주에서 가장 보충이 필요한 오행 (용신 또는 희신)'),
+      nameHanjaOhaeng: z.string().describe('이름 한자의 자원오행(한자 뜻 오행) 구성 요약'),
+      complementAssessment: z.string().describe('이름의 자원오행이 사주의 부족한 오행을 얼마나 잘 보완하는지에 대한 심층 평가'),
+    }).describe('자원오행 분석 (사주 보완 여부)'),
+
+    iChingHexagram: z.object({
+      hexagramName: z.string().describe('이름의 수리 또는 특성을 바탕으로 도출된 주역 64괘 중 관련성이 높은 괘의 이름 (예: 건위천, 곤위지 등)'),
+      hexagramImage: z.string().optional().describe('괘의 이미지 (예: ䷀ (중천건), ䷁ (중지곤) - 텍스트 또는 이미지 URL)'),
+      interpretation: z.string().describe('해당 괘의 의미와 이름의 운명에 대한 간략하고 이해하기 쉬운 해석입니다 (중학생 수준).'),
+    }).describe('주역 괘 분석'),
+  }).describe('상세 이름 분석 결과'),
+
+  cautionsAndRecommendations: z.object({
+    inauspiciousHanja: z.array(z.string()).optional().describe('이름에 사용된 불용한자 목록 및 그 이유 (있는 경우)'),
+    auspiciousHanja: z.array(z.string()).optional().describe('이름에 사용된 길한 한자 목록 및 그 이유 (있는 경우)'),
+    generalAdvice: z.string().optional().describe('이름과 관련한 전반적인 조언, 추가적인 주의사항, 운세 개선을 위한 구체적인 해결방안이나 지니면 좋은 물건 등의 조언. 단순한 격려가 아닌, 실질적이고 구체적인 내용을 담아야 합니다.'),
+    luckyNumbers: z.array(z.number().int().min(1).max(45)).length(3).optional().describe('이름 풀이를 바탕으로 한 행운의 숫자 세 개 (1-45 사이).'),
+  }).describe('고려사항 및 조언'),
+});
+export type InterpretNameOutput = z.infer<typeof InterpretNameOutputSchema>;
+
+async function fetchJsonData<T>(fileName: string): Promise<T> {
+  const response = await fetch(`/${fileName}`); // Fetch from public folder
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${fileName}: ${response.statusText}`);
+  }
+  return response.json() as Promise<T>;
 }
 
-function getIchingData(): IchingData {
-  return iching64DataJson as IchingData;
+async function getSuri81Data(): Promise<Suri81Data> {
+  return fetchJsonData<Suri81Data>('suri_81_data.json');
 }
 
+async function getIchingData(): Promise<IchingData> {
+  return fetchJsonData<IchingData>('iching_64_data.json');
+}
 
 const simplifyHexagramPrompt = ai.definePrompt({
   name: 'simplifyHexagramPrompt',
@@ -202,7 +200,6 @@ const simplifyHexagramPrompt = ai.definePrompt({
 {{{userName}}}님이 이 설명을 통해 자신의 삶에 대한 긍정적인 통찰과 지혜를 얻을 수 있도록 도와주십시오.
 `,
 });
-
 
 const nameInterpretationPrompt = ai.definePrompt({
   name: 'nameInterpretationPrompt',
@@ -267,8 +264,8 @@ const nameInterpretationPrompt = ai.definePrompt({
 
 export async function interpretName(input: InterpretNameInput): Promise<InterpretNameOutput> {
   try {
-    const suri81Data = getSuri81Data();
-    const ichingData = getIchingData();
+    const suri81Data = await getSuri81Data();
+    const ichingData = await getIchingData();
 
     const { output: initialOutput } = await nameInterpretationPrompt(input);
     if (!initialOutput) {

@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, PieChart as RechartsPieChart, Pie, Cell, LabelList, ResponsiveContainer } from "recharts";
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string | React.ReactNode }> = ({ title, icon: Icon, children, className, cardDescription }) => (
@@ -35,11 +35,11 @@ const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children:
 );
 
 const ohaengChartConfig = {
-  wood: { label: "목(木)", color: "hsl(var(--chart-1))" },
-  fire: { label: "화(火)", color: "hsl(var(--chart-2))" },
-  earth: { label: "토(土)", color: "hsl(var(--chart-3))" },
-  metal: { label: "금(金)", color: "hsl(var(--chart-4))" },
-  water: { label: "수(水)", color: "hsl(var(--chart-5))" },
+  wood: { label: "목(木)", color: "hsl(120, 60%, 45%)" }, // Green
+  fire: { label: "화(火)", color: "hsl(0, 70%, 55%)" },   // Red
+  earth: { label: "토(土)", color: "hsl(40, 60%, 50%)" },  // Yellow/Brown
+  metal: { label: "금(金)", color: "hsl(220, 15%, 75%)" }, // Light Grey/Silver
+  water: { label: "수(水)", color: "hsl(210, 70%, 50%)" }, // Blue
 } satisfies ChartConfig;
 
 
@@ -47,10 +47,10 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
   const percentage = maxScore > 0 ? Math.max(0, Math.min(100, (score / maxScore) * 100)) : 0; 
   
   const colorMap: { [key: string]: string } = {
-    "음양오행 조화": "bg-blue-500",
-    "수리길흉": "bg-green-500",
-    "발음오행": "bg-yellow-500",
-    "자원오행 (사주보완)": "bg-purple-500",
+    "음양오행 조화": "bg-[hsl(var(--chart-5))]", // 수 (Water) - Blue
+    "수리길흉": "bg-[hsl(var(--chart-1))]", // 목 (Wood) - Green
+    "발음오행": "bg-[hsl(var(--chart-3))]", // 토 (Earth) - Yellow/Brown
+    "자원오행 (사주보완)": "bg-[hsl(var(--chart-2))]", // 화 (Fire) - Red
   };
   const barColor = colorMap[label] || 'bg-primary';
 
@@ -76,9 +76,9 @@ const getRatingValue = (ratingText?: string): number => {
     if (ratingString.includes("최상") || ratingString.includes("대길")) return 5;
     if (ratingString.includes("상") || ratingString.includes("길")) return 4;
     if (ratingString.includes("양") || ratingString.includes("평") || ratingString.includes("보통")) return 3;
-    if (ratingString.includes("최흉")) return 1; // 최흉 먼저 체크
+    if (ratingString.includes("최흉")) return 1;
     if (ratingString.includes("흉")) return 2;
-    return 0; // "정보 없음" 또는 알 수 없는 등급
+    return 0; 
 };
 
 
@@ -192,7 +192,6 @@ function NameInterpretationResultContent() {
   
   const suriGyeokItems = suriGyeokItemsConfig.map(config => {
     const gyeokData = da.suriGilhyungAnalysis[config.dataKey] as SuriGyeokType | undefined; 
-    
     return {
       key: config.key,
       label: gyeokData?.name || config.defaultName,
@@ -211,25 +210,14 @@ function NameInterpretationResultContent() {
     { name: "수", value: bis.sajuOhaengDistribution.water, fill: ohaengChartConfig.water.color },
   ].filter(item => item.value >= 0); 
 
-
-  const lifeCycleFortuneData = suriGyeokItems.map(item => ({
-    name: item.label.split('(')[0].trim(), 
-    period: item.label.split(' - ')[1]?.split(' (')[0] || '정보 없음', 
-    ageRange: item.label.match(/\(([^)]+)\)/)?.[1] || '정보 없음', 
-    ratingValue: getRatingValue(item.rating),
-    ratingText: item.rating,
-    color: item.colorClass,
-  }));
-
-
   return (
     <div className="space-y-6 py-6 flex flex-col flex-1">
-      <Card className="shadow-xl bg-card dark:bg-card/90 border-primary/20">
+      <Card className="shadow-xl bg-primary/5 dark:bg-primary/10 border-primary/30">
         <CardHeader className="pb-4 rounded-t-lg">
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm text-foreground bg-background dark:bg-background/80")}> 
+           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm text-foreground")}> 
               <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation || "정보 없음"}
               </strong>
@@ -238,7 +226,7 @@ function NameInterpretationResultContent() {
           </CardDescription>
         </CardHeader>
       </Card>
-      
+
       <SectionCard title="기본 정보 요약" icon={Info} className="bg-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <p><strong className="text-foreground">이름:</strong> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`}</p>
@@ -253,16 +241,22 @@ function NameInterpretationResultContent() {
             <div className="flex flex-wrap gap-2">
             {[bis.sajuPillars.yearPillar, bis.sajuPillars.monthPillar, bis.sajuPillars.dayPillar, bis.sajuPillars.timePillar].map((pillar, index) => {
                 const isTimePillar = index === 3;
-                const isTimePillarUnknown = isTimePillar && (bis.birthTime.includes("모름") || pillar.cheonGan === "불명" || pillar.jiJi === "불명" || (!pillar.cheonGan && !pillar.jiJi));
+                 const isTimeUnknown = isTimePillar && (
+                    bis.birthTime.includes("모름") || 
+                    pillar.cheonGan === "불명" || pillar.jiJi === "불명" || 
+                    (!pillar.cheonGan && !pillar.jiJi) ||
+                    (pillar.cheonGan && pillar.cheonGan.includes("불명")) ||
+                    (pillar.jiJi && pillar.jiJi.includes("불명"))
+                );
                 
                 return (
                     <div key={index} className="text-xs bg-background border border-border px-2 py-1 rounded shadow-sm">
                         <span className="font-semibold">{['년주', '월주', '일주', '시주'][index]}:</span>
-                        {isTimePillarUnknown
+                        {isTimeUnknown
                           ? ' 불명'
                           : ` ${pillar.cheonGan || '미상'}${pillar.jiJi || '미상'}`
                         }
-                        {!isTimePillarUnknown && pillar.eumYang && pillar.ohaeng &&
+                        {!isTimeUnknown && pillar.eumYang && pillar.ohaeng &&
                           <span className="ml-1 text-muted-foreground/80">({pillar.eumYang}, {pillar.ohaeng})</span>
                         }
                     </div>
@@ -270,19 +264,6 @@ function NameInterpretationResultContent() {
             })}
             </div>
           </div>
-           <div className="md:col-span-2 pt-1">
-              <h4 className="font-semibold text-md mt-2 mb-1 text-secondary-foreground flex items-center gap-1">
-                <PieChartIcon className="h-4 w-4" /> 사주 오행 분포 (개수 또는 상대적 강도)
-              </h4>
-              <ul className="list-disc list-inside text-sm text-muted-foreground pl-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-2">
-                  <li>{ohaengChartConfig.wood.label}: {bis.sajuOhaengDistribution.wood}</li>
-                  <li>{ohaengChartConfig.fire.label}: {bis.sajuOhaengDistribution.fire}</li>
-                  <li>{ohaengChartConfig.earth.label}: {bis.sajuOhaengDistribution.earth}</li>
-                  <li>{ohaengChartConfig.metal.label}: {bis.sajuOhaengDistribution.metal}</li>
-                  <li>{ohaengChartConfig.water.label}: {bis.sajuOhaengDistribution.water}</li>
-              </ul>
-              <p className="text-sm text-muted-foreground mt-1 pl-4">사주에서 필요한 오행: <strong className="text-primary">{bis.neededOhaengInSaju}</strong></p>
-            </div>
         </div>
       </SectionCard>
       
@@ -323,6 +304,20 @@ function NameInterpretationResultContent() {
       
       <SectionCard title="오행 및 음양 상세 분석" icon={Palette} className="bg-card" cardDescription="이름의 소리, 글자 모양, 한자 뜻에 담긴 오행과 음양의 조화를 분석합니다.">
         <div className="space-y-4">
+            <div className="md:col-span-2 pt-1">
+              <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground flex items-center gap-1">
+                <PieChartIcon className="h-4 w-4" /> 사주 오행 분포 (개수 또는 상대적 강도)
+              </h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground pl-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-2">
+                  <li>{ohaengChartConfig.wood.label}: {bis.sajuOhaengDistribution.wood}</li>
+                  <li>{ohaengChartConfig.fire.label}: {bis.sajuOhaengDistribution.fire}</li>
+                  <li>{ohaengChartConfig.earth.label}: {bis.sajuOhaengDistribution.earth}</li>
+                  <li>{ohaengChartConfig.metal.label}: {bis.sajuOhaengDistribution.metal}</li>
+                  <li>{ohaengChartConfig.water.label}: {bis.sajuOhaengDistribution.water}</li>
+              </ul>
+              <p className="text-sm text-muted-foreground mt-1 pl-4">사주에서 필요한 오행: <strong className="text-primary">{bis.neededOhaengInSaju}</strong></p>
+            </div>
+            <Separator className="my-3"/>
             <div>
                 <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground flex items-center gap-1"><BookOpen className="h-4 w-4"/> 이름의 음양 조화 (획수 기반)</h4>
                  <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">

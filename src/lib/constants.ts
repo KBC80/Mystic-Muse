@@ -27,7 +27,6 @@ export const GENDER_OPTIONS = [
 
 const FIREBASE_STORAGE_BUCKET_NAME_FOR_API = "mystic-muse-rj8ab.firebasestorage.app";
 export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image";
-// REMOVED: export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib"; // No longer needed for JSON files
 const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME_FOR_API}/o`;
 export const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
@@ -45,8 +44,5 @@ export const getRuneImageUrl = (imageName: string): string => {
   return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
 };
 
-// REMOVED: getJSONFileUrl function as JSON files will be imported directly.
-// export const getJSONFileUrl = (fileName: string): string => {
-//   const fullPath = `${FIREBASE_STORAGE_LIB_FOLDER_PATH}/${fileName}`;
-//   return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
-// };
+// JSON 파일들은 이제 public 폴더에서 직접 fetch 되므로, URL 생성 헬퍼는 필요하지 않습니다.
+// 필요하다면, fetch('/filename.json') 형태로 사용됩니다.

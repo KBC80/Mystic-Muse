@@ -10,7 +10,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import namingRulesData from '@/lib/naming_rules.json'; // Direct import
+
+// Naming rules will be fetched from public folder
+interface NamingRule {
+  번호: number;
+  제목: string;
+  설명: string;
+}
 
 const GenerateAuspiciousNameInputSchema = z.object({
   fatherName: z.string().describe('아버지의 성함입니다.'),
@@ -38,14 +44,25 @@ const GenerateAuspiciousNameOutputSchema = z.object({
 });
 export type GenerateAuspiciousNameOutput = z.infer<typeof GenerateAuspiciousNameOutputSchema>;
 
-function getNamingRules(): Array<{ 번호: number; 제목: string; 설명: string }> {
-  return namingRulesData as Array<{ 번호: number; 제목: string; 설명: string }>;
+async function getNamingRules(): Promise<NamingRule[]> {
+  try {
+    const response = await fetch('/naming_rules.json'); // Fetch from public folder
+    if (!response.ok) {
+      throw new Error(`Failed to fetch naming_rules.json: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data as NamingRule[];
+  } catch (error) {
+    console.error("Error fetching or parsing naming_rules.json:", error);
+    return []; // Return empty array or throw error, depending on desired behavior
+  }
 }
 
 export async function generateAuspiciousName(input: GenerateAuspiciousNameInput): Promise<GenerateAuspiciousNameOutput> {
   return generateAuspiciousNameFlow(input);
 }
 
+// createAuspiciousNamePrompt must now be defined inside the flow or passed the rules
 const createAuspiciousNamePrompt = (formattedNamingRules: string) => ai.definePrompt({
   name: 'auspiciousNamePrompt',
   input: {schema: GenerateAuspiciousNameInputSchema},
@@ -90,7 +107,7 @@ const generateAuspiciousNameFlow = ai.defineFlow(
     outputSchema: GenerateAuspiciousNameOutputSchema,
   },
   async input => {
-    const rules = getNamingRules();
+    const rules = await getNamingRules();
     const formattedNamingRules = rules.map(rule => `${rule.번호}. ${rule.제목}: ${rule.설명}`).join('\n');
     const dynamicPrompt = createAuspiciousNamePrompt(formattedNamingRules);
     const {output} = await dynamicPrompt(input);

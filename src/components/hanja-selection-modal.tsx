@@ -43,7 +43,7 @@ export function HanjaSelectionModal({
   const [currentSyllableIndex, setCurrentSyllableIndex] = useState(0);
   const [selectedHanjaPerSyllable, setSelectedHanjaPerSyllable] = useState<(HanjaDetail | null)[]>([]);
   const [hanjaOptions, setHanjaOptions] = useState<HanjaDetail[]>([]);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(false); // Still useful for UX even if sync
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [currentPageForHanja, setCurrentPageForHanja] = useState(0);
 
   useEffect(() => {
@@ -56,38 +56,42 @@ export function HanjaSelectionModal({
 
   useEffect(() => {
     if (isOpen && nameSyllables.length > 0 && currentSyllableIndex < nameSyllables.length) {
-      setIsLoadingOptions(true);
-      const currentPhoneticSyllable = nameSyllables[currentSyllableIndex];
-      try {
-        let options = findHanjaForSyllable(currentPhoneticSyllable); // Now synchronous
-        
-        const getDescriptivePart = (specificReading: string, syllable: string): string => {
-          const pattern = new RegExp("\\s*" + syllable + "$");
-          const desc = specificReading.replace(pattern, "").trim();
-          return desc || specificReading;
-        };
-        options.sort((a, b) => {
-          const descA = getDescriptivePart(a.specificReading, currentPhoneticSyllable);
-          const descB = getDescriptivePart(b.specificReading, currentPhoneticSyllable);
-          const keyA = descA.length > 0 ? descA[0] : '';
-          const keyB = descB.length > 0 ? descB[0] : '';
-          return keyA.localeCompare(keyB, 'ko-KR');
-        });
-        setHanjaOptions(options);
-      } catch (error) {
-        console.error(`한자 로딩 오류 ("${currentPhoneticSyllable}"):`, error);
-        setHanjaOptions([]);
-        toast({
-          title: "한자 로딩 오류",
-          description: `"${currentPhoneticSyllable}"에 대한 한자를 불러오는 중 오류가 발생했습니다.`,
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingOptions(false);
-      }
+      const loadOptions = async () => {
+        setIsLoadingOptions(true);
+        const currentPhoneticSyllable = nameSyllables[currentSyllableIndex];
+        try {
+          let options = await findHanjaForSyllable(currentPhoneticSyllable);
+          
+          const getDescriptivePart = (specificReading: string, syllable: string): string => {
+            const pattern = new RegExp("\\s*" + syllable + "$");
+            const desc = specificReading.replace(pattern, "").trim();
+            return desc || specificReading;
+          };
+          options.sort((a, b) => {
+            const descA = getDescriptivePart(a.specificReading, currentPhoneticSyllable);
+            const descB = getDescriptivePart(b.specificReading, currentPhoneticSyllable);
+            const keyA = descA.length > 0 ? descA[0] : '';
+            const keyB = descB.length > 0 ? descB[0] : '';
+            return keyA.localeCompare(keyB, 'ko-KR');
+          });
+          setHanjaOptions(options);
+        } catch (error) {
+          console.error(`한자 로딩 오류 ("${currentPhoneticSyllable}"):`, error);
+          setHanjaOptions([]);
+          toast({
+            title: "한자 로딩 오류",
+            description: `"${currentPhoneticSyllable}"에 대한 한자를 불러오는 중 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`,
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingOptions(false);
+        }
+      };
+      loadOptions();
       setCurrentPageForHanja(0);
     }
-  }, [isOpen, nameSyllables, currentSyllableIndex, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, nameSyllables, currentSyllableIndex, toast]); // Removed `toast` from dependencies to avoid re-fetch on toast change
 
   const handleHanjaSelect = (hanjaDetail: HanjaDetail) => {
     const newSelections = [...selectedHanjaPerSyllable];
