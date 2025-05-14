@@ -1,4 +1,5 @@
 // Based on a standard 78-card Rider-Waite deck.
+import { TAROT_IMAGE_BASE_URL, TAROT_BACK_IMAGE_URL } from '@/lib/constants';
 
 export const tarotCardNames: string[] = [
   // Major Arcana (22 cards)
@@ -33,6 +34,7 @@ if (tarotCardNames.length !== 78) {
   console.warn(`경고: ${tarotCardNames.length}개의 타로 카드 이름이 정의되었습니다. 78개가 필요합니다. tarot-cards.ts 파일을 확인해주세요.`);
 }
 
+const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
 const cardImageMap: { [key: string]: string } = {
   // Major Arcana
@@ -81,7 +83,6 @@ const cardImageMap: { [key: string]: string } = {
   "펜타클 시종": "Pentacles11.jpg", "펜타클 기사": "Pentacles12.jpg", "펜타클 여왕": "Pentacles13.jpg", "펜타클 왕": "Pentacles14.jpg",
 };
 
-// Check if all tarotCardNames have a corresponding image in the map
 const missingImages = tarotCardNames.filter(name => !cardImageMap[name]);
 if (missingImages.length > 0) {
   console.error(`오류: 다음 타로 카드 이름에 대한 이미지가 cardImageMap에 없습니다: ${missingImages.join(', ')}`);
@@ -95,18 +96,21 @@ export interface TarotCard {
   isFaceUp: boolean;
 }
 
-// Generate a deck of 78 cards
 export function generateDeck(): TarotCard[] {
   return tarotCardNames.map((name, index) => {
     const imageName = cardImageMap[name];
-    const imageUrl = imageName ? `/image/${imageName}` : `https://picsum.photos/200/300?random=${index}`; // Fallback placeholder
-    if (!imageName) {
-      console.warn(`경고: 카드 "${name}"에 대한 이미지를 찾을 수 없습니다. 플레이스홀더 이미지를 사용합니다.`);
+    let imageUrl: string;
+    if (imageName) {
+      imageUrl = `${TAROT_IMAGE_BASE_URL}${encodeURIComponent(imageName)}${FIREBASE_STORAGE_SUFFIX}`;
+    } else {
+      // Fallback placeholder if image name is not found in map
+      imageUrl = `https://picsum.photos/200/300?random=${index}`; 
+      console.warn(`경고: 카드 "${name}"에 대한 이미지를 찾을 수 없습니다. 플레이스홀더 이미지를 사용합니다: ${imageUrl}`);
     }
-    const hintName = name.toLowerCase().replace(/\s+/g, ''); // e.g., "고위여사제"
-    const hintParts = hintName.match(/.{1,4}/g) || []; // Split into parts of up to 4 chars for two words
+    
+    const hintName = name.toLowerCase().replace(/\s+/g, ''); 
+    const hintParts = hintName.match(/.{1,4}/g) || []; 
     const dataAiHint = `타로 ${hintParts.slice(0,2).join(" ")}`.trim();
-
 
     return {
       id: `card-${index}-${name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -117,3 +121,6 @@ export function generateDeck(): TarotCard[] {
     };
   });
 }
+
+// Tarot card back image URL is defined in constants.ts as TAROT_BACK_IMAGE_URL
+// and imported/used directly in the TarotReadingPage component.

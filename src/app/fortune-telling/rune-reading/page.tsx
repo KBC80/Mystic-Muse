@@ -34,6 +34,7 @@ import { interpretRunes, type RuneReadingInput, type RuneReadingOutput } from '@
 import Image from 'next/image';
 import { WandSparkles, Home, Shuffle, HandCoins, HelpCircle, Sparkles, RotateCcw } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { RUNE_BACK_IMAGE_URL, RUNE_FRONT_IMAGE_URL } from '@/lib/constants';
 
 const formSchema = z.object({
   question: z.string().optional(),
@@ -51,7 +52,7 @@ const RuneDisplay = ({ rune, isReversed, reveal = false, size = 'small' }: { run
   if (!reveal) {
     return (
       <div className={cn(baseSizeClasses, "aspect-[2/3] bg-secondary rounded-lg flex items-center justify-center relative shadow-md overflow-hidden")}>
-        <Image src="/image/rune-back.png" alt="룬 뒷면" fill style={{ objectFit: 'cover' }} className="rounded-lg" data-ai-hint="rune back"/>
+        <Image src={RUNE_BACK_IMAGE_URL} alt="룬 뒷면" fill style={{ objectFit: 'cover' }} className="rounded-lg" data-ai-hint="rune back"/>
       </div>
     );
   }
@@ -59,7 +60,7 @@ const RuneDisplay = ({ rune, isReversed, reveal = false, size = 'small' }: { run
   return (
     <div
       className={cn(baseSizeClasses, "aspect-[2/3] rounded-lg shadow-xl flex flex-col items-center justify-center text-center p-1 relative bg-cover bg-center border border-black/20")}
-      style={{ backgroundImage: "url('/image/rune-front.png')" }}
+      style={{ backgroundImage: `url('${RUNE_FRONT_IMAGE_URL}')` }}
       data-ai-hint="rune front"
     >
       <div className={cn(symbolSizeClass, "font-bold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)]", isReversed && "transform rotate-180")}>
@@ -244,7 +245,7 @@ export default function RuneReadingPage() {
                           disabled={drawnRunesWithStatus.length >= numToDraw || drawnRunesWithStatus.some(dr => dr.rune.id === rune.id)}
                           className={cn(
                               "transition-all duration-200 transform",
-                              cardIndex > 0 ? 'ml-[-28px] md:ml-[-40px]' : 'ml-0', // Overlap for w-14/md:w-20
+                              cardIndex > 0 ? 'ml-[-28px] md:ml-[-40px]' : 'ml-0', 
                               drawnRunesWithStatus.some(dr => dr.rune.id === rune.id) && "opacity-30 cursor-not-allowed",
                               !drawnRunesWithStatus.some(dr => dr.rune.id === rune.id) && !(drawnRunesWithStatus.length >= numToDraw) && "hover:scale-105 hover:-translate-y-2"
                           )}
@@ -392,5 +393,3 @@ export default function RuneReadingPage() {
     </div>
   );
 }
-
-

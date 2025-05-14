@@ -24,6 +24,7 @@ import { generateDeck, type TarotCard } from '@/lib/tarot-cards';
 import Image from 'next/image';
 import { LayoutGrid, Shuffle, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TAROT_BACK_IMAGE_URL } from '@/lib/constants';
 
 const formSchema = z.object({
   question: z.string().min(5, "명확한 질문을 5자 이상 입력해주세요."),
@@ -44,14 +45,14 @@ const TarotCardDisplay = ({ card, onClick, isSelected, isDisabled }: { card: Tar
       disabled={isDisabled}
       className={cn(
         "rounded-lg overflow-hidden shadow-lg transition-all duration-300 transform focus:outline-none focus:ring-2 focus:ring-accent relative",
-        "w-16 md:w-24 h-auto aspect-[2/3] inline-block", // 카드 크기: 모바일 w-16, md부터 w-24
+        "w-16 md:w-24 h-auto aspect-[2/3] inline-block", 
         (isDisabled && !isSelected) && "opacity-50 cursor-not-allowed",
       )}
       style={{ ...selectedStyle }}
       aria-label="타로 카드 뒷면"
     >
       <div className="w-full h-full relative">
-        <Image src="/image/tarot-back.jpg" alt="타로 카드 뒷면" fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
+        <Image src={TAROT_BACK_IMAGE_URL} alt="타로 카드 뒷면" fill sizes="10vw" style={{ objectFit: 'cover' }} data-ai-hint="tarot card back" />
       </div>
     </button>
   );
@@ -198,13 +199,7 @@ export default function TarotReadingPage() {
                           key={card.id}
                           className={cn(
                             "transition-transform duration-200",
-                            // 모바일: ml-[-36px], sm: ml-[-40px], md: ml-[-48px], lg: ml-[-56px]
-                            // 기본 카드 폭: w-16 (64px), md부터: w-24 (96px)
-                            // 모바일에서 겹침 조정 (36px 겹침 -> 28px 노출)
-                            // sm에서는 40px 겹침 -> 24px 노출
-                            // md에서는 48px 겹침 -> 48px 노출 (절반)
-                            // lg에서는 56px 겹침 -> 40px 노출
-                            cardIndex > 0 ? 'ml-[-36px] sm:ml-[-40px] md:ml-[-48px] lg:ml-[-56px]' : 'ml-0', 
+                            cardIndex > 0 ? 'ml-[-40px] sm:ml-[-48px] md:ml-[-56px] lg:ml-[-64px]' : 'ml-0', 
                             !selectedCards.some(sc => sc.id === card.id) && !((selectedCards.length >= 3 && !selectedCards.some(sc => sc.id === card.id)) || isLoading) && "hover:translate-y-[-10px]"
                           )}
                         >
@@ -255,4 +250,3 @@ export default function TarotReadingPage() {
     </div>
   );
 }
-

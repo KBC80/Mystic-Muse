@@ -14,13 +14,6 @@ export const EAST_ASIAN_BIRTH_TIMES = [
   { value: "모름", label: "모름" },
 ];
 
-// NAME_TYPES is no longer directly used in the form for name interpretation
-// export const NAME_TYPES = [
-//   { value: "korean", label: "한글" },
-//   { value: "chinese", label: "한자" },
-//   { value: "english", label: "영문" },
-// ];
-
 export const CALENDAR_TYPES = [
   { value: "solar", label: "양력" },
   { value: "lunar", label: "음력" },
@@ -31,4 +24,16 @@ export const GENDER_OPTIONS = [
   { value: "female", label: "여성" },
 ];
 
-    
+const FIREBASE_STORAGE_BUCKET_NAME = "mystic-muse-rj8ab.appspot.com";
+const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image"; // Path within the bucket
+const FIREBASE_STORAGE_BASE_URL = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME}/o`;
+const FIREBASE_STORAGE_SUFFIX = "?alt=media";
+
+const encodeFilePath = (filePath: string) => encodeURIComponent(filePath);
+
+export const TAROT_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/`)}`;
+export const TAROT_BACK_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/tarot-back.jpg`)}${FIREBASE_STORAGE_SUFFIX}`;
+
+export const RUNE_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/`)}`;
+export const RUNE_BACK_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-back.png`)}${FIREBASE_STORAGE_SUFFIX}`;
+export const RUNE_FRONT_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-front.png`)}${FIREBASE_STORAGE_SUFFIX}`;
