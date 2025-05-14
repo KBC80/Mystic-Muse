@@ -25,8 +25,8 @@ export const GENDER_OPTIONS = [
   { value: "female", label: "여성" },
 ];
 
-// HTTP URL 생성 시 .appspot.com 형태의 버킷 이름을 사용합니다.
-const FIREBASE_STORAGE_BUCKET_NAME_FOR_API = "mystic-muse-rj8ab.appspot.com";
+// Firebase Storage 버킷 이름을 사용자 제공 정보에 맞게 수정
+const FIREBASE_STORAGE_BUCKET_NAME_FOR_API = "mystic-muse-rj8ab.firebasestorage.app"; 
 export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image";
 export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib";
 const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME_FOR_API}/o`;
@@ -50,3 +50,4 @@ export const getJSONFileUrl = (fileName: string): string => {
   const fullPath = `${FIREBASE_STORAGE_LIB_FOLDER_PATH}/${fileName}`;
   return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
 };
+
