@@ -14,33 +14,34 @@ let isMapInitialized = false;
 let hanjaDataPromise: Promise<Record<string, any>> | null = null;
 
 async function fetchHanjaData(): Promise<Record<string, any>> {
+  const fileName = 'hanja_full_data.json';
+  const fileUrl = getJSONFileUrl(fileName); // Define fileUrl once here
+
   if (!hanjaDataPromise) {
-    const fileName = 'hanja_full_data.json';
-    const fileUrl = getJSONFileUrl(fileName);
-    console.log(`Fetching ${fileName} from: ${fileUrl}`); // Log the URL for debugging
+    console.log(`Fetching ${fileName} from: ${fileUrl}`);
     hanjaDataPromise = fetch(fileUrl)
-      .then(async response => { // Make this async to await response.text() in case of error
+      .then(async response => {
         if (!response.ok) {
-          const statusText = response.statusText || (response.status === 404 ? 'Not Found' : 'Error');
-          let errorDetails = `Failed to fetch ${fileName}: ${response.status} ${statusText}`;
+          let errorDetails = `Failed to fetch ${fileName}: ${response.status} ${response.statusText}. URL: ${fileUrl}`;
           try {
-            // Try to get response body for more clues, but be careful with large responses
             const body = await response.text();
-            errorDetails += `\nResponse body (first 200 chars): ${body.substring(0, 200)}`; 
+            errorDetails += `\nResponse body (first 200 chars): ${body.substring(0, 200)}`;
           } catch (e) {
             // Ignore error from .text() if response is already bad or if body is not text
           }
-          console.error(errorDetails); // Log the detailed error
-          throw new Error(`데이터 파일(${fileName})을 가져오지 못했습니다. URL: ${fileUrl}, 상태: ${response.status} ${statusText}. 파일 경로와 공개 접근 권한을 확인해주세요.`);
+          console.error(errorDetails);
+          throw new Error(`데이터 파일(${fileName})을 가져오지 못했습니다. ${errorDetails}. Firebase Storage에서 파일 경로, 공개 접근 권한 및 CORS 설정을 확인해주세요.`);
         }
         return response.json();
       })
       .catch(error => {
         // This catch block will handle network errors or errors thrown from the .then block
-        console.error(`Error in fetchHanjaData for ${fileName}:`, error.message);
+        console.error(`네트워크 또는 데이터 처리 오류로 ${fileName} 파일 (${fileUrl})을 가져오는 데 실패했습니다:`, error);
         hanjaDataPromise = null; // Reset promise on error to allow retry
-        // Re-throw a more specific error or the original one if it's already informative
-        throw new Error(`네트워크 또는 데이터 처리 오류로 ${fileName} 파일을 가져오는 데 실패했습니다. 상세: ${error.message}`);
+        // If error.message is "Failed to fetch", it's often a CORS or network issue.
+        // If it's a different message (like the one from the .then block), it might be a server-side HTTP error.
+        const detailMessage = error.message && error.message.includes(`Failed to fetch ${fileName}:`) ? error.message : `상세: ${error.message || '알 수 없는 오류'}`;
+        throw new Error(`네트워크 또는 데이터 처리 오류로 ${fileName} 파일 (${fileUrl})을 가져오는 데 실패했습니다. ${detailMessage}. Firebase Storage의 CORS 설정, 파일 공개 접근 권한, 그리고 네트워크 연결을 확인해주세요.`);
       });
   }
   return hanjaDataPromise;
