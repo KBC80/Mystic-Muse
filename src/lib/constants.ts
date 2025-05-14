@@ -1,3 +1,4 @@
+
 export const EAST_ASIAN_BIRTH_TIMES = [
   { value: "자시", label: "자시 (23:00 - 00:59)" },
   { value: "축시", label: "축시 (01:00 - 02:59)" },
@@ -25,15 +26,30 @@ export const GENDER_OPTIONS = [
 ];
 
 const FIREBASE_STORAGE_BUCKET_NAME = "mystic-muse-rj8ab.appspot.com";
-const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image"; // Path within the bucket
-const FIREBASE_STORAGE_BASE_URL = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME}/o`;
-const FIREBASE_STORAGE_SUFFIX = "?alt=media";
+export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image"; // Export if needed elsewhere, or keep private
+const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME}/o`;
+export const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
-const encodeFilePath = (filePath: string) => encodeURIComponent(filePath);
+const encodeFirebasePath = (pathSegment: string) => encodeURIComponent(pathSegment);
 
-export const TAROT_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/`)}`;
-export const TAROT_BACK_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/tarot-back.jpg`)}${FIREBASE_STORAGE_SUFFIX}`;
+// Base URL for constructing image paths, e.g. https://.../o/
+const APP_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL_FOR_API}/`;
 
-export const RUNE_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/`)}`;
-export const RUNE_BACK_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-back.png`)}${FIREBASE_STORAGE_SUFFIX}`;
-export const RUNE_FRONT_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL}/${encodeFilePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-front.png`)}${FIREBASE_STORAGE_SUFFIX}`;
+// URL for Tarot Card Back
+export const TAROT_BACK_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/tarot-back.jpg`)}${FIREBASE_STORAGE_SUFFIX}`;
+
+// URL for Rune Back
+export const RUNE_BACK_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-back.png`)}${FIREBASE_STORAGE_SUFFIX}`;
+// URL for Rune Front background
+export const RUNE_FRONT_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-front.png`)}${FIREBASE_STORAGE_SUFFIX}`;
+
+
+// Function to construct full image URL for tarot cards
+export const getTarotCardImageUrl = (imageName: string): string => {
+  return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
+};
+
+// Function to construct full image URL for runes
+export const getRuneImageUrl = (imageName: string): string => {
+  return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
+};

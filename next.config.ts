@@ -23,6 +23,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/v0/b/mystic-muse-rj8ab.appspot.com/o/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co', // Added for rune placeholder images
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };

@@ -1,5 +1,6 @@
+
 // Based on a standard 78-card Rider-Waite deck.
-import { TAROT_IMAGE_BASE_URL, TAROT_BACK_IMAGE_URL } from '@/lib/constants';
+import { getTarotCardImageUrl } from '@/lib/constants';
 
 export const tarotCardNames: string[] = [
   // Major Arcana (22 cards)
@@ -33,8 +34,6 @@ export const tarotCardNames: string[] = [
 if (tarotCardNames.length !== 78) { 
   console.warn(`경고: ${tarotCardNames.length}개의 타로 카드 이름이 정의되었습니다. 78개가 필요합니다. tarot-cards.ts 파일을 확인해주세요.`);
 }
-
-const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
 const cardImageMap: { [key: string]: string } = {
   // Major Arcana
@@ -101,15 +100,15 @@ export function generateDeck(): TarotCard[] {
     const imageName = cardImageMap[name];
     let imageUrl: string;
     if (imageName) {
-      imageUrl = `${TAROT_IMAGE_BASE_URL}${encodeURIComponent(imageName)}${FIREBASE_STORAGE_SUFFIX}`;
+      imageUrl = getTarotCardImageUrl(imageName);
     } else {
       // Fallback placeholder if image name is not found in map
-      imageUrl = `https://picsum.photos/200/300?random=${index}`; 
+      imageUrl = `https://placehold.co/200x300.png?text=${encodeURIComponent(name)}`; 
       console.warn(`경고: 카드 "${name}"에 대한 이미지를 찾을 수 없습니다. 플레이스홀더 이미지를 사용합니다: ${imageUrl}`);
     }
     
     const hintName = name.toLowerCase().replace(/\s+/g, ''); 
-    const hintParts = hintName.match(/.{1,4}/g) || []; 
+    const hintParts = hintName.match(/.{1,6}/g) || []; // Adjusted length for potentially longer names
     const dataAiHint = `타로 ${hintParts.slice(0,2).join(" ")}`.trim();
 
     return {
@@ -121,6 +120,3 @@ export function generateDeck(): TarotCard[] {
     };
   });
 }
-
-// Tarot card back image URL is defined in constants.ts as TAROT_BACK_IMAGE_URL
-// and imported/used directly in the TarotReadingPage component.
