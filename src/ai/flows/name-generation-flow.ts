@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview 부모의 정보와 사주를 기반으로 아이에게 길운을 가져다 줄 이름을 생성합니다.
@@ -9,7 +10,28 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import namingRulesData from '@/lib/naming_rules.json';
+import { getJSONFileUrl } from '@/lib/constants';
+import { unstable_cache as cache } from 'next/cache';
+
+const fetchNamingRules = cache(
+  async (): Promise<Array<{ 번호: number; 제목: string; 설명: string }>> => {
+    const response = await fetch(getJSONFileUrl('naming_rules.json'));
+    if (!response.ok) {
+      console.error('Failed to fetch naming_rules.json:', response.status, response.statusText);
+      throw new Error('작명 규칙 데이터를 불러오는데 실패했습니다.');
+    }
+    try {
+      const data = await response.json();
+      return data as Array<{ 번호: number; 제목: string; 설명: string }>;
+    } catch (e) {
+      console.error('Failed to parse naming_rules.json:', e);
+      throw new Error('작명 규칙 데이터 형식이 올바르지 않습니다.');
+    }
+  },
+  ['naming-rules-data'], // Unique cache key
+  { revalidate: 3600 * 24 } // Revalidate once a day (24 hours)
+);
+
 
 const GenerateAuspiciousNameInputSchema = z.object({
   fatherName: z.string().describe('아버지의 성함입니다.'),
@@ -41,9 +63,7 @@ export async function generateAuspiciousName(input: GenerateAuspiciousNameInput)
   return generateAuspiciousNameFlow(input);
 }
 
-const formattedNamingRules = namingRulesData.map(rule => `${rule.번호}. ${rule.제목}: ${rule.설명}`).join('\n');
-
-const auspiciousNamePrompt = ai.definePrompt({
+const createAuspiciousNamePrompt = (formattedNamingRules: string) => ai.definePrompt({
   name: 'auspiciousNamePrompt',
   input: {schema: GenerateAuspiciousNameInputSchema},
   output: {schema: GenerateAuspiciousNameOutputSchema},
@@ -87,8 +107,10 @@ const generateAuspiciousNameFlow = ai.defineFlow(
     outputSchema: GenerateAuspiciousNameOutputSchema,
   },
   async input => {
-    const {output} = await auspiciousNamePrompt(input);
+    const namingRulesData = await fetchNamingRules();
+    const formattedNamingRules = namingRulesData.map(rule => `${rule.번호}. ${rule.제목}: ${rule.설명}`).join('\n');
+    const dynamicPrompt = createAuspiciousNamePrompt(formattedNamingRules);
+    const {output} = await dynamicPrompt(input);
     return output!;
   }
 );
-

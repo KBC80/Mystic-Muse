@@ -25,31 +25,31 @@ export const GENDER_OPTIONS = [
   { value: "female", label: "여성" },
 ];
 
-const FIREBASE_STORAGE_BUCKET_NAME = "mystic-muse-rj8ab.appspot.com";
-export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image"; // Export if needed elsewhere, or keep private
+const FIREBASE_STORAGE_BUCKET_NAME = "mystic-muse-rj8ab.firebasestorage.app";
+export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image";
+export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib"; // For JSON data files
 const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME}/o`;
 export const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
 const encodeFirebasePath = (pathSegment: string) => encodeURIComponent(pathSegment);
 
-// Base URL for constructing image paths, e.g. https://.../o/
 const APP_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL_FOR_API}/`;
 
-// URL for Tarot Card Back
 export const TAROT_BACK_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/tarot-back.jpg`)}${FIREBASE_STORAGE_SUFFIX}`;
-
-// URL for Rune Back
 export const RUNE_BACK_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-back.png`)}${FIREBASE_STORAGE_SUFFIX}`;
-// URL for Rune Front background
 export const RUNE_FRONT_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-front.png`)}${FIREBASE_STORAGE_SUFFIX}`;
 
-
-// Function to construct full image URL for tarot cards
 export const getTarotCardImageUrl = (imageName: string): string => {
   return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
 };
 
-// Function to construct full image URL for runes
 export const getRuneImageUrl = (imageName: string): string => {
   return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
+};
+
+export const getJSONFileUrl = (fileName: string): string => {
+  // Ensures the 'lib/' path segment is encoded correctly if it contains special characters,
+  // though in this case, it's simple.
+  const fullPath = `${FIREBASE_STORAGE_LIB_FOLDER_PATH}/${fileName}`;
+  return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
 };

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, PieChart as RechartsPieChart, Pie, Cell, LabelList, ResponsiveContainer } from "recharts";
-import suri81Data from '@/lib/suri_81_data.json';
+// REMOVE: import suri81Data from '@/lib/suri_81_data.json';
 
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string | React.ReactNode }> = ({ title, icon: Icon, children, className, cardDescription }) => (
@@ -70,29 +71,25 @@ const ScoreBarHorizontal = ({ label, score, maxScore }: { label: string; score: 
   );
 };
 
-const getRatingValue = (rating?: string): number => {
-    if (!rating) return 0;
-    const ratingString = rating.toString(); 
-    const classifications = suri81Data.numberClassifications;
-    if (classifications.choiSangUnSu.some(r => ratingString.includes(r.toString()))) return 5;
-    if (classifications.sangUnSu.some(r => ratingString.includes(r.toString()))) return 4;
-    if (classifications.yangUnSu.some(r => ratingString.includes(r.toString()))) return 3; 
-    if (ratingString.includes("길")) return 4; 
-    if (ratingString.includes("평")) return 3;
-    if (classifications.choiHyungUnSu.some(r => ratingString.includes(r.toString()))) return 1;
-    if (classifications.hyungUnSu.some(r => ratingString.includes(r.toString()))) return 2;
-    if (ratingString.includes("흉")) return 2; 
-    return 0;
+const getRatingValue = (ratingText?: string): number => {
+    if (!ratingText) return 0;
+    const ratingString = ratingText.toLowerCase();
+    if (ratingString.includes("최상") || ratingString.includes("대길")) return 5;
+    if (ratingString.includes("상") || ratingString.includes("길")) return 4;
+    if (ratingString.includes("양") || ratingString.includes("평") || ratingString.includes("보통")) return 3;
+    if (ratingString.includes("최흉")) return 1; // 최흉 먼저 체크
+    if (ratingString.includes("흉")) return 2;
+    return 0; // "정보 없음" 또는 알 수 없는 등급
 };
+
 
 const getRatingColorClass = (rating?: string): string => {
   if (!rating) return "text-muted-foreground";
-  const ratingString = rating.toString();
-   const classifications = suri81Data.numberClassifications;
-  if (ratingString.includes("대길") || ratingString.includes("최상") || classifications.choiSangUnSu.some(r => ratingString.includes(r.toString()))) return "text-green-600 dark:text-green-400";
-  if (ratingString.includes("길") || classifications.sangUnSu.some(r => ratingString.includes(r.toString())) || classifications.yangUnSu.some(r => ratingString.includes(r.toString())) ) return "text-blue-500 dark:text-blue-400";
+  const ratingString = rating.toLowerCase();
+  if (ratingString.includes("대길") || ratingString.includes("최상")) return "text-green-600 dark:text-green-400";
+  if (ratingString.includes("길") || ratingString.includes("상") || ratingString.includes("양")) return "text-blue-500 dark:text-blue-400";
   if (ratingString.includes("평") || ratingString.includes("보통")) return "text-yellow-600 dark:text-yellow-400";
-  if (ratingString.includes("흉") || classifications.hyungUnSu.some(r => ratingString.includes(r.toString())) || classifications.choiHyungUnSu.some(r => ratingString.includes(r.toString())) ) return "text-red-600 dark:text-red-400";
+  if (ratingString.includes("흉") || ratingString.includes("최흉")) return "text-red-600 dark:text-red-400";
   return "text-muted-foreground";
 };
 
@@ -196,25 +193,14 @@ function NameInterpretationResultContent() {
   
   const suriGyeokItems = suriGyeokItemsConfig.map(config => {
     const gyeokData = da.suriGilhyungAnalysis[config.dataKey] as SuriGyeokType | undefined; 
-    let suriRatingName = "정보 없음";
-    let suriRatingText = gyeokData?.rating || "정보 없음";
-
-    if (gyeokData?.suriNumber && suri81Data.suriInterpretations[gyeokData.suriNumber.toString() as keyof typeof suri81Data.suriInterpretations]) {
-        suriRatingName = suri81Data.suriInterpretations[gyeokData.suriNumber.toString() as keyof typeof suri81Data.suriInterpretations].name;
-        suriRatingText = suri81Data.suriInterpretations[gyeokData.suriNumber.toString() as keyof typeof suri81Data.suriInterpretations].rating;
-    } else if (gyeokData?.suriNumber === 0 && gyeokData?.rating === "정보 없음"){
-        // Handle case where LLM might return 0 for suriNumber and "정보 없음" for rating
-        // This can happen if the LLM couldn't calculate or determine the specific gyeok
-    }
     
     return {
       key: config.key,
       label: gyeokData?.name || config.defaultName,
-      suriRatingName: suriRatingName,
-      rating: suriRatingText,
-      suriNumber: gyeokData?.suriNumber ?? 0, // Ensure suriNumber is always a number
+      rating: gyeokData?.rating || "정보 없음",
+      suriNumber: gyeokData?.suriNumber ?? 0, 
       interpretation: gyeokData?.interpretation || "해석 정보가 없습니다.",
-      colorClass: getRatingColorClass(suriRatingText)
+      colorClass: getRatingColorClass(gyeokData?.rating)
     };
   });
   
@@ -228,9 +214,9 @@ function NameInterpretationResultContent() {
 
 
   const lifeCycleFortuneData = suriGyeokItems.map(item => ({
-    name: item.label.split('(')[0].trim(), // e.g., "원격"
-    period: item.label.split(' - ')[1]?.split(' (')[0] || '정보 없음', // e.g., "초년운"
-    ageRange: item.label.match(/\(([^)]+)\)/)?.[1] || '정보 없음', // e.g., "0-20세"
+    name: item.label.split('(')[0].trim(), 
+    period: item.label.split(' - ')[1]?.split(' (')[0] || '정보 없음', 
+    ageRange: item.label.match(/\(([^)]+)\)/)?.[1] || '정보 없음', 
     ratingValue: getRatingValue(item.rating),
     ratingText: item.rating,
     color: item.colorClass,
@@ -244,7 +230,7 @@ function NameInterpretationResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8" /> {bis.koreanName}{bis.hanjaName && ` (${bis.hanjaName})`} 님의 이름 풀이 결과
           </CardTitle>
-           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm text-foreground", oa.summaryEvaluation ? "bg-card" : "bg-muted")}> 
+           <CardDescription className={cn("text-md pt-2 p-3 rounded-md shadow-sm text-foreground bg-background dark:bg-background/80")}> 
               <strong className={cn("px-1 py-0.5 rounded", getOverallGradeTextStyle(oa.summaryEvaluation))}>
                 간단 요약: {oa.summaryEvaluation || "정보 없음"}
               </strong>
@@ -447,4 +433,3 @@ export default function NameInterpretationResultPage() {
     </Suspense>
   );
 }
-

@@ -17,6 +17,8 @@ import { findHanjaForSyllable, type HanjaDetail } from '@/lib/hanja-utils';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
 
 interface HanjaSelectionModalProps {
   isOpen: boolean;
@@ -50,36 +52,45 @@ export function HanjaSelectionModal({
       setCurrentSyllableIndex(0);
       setCurrentPageForHanja(0); 
     }
-  }, [isOpen, nameSyllables.length]); // nameSyllables.length ensures re-init if syllables change while open (though unlikely)
+  }, [isOpen, nameSyllables.length]);
 
   useEffect(() => {
     if (isOpen && nameSyllables.length > 0 && currentSyllableIndex < nameSyllables.length) {
-      setIsLoadingOptions(true);
-      const currentPhoneticSyllable = nameSyllables[currentSyllableIndex];
-      let options = findHanjaForSyllable(currentPhoneticSyllable);
-
-      // Helper function to get the descriptive part of the reading (e.g., "높을" from "높을 고")
-      const getDescriptivePart = (specificReading: string, syllable: string): string => {
-        const pattern = new RegExp("\\s*" + syllable + "$");
-        const desc = specificReading.replace(pattern, "").trim();
-        return desc || specificReading; 
+      const loadOptions = async () => {
+        setIsLoadingOptions(true);
+        const currentPhoneticSyllable = nameSyllables[currentSyllableIndex];
+        try {
+          let options = await findHanjaForSyllable(currentPhoneticSyllable);
+          
+          const getDescriptivePart = (specificReading: string, syllable: string): string => {
+            const pattern = new RegExp("\\s*" + syllable + "$");
+            const desc = specificReading.replace(pattern, "").trim();
+            return desc || specificReading;
+          };
+          options.sort((a, b) => {
+            const descA = getDescriptivePart(a.specificReading, currentPhoneticSyllable);
+            const descB = getDescriptivePart(b.specificReading, currentPhoneticSyllable);
+            const keyA = descA.length > 0 ? descA[0] : '';
+            const keyB = descB.length > 0 ? descB[0] : '';
+            return keyA.localeCompare(keyB, 'ko-KR');
+          });
+          setHanjaOptions(options);
+        } catch (error) {
+          console.error(`한자 로딩 오류 ("${currentPhoneticSyllable}"):`, error);
+          setHanjaOptions([]);
+          toast({
+            title: "한자 로딩 오류",
+            description: `"${currentPhoneticSyllable}"에 대한 한자를 불러오는 중 오류가 발생했습니다. 인터넷 연결을 확인해주세요.`,
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingOptions(false);
+        }
+        setCurrentPageForHanja(0);
       };
-      
-      options.sort((a, b) => {
-        const descA = getDescriptivePart(a.specificReading, currentPhoneticSyllable);
-        const descB = getDescriptivePart(b.specificReading, currentPhoneticSyllable);
-        
-        const keyA = descA.length > 0 ? descA[0] : ''; // First character of descriptive part
-        const keyB = descB.length > 0 ? descB[0] : '';
-        
-        return keyA.localeCompare(keyB, 'ko-KR'); // Sort by Korean alphabetical order
-      });
-
-      setHanjaOptions(options);
-      setCurrentPageForHanja(0); 
-      setIsLoadingOptions(false);
+      loadOptions();
     }
-  }, [isOpen, nameSyllables, currentSyllableIndex]);
+  }, [isOpen, nameSyllables, currentSyllableIndex, toast]);
 
   const handleHanjaSelect = (hanjaDetail: HanjaDetail) => {
     const newSelections = [...selectedHanjaPerSyllable];
@@ -148,24 +159,25 @@ export function HanjaSelectionModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-grow overflow-y-auto pr-1"> {/* Changed to overflow-y-auto for vertical scroll only */}
+        <ScrollArea className="flex-grow pr-1">
           <div className="py-2">
             {isLoadingOptions ? (
-              <p className="text-center py-4 text-muted-foreground break-words">옵션 로딩 중...</p>
+               <div className="flex justify-center items-center py-4">
+                <LoadingSpinner /> 
+                <span className="ml-2">옵션 로딩 중...</span>
+              </div>
             ) : paginatedHanjaOptions.length > 0 ? (
               <div className="grid grid-cols-4 gap-2">
                 {paginatedHanjaOptions.map((opt, optIndex) => {
-                  // Extract descriptive part for display
                   const descriptivePart = opt.specificReading.replace(new RegExp("\\s*" + nameSyllables[currentSyllableIndex] + "$"), "").trim();
                   return (
                     <Button
                       key={`${opt.hanja}-${optIndex}-${currentSyllableIndex}-${currentPageForHanja}`}
                       variant={selectedHanjaPerSyllable[currentSyllableIndex]?.hanja === opt.hanja ? "default" : "outline"}
                       onClick={() => handleHanjaSelect(opt)}
-                      className="flex flex-col h-auto p-2 text-center text-xs" // text-xs applied here
+                      className="flex flex-col h-auto p-2 text-center text-xs"
                     >
                       <span className="text-2xl font-semibold">{opt.hanja}</span>
-                      {/* Ensure descriptivePart or a fallback is shown */}
                       <span className="text-[10px] text-muted-foreground mt-0.5 truncate w-full break-words">{descriptivePart || opt.specificReading}</span>
                     </Button>
                   );
@@ -175,7 +187,7 @@ export function HanjaSelectionModal({
               <p className="text-center py-4 text-muted-foreground break-words">"{currentSyllable}"에 대한 추천 한자가 없습니다.</p>
             )}
           </div>
-        </div>
+        </ScrollArea>
 
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-2 py-2 border-t">
@@ -194,7 +206,7 @@ export function HanjaSelectionModal({
               variant="outline" 
               size="sm"
               onClick={() => setCurrentPageForHanja(p => Math.min(totalPages - 1, p + 1))} 
-              disabled={currentPageForHanja === totalPages - 1}
+              disabled={currentPageForHanja === totalPages - 1 || paginatedHanjaOptions.length === 0}
             >
               다음 <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
@@ -227,4 +239,3 @@ export function HanjaSelectionModal({
     </Dialog>
   );
 }
-

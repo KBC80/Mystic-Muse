@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview 사용자의 이름, 생년월일시, 성별을 바탕으로 동서양 철학, 사주명리학, 성명학(한자 수리획수법, 음양오행, 발음오행, 자원오행), 주역 등을 종합적으로 분석하고 인생 조언을 제공합니다.
@@ -9,8 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import suri81Data from '@/lib/suri_81_data.json';
-import ichingData from '@/lib/iching_64_data.json';
+import { getJSONFileUrl } from '@/lib/constants';
+import { unstable_cache as cache } from 'next/cache';
 
 
 const InterpretNameInputSchema = z.object({
@@ -132,8 +133,82 @@ const InterpretNameOutputSchema = z.object({
     luckyNumbers: z.array(z.number().int().min(1).max(45)).length(3).optional().describe('이름 풀이를 바탕으로 한 행운의 숫자 세 개 (1-45 사이).'),
   }).describe('고려사항 및 조언'),
 });
-
 export type InterpretNameOutput = z.infer<typeof InterpretNameOutputSchema>;
+
+
+interface Suri81Data {
+  description: string;
+  suriGyeokMeaning: {
+    wonGyeok: string;
+    hyeongGyeok: string;
+    iGyeok: string;
+    jeongGyeok: string;
+  };
+  numberClassifications: {
+    yangUnSu: number[];
+    sangUnSu: number[];
+    choiSangUnSu: number[];
+    hyungUnSu: number[];
+    choiHyungUnSu: number[];
+  };
+  suriInterpretations: {
+    [key: string]: { name: string; rating: string; description: string };
+  };
+}
+
+interface IchingDataEntry {
+  id: number;
+  name: string;
+  symbol: string;
+  hexagram: string;
+  number?: string;
+  description: string;
+  summary: {
+    keyword: string;
+    positive: string;
+    caution: string;
+    advice: string;
+  };
+}
+type IchingData = IchingDataEntry[];
+
+
+const fetchSuri81Data = cache(
+  async (): Promise<Suri81Data> => {
+    const response = await fetch(getJSONFileUrl('suri_81_data.json'));
+    if (!response.ok) {
+      console.error('Failed to fetch suri_81_data.json:', response.status, response.statusText);
+      throw new Error('수리 데이터를 불러오는데 실패했습니다.');
+    }
+    try {
+      return await response.json() as Suri81Data;
+    } catch (e) {
+      console.error('Failed to parse suri_81_data.json:', e);
+      throw new Error('수리 데이터 형식이 올바르지 않습니다.');
+    }
+  },
+  ['suri-81-data'],
+  { revalidate: 3600 * 24 }
+);
+
+const fetchIchingData = cache(
+  async (): Promise<IchingData> => {
+    const response = await fetch(getJSONFileUrl('iching_64_data.json'));
+    if (!response.ok) {
+      console.error('Failed to fetch iching_64_data.json:', response.status, response.statusText);
+      throw new Error('주역 데이터를 불러오는데 실패했습니다.');
+    }
+    try {
+      return await response.json() as IchingData;
+    } catch (e) {
+      console.error('Failed to parse iching_64_data.json:', e);
+      throw new Error('주역 데이터 형식이 올바르지 않습니다.');
+    }
+  },
+  ['iching-64-data'],
+  { revalidate: 3600 * 24 }
+);
+
 
 const simplifyHexagramPrompt = ai.definePrompt({
   name: 'simplifyHexagramPrompt',
@@ -182,9 +257,9 @@ const nameInterpretationPrompt = ai.definePrompt({
     *   사주 전체의 오행 분포(목,화,토,금,수 각 오행의 상대적 강도 또는 개수)를 분석하고, 사주에서 **가장 보충이 필요한 오행**(용신 또는 희신에 해당)을 명확히 제시합니다.
 2.  **이름 분석:**
     *   **한자 획수 및 음양 (hanjaStrokeCounts 및 yinYangHarmony):**
-        *   먼저, 이름의 각 글자(한자 또는 한글)에 대한 획수를 계산하여 \\\`hanjaStrokeCounts\\\` 배열에 저장합니다. 한자가 명시된 경우(예: '洪'), 해당 한자의 **정자(正字) 획수**를 사용합니다. 한글만 있는 음절의 경우, 일반적인 한글 획수 계산법(예: ㄱ=1획, ㅏ=1획 등)을 적용합니다. 각 \\\`hanjaStrokeCounts\\\` 항목에는 { character: "글자", strokes: 획수, yinYang: "음양표기 (예: 양(陽) 또는 음(陰))" } 형태로 제공되어야 하며, \\\`yinYang\\\` 필드는 해당 글자의 계산된 획수(홀수=양, 짝수=음)에 따라 정확히 '양(陽)' 또는 '음(陰)'으로 채워져야 합니다. 획수를 알 수 없는 경우 strokes 필드를 생략할 수 있습니다.
-        *   \\\`yinYangHarmony.nameYinYangComposition\\\` 필드에는 \\\`hanjaStrokeCounts\\\` 배열의 각 항목에서 결정된 \\\`yinYang\\\` 값(예: '음(陰)' 또는 '양(陽)')들을 순서대로 '-' 문자로 연결하여 문자열로 표시합니다 (예: \\\`hanjaStrokeCounts\\\`가 洪(음), 吉(음), 童(음)으로 분석되었다면 "음(陰)-음(陰)-음(陰)"으로, 李(양), 明(음), 博(음)으로 분석되었다면 "양(陽)-음(陰)-음(陰)"으로 정확히 명시합니다). 이 음양 배열은 반드시 \\\`hanjaStrokeCounts\\\`에서 계산된 각 글자 획수 및 \\\`yinYang\\\` 필드와 일치해야 합니다.
-        *   마지막으로, \\\`yinYangHarmony.assessment\\\` 필드에 이렇게 도출된 이름 전체의 음양 배열과 그 조화도에 대한 상세한 평가를 제공합니다.
+        *   먼저, 이름의 각 글자(한자 또는 한글)에 대한 획수를 계산하여 \`hanjaStrokeCounts\` 배열에 저장합니다. 한자가 명시된 경우(예: '洪'), 해당 한자의 **정자(正字) 획수**를 사용합니다. 한글만 있는 음절의 경우, 일반적인 한글 획수 계산법(예: ㄱ=1획, ㅏ=1획 등)을 적용합니다. 각 \`hanjaStrokeCounts\` 항목에는 { character: "글자", strokes: 획수, yinYang: "음양표기 (예: 양(陽) 또는 음(陰))" } 형태로 제공되어야 하며, \`yinYang\` 필드는 해당 글자의 계산된 획수(홀수=양, 짝수=음)에 따라 정확히 '양(陽)' 또는 '음(陰)'으로 채워져야 합니다. 획수를 알 수 없는 경우 strokes 필드를 생략할 수 있습니다.
+        *   \`yinYangHarmony.nameYinYangComposition\` 필드에는 \`hanjaStrokeCounts\` 배열의 각 항목에서 결정된 \`yinYang\` 값(예: '음(陰)' 또는 '양(陽)')들을 순서대로 '-' 문자로 연결하여 문자열로 표시합니다 (예: \`hanjaStrokeCounts\`가 洪(음), 吉(음), 童(음)으로 분석되었다면 "음(陰)-음(陰)-음(陰)"으로, 李(양), 明(음), 博(음)으로 분석되었다면 "양(陽)-음(陰)-음(陰)"으로 정확히 명시합니다). 이 음양 배열은 반드시 \`hanjaStrokeCounts\`에서 계산된 각 글자 획수 및 \`yinYang\` 필드와 일치해야 합니다.
+        *   마지막으로, \`yinYangHarmony.assessment\` 필드에 이렇게 도출된 이름 전체의 음양 배열과 그 조화도에 대한 상세한 평가를 제공합니다.
     *   **발음오행:** 이름 각 한글 음절의 초성(자음)에 해당하는 오행(예: ㄱ,ㅋ=木 / ㄴ,ㄷ,ㄹ,ㅌ=火 / ㅇ,ㅎ=土 / ㅅ,ㅈ,ㅊ=金 / ㅁ,ㅂ,ㅍ=水)을 분석하고, 초성 오행 간의 상생/상극 관계를 설명하고 평가합니다.
     *   **수리길흉 분석 (81수리 이론 기반 원형이정 4격):**
         *   **원격(元格, 초년운 0-20세):** (성이 한 글자일 경우) 이름 첫 글자 획수 + 이름 두번째 글자 획수. (성이 두 글자일 경우) 성씨 두번째 글자 획수 + 이름 첫 글자 획수. (이름이 외자일 경우) 이름 첫 글자 획수 + 1획. 산출된 수를 81수리표에 대입하여 길흉과 의미를 해석합니다. 해당 시기의 성격적 특징, 주요 운세 흐름(학업, 친구관계 등), 건강, 잠재력에 대해 **81수리 이론의 해당 번호 설명을 참고하여 구체적이고 심층적으로 설명**합니다. name 필드 값은 "원격(元格) - 초년운 (0-20세)" 이어야 합니다.
@@ -220,6 +295,9 @@ const nameInterpretationPrompt = ai.definePrompt({
 
 export async function interpretName(input: InterpretNameInput): Promise<InterpretNameOutput> {
   try {
+    const suri81Data = await fetchSuri81Data();
+    const ichingData = await fetchIchingData();
+
     const { output: initialOutput } = await nameInterpretationPrompt(input);
     if (!initialOutput) {
       throw new Error("이름 풀이 초기 결과를 생성하지 못했습니다. AI 모델로부터 응답을 받지 못했습니다.");
@@ -243,12 +321,11 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
 
     if (initialOutput.detailedAnalysis?.iChingHexagram?.hexagramName) {
       let hexagramNameFromLLM = initialOutput.detailedAnalysis.iChingHexagram.hexagramName;
-      // "괘" 접미사 제거
       let cleanedHexagramName = hexagramNameFromLLM.endsWith("괘")
         ? hexagramNameFromLLM.slice(0, -1)
         : hexagramNameFromLLM;
 
-      const typedIchingData = ichingData as Array<{ id: number; name: string; symbol: string; hexagram: string; number?: string; description: string; summary: { keyword: string; positive: string; caution: string; advice: string; } }>;
+      const typedIchingData = ichingData as IchingData;
       const hexagramInfo = typedIchingData.find(item => item.name === cleanedHexagramName);
 
       if (hexagramInfo && hexagramInfo.description) {
@@ -260,7 +337,7 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
         const { output: simplifiedResult } = await simplifyHexagramPrompt(simplifyInput);
         if (simplifiedResult?.simplifiedInterpretation) {
           finalOutput.detailedAnalysis.iChingHexagram.interpretation = simplifiedResult.simplifiedInterpretation;
-          finalOutput.detailedAnalysis.iChingHexagram.hexagramName = cleanedHexagramName; // Update to cleaned name
+          finalOutput.detailedAnalysis.iChingHexagram.hexagramName = cleanedHexagramName; 
         } else {
           console.warn(`주역 괘 단순화 실패: ${cleanedHexagramName}`);
           finalOutput.detailedAnalysis.iChingHexagram.interpretation = `"${cleanedHexagramName}" 괘의 의미를 요약하는 데 실패했습니다. 원본 해설의 일부: ${hexagramInfo.description.substring(0,100)}...`;
@@ -273,10 +350,9 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
          finalOutput.detailedAnalysis.iChingHexagram.interpretation = "관련된 주역 괘를 찾지 못했습니다.";
     }
 
-    // Ensure all SuriGyeok fields have default values if missing from LLM
     const suriGyeokKeys: (keyof typeof finalOutput.detailedAnalysis.suriGilhyungAnalysis)[] = ['wonGyeok', 'hyeongGyeok', 'iGyeok', 'jeongGyeok'];
     suriGyeokKeys.forEach(key => {
-        if (key === 'introduction') return; // Skip introduction
+        if (key === 'introduction') return; 
         const gyeok = finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as SuriGyeokSchema | undefined;
 
         let defaultName = "";
@@ -284,20 +360,20 @@ export async function interpretName(input: InterpretNameInput): Promise<Interpre
         else if (key === 'hyeongGyeok') defaultName = "형격(亨格) - 청년운 (21-40세)";
         else if (key === 'iGyeok') defaultName = "이격(利格) - 장년운 (41-60세)";
         else defaultName = "정격(貞格) - 말년운/총운 (60세 이후)";
+        
+        let suriRatingText = gyeok?.rating || "정보 없음";
+        const suriNumber = gyeok?.suriNumber;
 
-        if (!gyeok) {
-            (finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as SuriGyeokSchema) = {
-                name: defaultName,
-                suriNumber: 0,
-                rating: "정보 없음",
-                interpretation: "해석 정보를 생성하지 못했습니다."
-            };
-        } else {
-            if (!gyeok.name) gyeok.name = defaultName;
-            if (gyeok.suriNumber === undefined) gyeok.suriNumber = 0;
-            if (!gyeok.rating) gyeok.rating = "정보 없음";
-            if (!gyeok.interpretation) gyeok.interpretation = "해석 정보를 생성하지 못했습니다.";
+        if (suriNumber && suri81Data.suriInterpretations[suriNumber.toString() as keyof typeof suri81Data.suriInterpretations]) {
+            suriRatingText = suri81Data.suriInterpretations[suriNumber.toString() as keyof typeof suri81Data.suriInterpretations].rating;
         }
+        
+        (finalOutput.detailedAnalysis.suriGilhyungAnalysis[key] as SuriGyeokSchema) = {
+            name: gyeok?.name || defaultName,
+            suriNumber: suriNumber ?? 0,
+            rating: suriRatingText,
+            interpretation: gyeok?.interpretation || "해석 정보가 없습니다.",
+        };
     });
 
 

@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
         port: '',
-        pathname: '/v0/b/mystic-muse-rj8ab.appspot.com/o/**',
+        pathname: '/v0/b/mystic-muse-rj8ab.firebasestorage.app/o/**',
       },
       {
         protocol: 'https',
