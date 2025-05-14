@@ -25,10 +25,9 @@ export const GENDER_OPTIONS = [
   { value: "female", label: "여성" },
 ];
 
-// Firebase Storage 버킷 이름을 사용자 제공 정보에 맞게 수정
-const FIREBASE_STORAGE_BUCKET_NAME_FOR_API = "mystic-muse-rj8ab.firebasestorage.app"; 
+const FIREBASE_STORAGE_BUCKET_NAME_FOR_API = "mystic-muse-rj8ab.firebasestorage.app";
 export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image";
-export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib";
+// REMOVED: export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib"; // No longer needed for JSON files
 const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME_FOR_API}/o`;
 export const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
@@ -46,8 +45,8 @@ export const getRuneImageUrl = (imageName: string): string => {
   return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
 };
 
-export const getJSONFileUrl = (fileName: string): string => {
-  const fullPath = `${FIREBASE_STORAGE_LIB_FOLDER_PATH}/${fileName}`;
-  return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
-};
-
+// REMOVED: getJSONFileUrl function as JSON files will be imported directly.
+// export const getJSONFileUrl = (fileName: string): string => {
+//   const fullPath = `${FIREBASE_STORAGE_LIB_FOLDER_PATH}/${fileName}`;
+//   return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
+// };

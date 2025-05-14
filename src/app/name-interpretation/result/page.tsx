@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 import { EAST_ASIAN_BIRTH_TIMES } from '@/lib/constants';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, PieChart as RechartsPieChart, Pie, Cell, LabelList, ResponsiveContainer } from "recharts";
-// REMOVE: import suri81Data from '@/lib/suri_81_data.json';
 
 
 const SectionCard: React.FC<{ title: string; icon?: React.ElementType; children: React.ReactNode; className?: string; cardDescription?: string | React.ReactNode }> = ({ title, icon: Icon, children, className, cardDescription }) => (
@@ -271,6 +270,19 @@ function NameInterpretationResultContent() {
             })}
             </div>
           </div>
+           <div className="md:col-span-2 pt-1">
+              <h4 className="font-semibold text-md mt-2 mb-1 text-secondary-foreground flex items-center gap-1">
+                <PieChartIcon className="h-4 w-4" /> 사주 오행 분포 (개수 또는 상대적 강도)
+              </h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground pl-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-2">
+                  <li>{ohaengChartConfig.wood.label}: {bis.sajuOhaengDistribution.wood}</li>
+                  <li>{ohaengChartConfig.fire.label}: {bis.sajuOhaengDistribution.fire}</li>
+                  <li>{ohaengChartConfig.earth.label}: {bis.sajuOhaengDistribution.earth}</li>
+                  <li>{ohaengChartConfig.metal.label}: {bis.sajuOhaengDistribution.metal}</li>
+                  <li>{ohaengChartConfig.water.label}: {bis.sajuOhaengDistribution.water}</li>
+              </ul>
+              <p className="text-sm text-muted-foreground mt-1 pl-4">사주에서 필요한 오행: <strong className="text-primary">{bis.neededOhaengInSaju}</strong></p>
+            </div>
         </div>
       </SectionCard>
       
@@ -311,20 +323,6 @@ function NameInterpretationResultContent() {
       
       <SectionCard title="오행 및 음양 상세 분석" icon={Palette} className="bg-card" cardDescription="이름의 소리, 글자 모양, 한자 뜻에 담긴 오행과 음양의 조화를 분석합니다.">
         <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-md mt-2 mb-1 text-secondary-foreground flex items-center gap-1">
-                <PieChartIcon className="h-4 w-4" /> 사주 오행 분포 (개수 또는 상대적 강도)
-              </h4>
-              <ul className="list-disc list-inside text-sm text-muted-foreground pl-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-2">
-                  <li>{ohaengChartConfig.wood.label}: {bis.sajuOhaengDistribution.wood}</li>
-                  <li>{ohaengChartConfig.fire.label}: {bis.sajuOhaengDistribution.fire}</li>
-                  <li>{ohaengChartConfig.earth.label}: {bis.sajuOhaengDistribution.earth}</li>
-                  <li>{ohaengChartConfig.metal.label}: {bis.sajuOhaengDistribution.metal}</li>
-                  <li>{ohaengChartConfig.water.label}: {bis.sajuOhaengDistribution.water}</li>
-              </ul>
-              <p className="text-sm text-muted-foreground mt-1 pl-4">사주에서 필요한 오행: <strong className="text-primary">{bis.neededOhaengInSaju}</strong></p>
-            </div>
-            <Separator className="my-3"/>
             <div>
                 <h4 className="font-semibold text-md mt-3 mb-1 text-secondary-foreground flex items-center gap-1"><BookOpen className="h-4 w-4"/> 이름의 음양 조화 (획수 기반)</h4>
                  <div className="flex flex-wrap gap-x-3 gap-y-2 items-center mb-2">

@@ -10,8 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { getJSONFileUrl } from '@/lib/constants';
-import { unstable_cache as cache } from 'next/cache';
+import suri81DataJson from '@/lib/suri_81_data.json'; // Direct import
+import iching64DataJson from '@/lib/iching_64_data.json'; // Direct import
 
 
 const InterpretNameInputSchema = z.object({
@@ -173,41 +173,13 @@ interface IchingDataEntry {
 type IchingData = IchingDataEntry[];
 
 
-const fetchSuri81Data = cache(
-  async (): Promise<Suri81Data> => {
-    const response = await fetch(getJSONFileUrl('suri_81_data.json'));
-    if (!response.ok) {
-      console.error('Failed to fetch suri_81_data.json:', response.status, response.statusText);
-      throw new Error('수리 데이터를 불러오는데 실패했습니다.');
-    }
-    try {
-      return await response.json() as Suri81Data;
-    } catch (e) {
-      console.error('Failed to parse suri_81_data.json:', e);
-      throw new Error('수리 데이터 형식이 올바르지 않습니다.');
-    }
-  },
-  ['suri-81-data'],
-  { revalidate: 3600 * 24 }
-);
+function getSuri81Data(): Suri81Data {
+  return suri81DataJson as Suri81Data;
+}
 
-const fetchIchingData = cache(
-  async (): Promise<IchingData> => {
-    const response = await fetch(getJSONFileUrl('iching_64_data.json'));
-    if (!response.ok) {
-      console.error('Failed to fetch iching_64_data.json:', response.status, response.statusText);
-      throw new Error('주역 데이터를 불러오는데 실패했습니다.');
-    }
-    try {
-      return await response.json() as IchingData;
-    } catch (e) {
-      console.error('Failed to parse iching_64_data.json:', e);
-      throw new Error('주역 데이터 형식이 올바르지 않습니다.');
-    }
-  },
-  ['iching-64-data'],
-  { revalidate: 3600 * 24 }
-);
+function getIchingData(): IchingData {
+  return iching64DataJson as IchingData;
+}
 
 
 const simplifyHexagramPrompt = ai.definePrompt({
@@ -295,8 +267,8 @@ const nameInterpretationPrompt = ai.definePrompt({
 
 export async function interpretName(input: InterpretNameInput): Promise<InterpretNameOutput> {
   try {
-    const suri81Data = await fetchSuri81Data();
-    const ichingData = await fetchIchingData();
+    const suri81Data = getSuri81Data();
+    const ichingData = getIchingData();
 
     const { output: initialOutput } = await nameInterpretationPrompt(input);
     if (!initialOutput) {
