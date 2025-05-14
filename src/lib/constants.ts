@@ -25,31 +25,28 @@ export const GENDER_OPTIONS = [
   { value: "female", label: "여성" },
 ];
 
-const FIREBASE_STORAGE_BUCKET_NAME = "mystic-muse-rj8ab.firebasestorage.app";
+// HTTP URL 생성 시 .appspot.com 형태의 버킷 이름을 사용합니다.
+const FIREBASE_STORAGE_BUCKET_NAME_FOR_API = "mystic-muse-rj8ab.appspot.com";
 export const FIREBASE_STORAGE_IMAGE_FOLDER_PATH = "image";
-export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib"; // For JSON data files
-const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME}/o`;
+export const FIREBASE_STORAGE_LIB_FOLDER_PATH = "lib";
+const FIREBASE_STORAGE_BASE_URL_FOR_API = `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET_NAME_FOR_API}/o`;
 export const FIREBASE_STORAGE_SUFFIX = "?alt=media";
 
 const encodeFirebasePath = (pathSegment: string) => encodeURIComponent(pathSegment);
 
-const APP_IMAGE_BASE_URL = `${FIREBASE_STORAGE_BASE_URL_FOR_API}/`;
-
-export const TAROT_BACK_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/tarot-back.jpg`)}${FIREBASE_STORAGE_SUFFIX}`;
-export const RUNE_BACK_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-back.png`)}${FIREBASE_STORAGE_SUFFIX}`;
-export const RUNE_FRONT_IMAGE_URL = `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-front.png`)}${FIREBASE_STORAGE_SUFFIX}`;
+export const TAROT_BACK_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/tarot-back.jpg`)}${FIREBASE_STORAGE_SUFFIX}`;
+export const RUNE_BACK_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-back.png`)}${FIREBASE_STORAGE_SUFFIX}`;
+export const RUNE_FRONT_IMAGE_URL = `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/rune-front.png`)}${FIREBASE_STORAGE_SUFFIX}`;
 
 export const getTarotCardImageUrl = (imageName: string): string => {
-  return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
+  return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
 };
 
 export const getRuneImageUrl = (imageName: string): string => {
-  return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
+  return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(`${FIREBASE_STORAGE_IMAGE_FOLDER_PATH}/${imageName}`)}${FIREBASE_STORAGE_SUFFIX}`;
 };
 
 export const getJSONFileUrl = (fileName: string): string => {
-  // Ensures the 'lib/' path segment is encoded correctly if it contains special characters,
-  // though in this case, it's simple.
   const fullPath = `${FIREBASE_STORAGE_LIB_FOLDER_PATH}/${fileName}`;
-  return `${APP_IMAGE_BASE_URL}${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
+  return `${FIREBASE_STORAGE_BASE_URL_FOR_API}/${encodeFirebasePath(fullPath)}${FIREBASE_STORAGE_SUFFIX}`;
 };
