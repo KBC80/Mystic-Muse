@@ -143,7 +143,7 @@ export default function TodaysFortunePage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <CalendarHeart className="text-primary h-6 w-6" /> 오늘의 운세
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             오늘의 다양한 측면에서의 운세를 알아보세요. 아래에 정보를 입력해주세요.
           </CardDescription>
         </CardHeader>
@@ -325,3 +325,4 @@ export default function TodaysFortunePage() {
     </div>
   );
 }
+

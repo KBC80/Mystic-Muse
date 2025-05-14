@@ -55,12 +55,12 @@ const OhaengPieChart = ({ dataString, personLabel }: { dataString: string; perso
   }).filter(item => item !== null && item.value > 0);
 
   if (!ohaengData || ohaengData.length === 0) {
-    return <p className="text-sm text-muted-foreground">{personLabel}: 오행 데이터 분석 중 또는 데이터 없음.</p>;
+    return <p className="text-sm text-muted-foreground break-words">{personLabel}: 오행 데이터 분석 중 또는 데이터 없음.</p>;
   }
 
   return (
     <div>
-      <h4 className="text-md font-semibold mb-1 text-secondary-foreground">{personLabel} 오행 분포</h4>
+      <h4 className="text-md font-semibold mb-1 text-secondary-foreground break-words">{personLabel} 오행 분포</h4>
       <ChartContainer config={ohaengChartConfig} className="mx-auto aspect-square h-[150px]">
         <RechartsPieChart>
           <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
@@ -131,7 +131,7 @@ function RelationshipCompatibilityResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">두 분의 인연을 분석하고 있습니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">두 분의 인연을 분석하고 있습니다...</p>
       </div>
     );
   }
@@ -142,7 +142,7 @@ function RelationshipCompatibilityResultContent() {
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTriangle className="h-5 w-5" />
           <AlertTitle>분석 오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/relationship-compatibility')} variant="outline" className="mt-4">
           새 궁합 보기
@@ -154,7 +154,7 @@ function RelationshipCompatibilityResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
          <Button onClick={() => router.push('/relationship-compatibility')} variant="outline" className="mt-4">
           새 궁합 보기
         </Button>
@@ -181,7 +181,7 @@ function RelationshipCompatibilityResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Heart className="h-8 w-8" /> {person1Name}님과 {person2Name}님의 천생연분 궁합
           </CardTitle>
-          <CardDescription className="text-md pt-2 text-primary">
+          <CardDescription className="text-md pt-2 text-primary break-words">
             <strong>궁합 총점: {overallScore}점</strong> / <strong className={`font-semibold px-1 py-0.5 rounded-md text-lg ${getGradeColor(overallGrade)}`}>{overallGrade}</strong>
           </CardDescription>
         </CardHeader>
@@ -206,15 +206,15 @@ function RelationshipCompatibilityResultContent() {
       <SectionCard title="이름 한자 조화도 분석" icon={BookOpen}>
         <div className="space-y-2">
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">{person1Name}님 이름 분석:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">{person1Name}님 이름 분석:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{nameHanjaHarmony.person1NameAnalysis}</p>
             </div>
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">{person2Name}님 이름 분석:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">{person2Name}님 이름 분석:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{nameHanjaHarmony.person2NameAnalysis}</p>
             </div>
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">이름 간 조화:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">이름 간 조화:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{nameHanjaHarmony.compatibilityDescription}</p>
             </div>
         </div>
@@ -223,19 +223,19 @@ function RelationshipCompatibilityResultContent() {
       <SectionCard title="종합 해석 및 조언" icon={Sparkles} className="bg-card border-primary/50">
         <div className="space-y-4">
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">종합 해석:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">종합 해석:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{overallInterpretation}</p>
             </div>
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">관계의 강점:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">관계의 강점:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{strengths}</p>
             </div>
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">관계의 약점 및 주의사항:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">관계의 약점 및 주의사항:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{weaknesses}</p>
             </div>
             <div>
-                <h4 className="font-semibold text-md text-secondary-foreground">관계 개선을 위한 조언:</h4>
+                <h4 className="font-semibold text-md text-secondary-foreground break-words">관계 개선을 위한 조언:</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{improvementAdvice}</p>
             </div>
         </div>
@@ -252,7 +252,7 @@ function RelationshipCompatibilityResultContent() {
       </SectionCard>
 
 
-      <CardFooter className="pt-8 border-t flex-col sm:flex-row items-center justify-center gap-4">
+      <CardFooter className="pt-8 border-t flex flex-col sm:flex-row items-center justify-center gap-4">
         <Button onClick={() => router.push('/relationship-compatibility')} variant="outline" className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
           <RotateCcw className="mr-2 h-4 w-4" />
           다른 궁합 보기
@@ -273,11 +273,12 @@ export default function RelationshipCompatibilityResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <RelationshipCompatibilityResultContent />
     </Suspense>
   );
 }
+
 

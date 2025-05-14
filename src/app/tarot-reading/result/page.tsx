@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -19,7 +20,7 @@ const TarotCardDisplay = ({ card }: { card: TarotCardType }) => {
       <div className="w-40 h-auto aspect-[2/3] relative rounded-lg overflow-hidden shadow-lg mb-2">
         <Image src={card.imageUrl} alt={card.name} fill sizes="20vw" style={{ objectFit: 'cover' }} data-ai-hint={card.dataAiHint} />
       </div>
-      <p className="font-semibold text-center text-sm">{card.name}</p>
+      <p className="font-semibold text-center text-sm break-words">{card.name}</p>
     </div>
   );
 };
@@ -88,7 +89,7 @@ function TarotResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">당신의 운명을 해석하고 있습니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">당신의 운명을 해석하고 있습니다...</p>
       </div>
     );
   }
@@ -98,7 +99,7 @@ function TarotResultContent() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTitle>해석 오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/tarot-reading')} variant="outline" className="mt-4">
           새 리딩 시작
@@ -110,7 +111,7 @@ function TarotResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
         <Button onClick={() => router.push('/tarot-reading')} variant="outline" className="mt-4">
           새 리딩 시작
         </Button>
@@ -125,7 +126,7 @@ function TarotResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <WandSparkles className="h-8 w-8 text-primary" /> 당신의 타로 운세 결과
           </CardTitle>
-          <CardDescription className="text-md pt-1">질문: "{question}"</CardDescription>
+          <CardDescription className="text-md pt-1 break-words">질문: "{question}"</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 justify-items-center mb-8 pt-4">
@@ -137,7 +138,7 @@ function TarotResultContent() {
           <div className="space-y-6">
             {selectedCardDetails.map((card, index) => (
               <div key={card.id}>
-                <h3 className="text-xl font-semibold text-secondary-foreground mb-1">카드 {index + 1}: {card.name}</h3>
+                <h3 className="text-xl font-semibold text-secondary-foreground mb-1 break-words">카드 {index + 1}: {card.name}</h3>
                 <p className="text-muted-foreground whitespace-pre-wrap text-base leading-relaxed">
                   {index === 0 ? result.card1Interpretation : index === 1 ? result.card2Interpretation : result.card3Interpretation}
                 </p>
@@ -187,10 +188,11 @@ export default function TarotResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">로딩 중...</p>
       </div>
     }>
       <TarotResultContent />
     </Suspense>
   );
 }
+

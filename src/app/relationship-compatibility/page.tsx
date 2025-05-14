@@ -294,7 +294,7 @@ export default function RelationshipCompatibilityPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Heart className="text-primary h-6 w-6" /> 천생연분 궁합
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             두 분의 이름과 생년월일시 정보를 입력하여 서로의 궁합을 알아보세요.
           </CardDescription>
         </CardHeader>
@@ -341,3 +341,4 @@ export default function RelationshipCompatibilityPage() {
     </div>
   );
 }
+

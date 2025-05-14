@@ -160,7 +160,7 @@ export default function NameGenerationPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Baby className="text-primary h-6 w-6" /> 작명 도우미
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             부모님과 자녀 정보를 입력하시면 아이를 위한 아름답고 의미 있는 이름 다섯 개를 추천해 드립니다.
           </CardDescription>
         </CardHeader>
@@ -478,3 +478,4 @@ export default function NameGenerationPage() {
     </div>
   );
 }
+

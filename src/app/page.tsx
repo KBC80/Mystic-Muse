@@ -24,7 +24,7 @@ export default function HomePage() {
         <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">
           Mystic Muse에 오신 것을 환영합니다
         </h1>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-lg text-muted-foreground break-words">
           보이는 것과 보이지 않는 것을 이해하기 위한 당신의 안내자. 운세, 이름, 꿈, 그리고 행운의 번호까지 탐험하세요.
         </p>
       </header>
@@ -40,7 +40,7 @@ export default function HomePage() {
                 <CardTitle className="text-xl text-primary group-hover:text-primary/90">{feature.title}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow pt-2">
-                <CardDescription>{feature.description}</CardDescription>
+                <CardDescription className="break-words">{feature.description}</CardDescription>
               </CardContent>
             </Card>
           </Link>
@@ -49,7 +49,7 @@ export default function HomePage() {
 
       <section className="text-center py-10 bg-card rounded-lg shadow-md">
         <h2 className="text-3xl font-semibold text-primary mb-4">여정을 시작할 준비가 되셨나요?</h2>
-        <p className="text-md text-muted-foreground mb-6 max-w-2xl mx-auto">
+        <p className="text-md text-muted-foreground mb-6 max-w-2xl mx-auto break-words">
           Mystic Muse는 자기 발견과 예지력을 위한 안식처를 제공합니다. 각 도구는 명확성과 영감을 제공하도록 설계되었습니다. 지금 바로 탐색을 시작하고 내면의 지혜를 발견하세요.
         </p>
         <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
@@ -59,6 +59,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 

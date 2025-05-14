@@ -35,7 +35,7 @@ export default function LottoRecommendationLandingPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Ticket className="text-primary h-6 w-6" /> 로또 번호 추천 및 정보
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             어떤 방식으로 로또 번호를 추천받거나 정보를 조회하고 싶으신가요? 아래에서 선택해주세요.
           </CardDescription>
         </CardHeader>
@@ -50,7 +50,7 @@ export default function LottoRecommendationLandingPage() {
                   <CardTitle className="text-xl text-primary group-hover:text-primary/90">{type.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow pt-2">
-                  <CardDescription>{type.description}</CardDescription>
+                  <CardDescription className="break-words">{type.description}</CardDescription>
                 </CardContent>
               </Card>
             </Link>
@@ -75,3 +75,4 @@ export default function LottoRecommendationLandingPage() {
     </div>
   );
 }
+

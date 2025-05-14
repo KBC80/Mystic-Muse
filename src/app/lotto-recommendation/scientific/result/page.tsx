@@ -120,7 +120,7 @@ function ScientificLottoResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">
+        <p className="mt-4 text-lg text-muted-foreground break-words">
           {isLoading ? "AI가 데이터를 분석하여 번호를 생성 중입니다..." : "최신 당첨 정보를 불러오는 중..."}
         </p>
       </div>
@@ -133,7 +133,7 @@ function ScientificLottoResultContent() {
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTriangle className="h-5 w-5" />
           <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/lotto-recommendation/scientific')} variant="outline" className="mt-4">
           새 추천 시도
@@ -145,7 +145,7 @@ function ScientificLottoResultContent() {
   if (!llmResult) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
         <Button onClick={() => router.push('/lotto-recommendation/scientific')} variant="outline" className="mt-4">
           새 추천 시도
         </Button>
@@ -160,14 +160,14 @@ function ScientificLottoResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8 text-primary" /> AI 분석 기반 추천 번호
           </CardTitle>
-           <CardDescription className="text-md pt-1 flex items-start gap-1">
+           <CardDescription className="text-md pt-1 flex items-start gap-1 break-words">
               <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
               <span>
                 AI가 과거 데이터 통계 (최근 {analysisDataForUI?.analyzedDrawsCount || "지정된"}회차 기준)와 입력하신 조건을 종합적으로 고려하여 추천한 번호 조합입니다.
               </span>
             </CardDescription>
             {(includeNumbersStr !== "없음" || excludeNumbersStr !== "없음") && (
-                <div className="mt-2 text-sm text-muted-foreground">
+                <div className="mt-2 text-sm text-muted-foreground break-words">
                     {includeNumbersStr !== "없음" && <span>포함된 숫자: {includeNumbersStr}</span>}
                     {includeNumbersStr !== "없음" && excludeNumbersStr !== "없음" && <span> / </span>}
                     {excludeNumbersStr !== "없음" && <span>제외된 숫자: {excludeNumbersStr}</span>}
@@ -179,7 +179,7 @@ function ScientificLottoResultContent() {
             <Alert variant="destructive" className="my-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>최신 정보 로딩 오류</AlertTitle>
-              <AlertDescription>{latestDrawError}</AlertDescription>
+              <AlertDescription className="break-words">{latestDrawError}</AlertDescription>
             </Alert>
           )}
           {latestDraw && !isLoadingLatestDraw && !latestDrawError && (
@@ -208,58 +208,60 @@ function ScientificLottoResultContent() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 space-y-3">
-                  <p className="text-muted-foreground">평균 당첨 번호 합계: <strong>{analysisDataForUI.averageSum.toFixed(1)}</strong></p>
-                  <p className="text-muted-foreground">가장 흔한 짝수:홀수 비율: <strong>{analysisDataForUI.averageEvenOddRatio}</strong></p>
+                  <p className="text-muted-foreground break-words">평균 당첨 번호 합계: <strong>{analysisDataForUI.averageSum.toFixed(1)}</strong></p>
+                  <p className="text-muted-foreground break-words">가장 흔한 짝수:홀수 비율: <strong>{analysisDataForUI.averageEvenOddRatio}</strong></p>
                   
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[150px] text-foreground">구분</TableHead>
-                        {Array.from({ length: Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length, 1) }).map((_, index) => (
-                          <TableHead key={`header-num-${index}`} className="text-center text-muted-foreground">번호 {index + 1}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {analysisDataForUI.frequentNumbers.length > 0 && (
-                        <>
-                          <TableRow>
-                            <TableCell rowSpan={2} className="font-semibold align-middle text-foreground">자주 당첨된 번호</TableCell>
-                            {analysisDataForUI.frequentNumbers.map(item => (
-                              <TableCell key={`freq-num-${item.num}`} className="text-center font-medium text-foreground">{item.num}</TableCell>
-                            ))}
-                            {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-pad-${i}`} />)}
-                          </TableRow>
-                          <TableRow>
-                            {analysisDataForUI.frequentNumbers.map(item => (
-                              <TableCell key={`freq-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
-                            ))}
-                            {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-count-pad-${i}`} />)}
-                          </TableRow>
-                        </>
-                      )}
-                      {analysisDataForUI.leastFrequentNumbers.length > 0 && (
-                         <>
-                          <TableRow>
-                            <TableCell rowSpan={2} className="font-semibold align-middle text-foreground">가장 적게 당첨된 번호</TableCell>
-                            {analysisDataForUI.leastFrequentNumbers.map(item => (
-                              <TableCell key={`least-num-${item.num}`} className="text-center font-medium text-foreground">{item.num}</TableCell>
-                            ))}
-                             {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-pad-${i}`} />)}
-                          </TableRow>
-                          <TableRow>
-                            {analysisDataForUI.leastFrequentNumbers.map(item => (
-                              <TableCell key={`least-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
-                            ))}
-                            {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-count-pad-${i}`} />)}
-                          </TableRow>
-                        </>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[150px] whitespace-nowrap">구분</TableHead>
+                          {Array.from({ length: Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length, 1) }).map((_, index) => (
+                            <TableHead key={`header-num-${index}`} className="text-center whitespace-nowrap">번호 {index + 1}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {analysisDataForUI.frequentNumbers.length > 0 && (
+                          <>
+                            <TableRow>
+                              <TableCell rowSpan={2} className="font-semibold align-middle text-foreground whitespace-nowrap">자주 당첨된 번호</TableCell>
+                              {analysisDataForUI.frequentNumbers.map(item => (
+                                <TableCell key={`freq-num-${item.num}`} className="text-center font-medium text-foreground whitespace-nowrap">{item.num}</TableCell>
+                              ))}
+                              {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-pad-${i}`} />)}
+                            </TableRow>
+                            <TableRow>
+                              {analysisDataForUI.frequentNumbers.map(item => (
+                                <TableCell key={`freq-count-${item.num}`} className="text-center text-xs text-muted-foreground whitespace-nowrap">({item.count}회)</TableCell>
+                              ))}
+                              {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-count-pad-${i}`} />)}
+                            </TableRow>
+                          </>
+                        )}
+                        {analysisDataForUI.leastFrequentNumbers.length > 0 && (
+                           <>
+                            <TableRow>
+                              <TableCell rowSpan={2} className="font-semibold align-middle text-foreground whitespace-nowrap">가장 적게 당첨된 번호</TableCell>
+                              {analysisDataForUI.leastFrequentNumbers.map(item => (
+                                <TableCell key={`least-num-${item.num}`} className="text-center font-medium text-foreground whitespace-nowrap">{item.num}</TableCell>
+                              ))}
+                               {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-pad-${i}`} />)}
+                            </TableRow>
+                            <TableRow>
+                              {analysisDataForUI.leastFrequentNumbers.map(item => (
+                                <TableCell key={`least-count-${item.num}`} className="text-center text-xs text-muted-foreground whitespace-nowrap">({item.count}회)</TableCell>
+                              ))}
+                              {Array.from({ length: Math.max(0, Math.max(analysisDataForUI.frequentNumbers.length, analysisDataForUI.leastFrequentNumbers.length) - analysisDataForUI.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-count-pad-${i}`} />)}
+                            </TableRow>
+                          </>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
 
                   {analysisDataForUI.notAppearedNumbers && analysisDataForUI.notAppearedNumbers.length > 0 && (
-                    <p className="text-sm text-muted-foreground">최근 {analysisDataForUI.analyzedDrawsCount}회 동안 미출현한 주요 숫자: <strong>{analysisDataForUI.notAppearedNumbers.join(', ')}</strong></p>
+                    <p className="text-sm text-muted-foreground break-words">최근 {analysisDataForUI.analyzedDrawsCount}회 동안 미출현한 주요 숫자: <strong>{analysisDataForUI.notAppearedNumbers.join(', ')}</strong></p>
                   )}
                 </CardContent>
             </Card>
@@ -279,7 +281,7 @@ function ScientificLottoResultContent() {
                     <LottoBall key={`${index}-${num}`} number={num} />
                   ))}
                 </div>
-                <p className="text-base text-muted-foreground whitespace-pre-wrap">
+                <p className="text-base text-muted-foreground whitespace-pre-wrap break-words">
                     <strong className="text-secondary-foreground">AI 추천 근거:</strong> {set.reasoning}
                 </p>
               </CardContent>
@@ -326,11 +328,12 @@ export default function ScientificLottoResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <ScientificLottoResultContent />
     </Suspense>
   );
 }
+
 

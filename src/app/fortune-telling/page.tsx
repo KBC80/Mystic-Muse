@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -46,7 +47,7 @@ export default function FortuneTellingLandingPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Sparkles className="text-primary h-6 w-6" /> 재미로 보는 운세
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             다양한 운세 서비스를 통해 당신의 오늘, 올해, 별자리, 타로, 룬 문자의 기운을 확인해보세요.
           </CardDescription>
         </CardHeader>
@@ -61,7 +62,7 @@ export default function FortuneTellingLandingPage() {
                   <CardTitle className="text-xl text-primary group-hover:text-primary/90">{type.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow pt-2">
-                  <CardDescription>{type.description}</CardDescription>
+                  <CardDescription className="break-words">{type.description}</CardDescription>
                 </CardContent>
               </Card>
             </Link>
@@ -80,3 +81,4 @@ export default function FortuneTellingLandingPage() {
     </div>
   );
 }
+

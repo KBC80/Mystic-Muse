@@ -89,7 +89,7 @@ export default function LottoHistoryPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Archive className="text-primary h-6 w-6" /> 역대 당첨번호 조회
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             과거 로또 당첨 번호, 1등 당첨자 수 및 1인당 당첨금을 회차별로 조회합니다.
           </CardDescription>
         </CardHeader>
@@ -98,7 +98,7 @@ export default function LottoHistoryPage() {
       {isLoadingRecent && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">최근 당첨 정보 로딩 중...</p>
+          <p className="ml-2 text-muted-foreground break-words">최근 당첨 정보 로딩 중...</p>
         </div>
       )}
 
@@ -106,7 +106,7 @@ export default function LottoHistoryPage() {
         <Alert variant="destructive" className="my-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>오류 발생</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
       )}
 
@@ -116,39 +116,41 @@ export default function LottoHistoryPage() {
             <CardTitle className="text-xl">최근 5회차 당첨 정보</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>회차</TableHead>
-                  <TableHead>추첨일</TableHead>
-                  <TableHead>당첨번호 + 보너스</TableHead>
-                  <TableHead className="text-center">1등 당첨자/금액</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentDraws.map((draw) => (
-                  <TableRow key={draw.drwNo}>
-                    <TableCell>{draw.drwNo}회</TableCell>
-                    <TableCell>{draw.drwNoDate}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1 items-center">
-                        {draw.numbers.map(num => <LottoBall key={`recent-${draw.drwNo}-${num}`} number={num} size="small" />)}
-                        <span className="mx-1 text-muted-foreground">+</span>
-                        <LottoBall number={draw.bnusNo} size="small" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                            <User className="h-4 w-4 text-muted-foreground"/> {draw.firstPrzwnerCo}명
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            {draw.firstPrzwnerCo > 0 ? `(각 ${formatCurrency(draw.firstWinamnt)})` : '(당첨자 없음)'}
-                        </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>회차</TableHead>
+                    <TableHead>추첨일</TableHead>
+                    <TableHead>당첨번호 + 보너스</TableHead>
+                    <TableHead className="text-center">1등 당첨자/금액</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentDraws.map((draw) => (
+                    <TableRow key={draw.drwNo}>
+                      <TableCell>{draw.drwNo}회</TableCell>
+                      <TableCell>{draw.drwNoDate}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 items-center">
+                          {draw.numbers.map(num => <LottoBall key={`recent-${draw.drwNo}-${num}`} number={num} size="small" />)}
+                          <span className="mx-1 text-muted-foreground">+</span>
+                          <LottoBall number={draw.bnusNo} size="small" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                              <User className="h-4 w-4 text-muted-foreground"/> {draw.firstPrzwnerCo}명
+                          </div>
+                          <div className="text-xs text-muted-foreground break-words">
+                              {draw.firstPrzwnerCo > 0 ? `(각 ${formatCurrency(draw.firstWinamnt)})` : '(당첨자 없음)'}
+                          </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -156,7 +158,7 @@ export default function LottoHistoryPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl">특정 회차 조회</CardTitle>
-          {latestDrawNo && <CardDescription>조회 가능 범위: 1회 ~ {latestDrawNo}회</CardDescription>}
+          {latestDrawNo && <CardDescription className="break-words">조회 가능 범위: 1회 ~ {latestDrawNo}회</CardDescription>}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleFetchDraw} className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
@@ -181,7 +183,7 @@ export default function LottoHistoryPage() {
           {isLoadingSelected && (
             <div className="flex justify-center items-center p-6 mt-4">
               <LoadingSpinner size={28} />
-              <p className="ml-2 text-muted-foreground">선택한 회차 정보를 불러오는 중...</p>
+              <p className="ml-2 text-muted-foreground break-words">선택한 회차 정보를 불러오는 중...</p>
             </div>
           )}
 
@@ -189,7 +191,7 @@ export default function LottoHistoryPage() {
              <Alert variant="destructive" className="mt-4">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>조회 오류</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="break-words">{error}</AlertDescription>
             </Alert>
           )}
 
@@ -197,7 +199,7 @@ export default function LottoHistoryPage() {
             <Card className="mt-6 bg-secondary/30 shadow">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">{selectedDraw.drwNo}회 당첨 정보</CardTitle>
-                <CardDescription>추첨일: {selectedDraw.drwNoDate}</CardDescription>
+                <CardDescription className="break-words">추첨일: {selectedDraw.drwNoDate}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -216,7 +218,7 @@ export default function LottoHistoryPage() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-md text-foreground">1등 당첨금 (1인당)</h4>
-                  <p className="text-muted-foreground flex items-center gap-1">
+                  <p className="text-muted-foreground flex items-center gap-1 break-words">
                     <Gift className="h-5 w-5 text-yellow-500"/> 
                     {selectedDraw.firstPrzwnerCo > 0 ? formatCurrency(selectedDraw.firstWinamnt) : '당첨자 없음'}
                   </p>
@@ -244,3 +246,4 @@ export default function LottoHistoryPage() {
     </div>
   );
 }
+

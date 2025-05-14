@@ -185,7 +185,7 @@ export default function SajuLottoRecommendationPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Ticket className="text-primary h-6 w-6" /> 사주 로또 번호 추천
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             당신의 사주 정보를 입력하시면 특별한 행운 번호를 추천해 드립니다.
           </CardDescription>
         </CardHeader>
@@ -193,14 +193,14 @@ export default function SajuLottoRecommendationPage() {
           {isLoadingLatestDraw && (
             <div className="flex items-center justify-center my-4 p-4 border rounded-md bg-secondary/10">
               <LoadingSpinner size={24} />
-              <p className="ml-2 text-sm text-muted-foreground">최신 당첨 정보 로딩 중...</p>
+              <p className="ml-2 text-sm text-muted-foreground break-words">최신 당첨 정보 로딩 중...</p>
             </div>
           )}
           {latestDrawError && !isLoadingLatestDraw && (
             <Alert variant="destructive" className="my-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>최신 정보 로딩 오류</AlertTitle>
-              <AlertDescription>{latestDrawError}</AlertDescription>
+              <AlertDescription className="break-words">{latestDrawError}</AlertDescription>
             </Alert>
           )}
           {latestDraw && !isLoadingLatestDraw && !latestDrawError && (
@@ -374,3 +374,4 @@ export default function SajuLottoRecommendationPage() {
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -59,7 +60,7 @@ function TodaysFortuneResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">별의 기운을 읽고 있습니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">별의 기운을 읽고 있습니다...</p>
       </div>
     );
   }
@@ -69,7 +70,7 @@ function TodaysFortuneResultContent() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/fortune-telling/today')} variant="outline" className="mt-4">
           다른 정보로 운세 보기
@@ -81,7 +82,7 @@ function TodaysFortuneResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
          <Button onClick={() => router.push('/fortune-telling/today')} variant="outline" className="mt-4">
           다른 정보로 운세 보기
         </Button>
@@ -96,7 +97,7 @@ function TodaysFortuneResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <CalendarHeart className="h-8 w-8 text-primary" /> 오늘의 운세 ({inputName}님)
           </CardTitle>
-          <CardDescription className="text-md pt-1 flex items-center gap-1">
+          <CardDescription className="text-md pt-1 flex items-center gap-1 break-words">
             <Sparkles className="h-4 w-4 text-yellow-500"/> 당신의 {result.gapjaYearName} ({result.zodiacColor} {result.zodiacAnimal})
           </CardDescription>
         </CardHeader>
@@ -186,10 +187,11 @@ export default function TodaysFortuneResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <TodaysFortuneResultContent />
     </Suspense>
   );
 }
+

@@ -150,7 +150,7 @@ export default function NameInterpretationPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <PenTool className="text-primary h-6 w-6" /> 이름 풀이
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             생년월일시, 이름, 성별 정보를 입력하여 이름에 담긴 깊은 의미와 인생 경로를 알아보세요.
           </CardDescription>
         </CardHeader>
@@ -327,3 +327,4 @@ export default function NameInterpretationPage() {
     </div>
   );
 }
+

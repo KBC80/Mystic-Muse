@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -65,7 +66,7 @@ function HoroscopeResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">별들의 메시지를 해독 중입니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">별들의 메시지를 해독 중입니다...</p>
       </div>
     );
   }
@@ -75,7 +76,7 @@ function HoroscopeResultContent() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/fortune-telling/horoscope')} variant="outline" className="mt-4">
           다른 정보로 운세 보기
@@ -87,7 +88,7 @@ function HoroscopeResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
          <Button onClick={() => router.push('/fortune-telling/horoscope')} variant="outline" className="mt-4">
           다른 정보로 운세 보기
         </Button>
@@ -102,7 +103,7 @@ function HoroscopeResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <StarIcon className="h-8 w-8 text-primary" /> {result.zodiacSign} 주간 운세
           </CardTitle>
-          <CardDescription className="text-md pt-1 flex items-center gap-1">
+          <CardDescription className="text-md pt-1 flex items-center gap-1 break-words">
            <Info className="h-4 w-4 text-muted-foreground shrink-0"/>
             {inputName}님 ({inputBirthDate}, {inputCalendarType === 'solar' ? '양력' : '음력'}, {inputGender})의 이번 주 별자리 메시지입니다.
           </CardDescription>
@@ -144,13 +145,13 @@ function HoroscopeResultContent() {
               <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
                 <ShoppingBag className="h-6 w-6 text-purple-500"/> 행운 아이템
               </h3>
-              <p className="text-muted-foreground text-lg">{result.luckyItem}</p>
+              <p className="text-muted-foreground text-lg break-words">{result.luckyItem}</p>
             </div>
             <div>
               <h3 className="text-2xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
                 <CalendarCheck className="h-6 w-6 text-teal-500"/> 행운의 요일
               </h3>
-              <p className="text-muted-foreground text-lg">{result.luckyDayOfWeek}</p>
+              <p className="text-muted-foreground text-lg break-words">{result.luckyDayOfWeek}</p>
             </div>
           </div>
 
@@ -202,10 +203,11 @@ export default function HoroscopeResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <HoroscopeResultContent />
     </Suspense>
   );
 }
+

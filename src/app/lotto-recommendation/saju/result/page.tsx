@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -98,7 +99,7 @@ function SajuLottoResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">
+        <p className="mt-4 text-lg text-muted-foreground break-words">
           {isLoading ? "사주를 분석하여 번호를 생성 중입니다..." : "최신 당첨 정보를 불러오는 중..."}
         </p>
       </div>
@@ -110,7 +111,7 @@ function SajuLottoResultContent() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/lotto-recommendation/saju')} variant="outline" className="mt-4">
           새 추천 시도
@@ -122,7 +123,7 @@ function SajuLottoResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
          <Button onClick={() => router.push('/lotto-recommendation/saju')} variant="outline" className="mt-4">
           새 추천 시도
         </Button>
@@ -137,7 +138,7 @@ function SajuLottoResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8 text-primary" /> {inputName}님을 위한 사주 로또 번호
           </CardTitle>
-          <CardDescription className="text-md pt-1">
+          <CardDescription className="text-md pt-1 break-words">
             AI가 당신의 사주를 분석하여 추천하는 특별한 행운의 번호 조합입니다.
           </CardDescription>
         </CardHeader>
@@ -146,7 +147,7 @@ function SajuLottoResultContent() {
             <Alert variant="destructive" className="my-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>최신 정보 로딩 오류</AlertTitle>
-              <AlertDescription>{latestDrawError}</AlertDescription>
+              <AlertDescription className="break-words">{latestDrawError}</AlertDescription>
             </Alert>
           )}
           {latestDraw && !isLoadingLatestDraw && !latestDrawError && (
@@ -228,10 +229,11 @@ export default function SajuLottoResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <SajuLottoResultContent />
     </Suspense>
   );
 }
+

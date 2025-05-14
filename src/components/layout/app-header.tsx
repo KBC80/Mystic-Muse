@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from 'next/navigation';
@@ -31,7 +32,7 @@ export function AppHeader() {
           <div className="md:hidden">
              {/* SidebarTrigger 자리 표시자 */}
           </div>
-          <h1 className="text-lg font-semibold md:text-xl">로딩 중...</h1>
+          <h1 className="text-lg font-semibold md:text-xl break-words">로딩 중...</h1>
         </div>
          {/* ThemeToggle 자리 표시자 */}
       </header>
@@ -44,7 +45,7 @@ export function AppHeader() {
         <div className="md:hidden">
           <SidebarTrigger />
         </div>
-        <h1 className="text-lg font-semibold md:text-xl">{pageTitle}</h1>
+        <h1 className="text-lg font-semibold md:text-xl break-words">{pageTitle}</h1>
       </div>
       <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="테마 전환">
         {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -52,3 +53,4 @@ export function AppHeader() {
     </header>
   );
 }
+

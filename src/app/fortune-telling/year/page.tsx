@@ -142,7 +142,7 @@ export default function YearlyFortunePage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <TrendingUp className="text-primary h-6 w-6" /> 올해 운세
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             올 한 해의 종합적인 운세를 알아보세요. 아래에 정보를 입력해주세요.
           </CardDescription>
         </CardHeader>
@@ -324,3 +324,4 @@ export default function YearlyFortunePage() {
     </div>
   );
 }
+

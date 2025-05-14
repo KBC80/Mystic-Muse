@@ -56,7 +56,7 @@ export default function DreamInterpretationPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <CloudMoon className="text-primary h-6 w-6" /> 꿈 해몽
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             당신의 꿈을 설명해주시면 숨겨진 의미와 상징을 찾는 데 도움을 드립니다.
           </CardDescription>
         </CardHeader>
@@ -76,7 +76,7 @@ export default function DreamInterpretationPage() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="break-words">
                       자세한 내용을 제공할수록 더 나은 해석을 받을 수 있습니다.
                     </FormDescription>
                     <FormMessage />
@@ -104,3 +104,4 @@ export default function DreamInterpretationPage() {
     </div>
   );
 }
+

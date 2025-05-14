@@ -65,11 +65,11 @@ const RuneDisplay = ({ rune, isReversed, reveal = false, size = 'small' }: { run
       <div className={cn(symbolSizeClass, "font-bold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)]", isReversed && "transform rotate-180")}>
         {rune.symbol}
       </div>
-      <p className={cn(nameSizeClass, "font-medium text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_70%)] mt-1")}>
+      <p className={cn(nameSizeClass, "font-medium text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_70%)] mt-1 break-words")}>
         {rune.koreanName}
       </p>
       {isReversed !== undefined && (
-        <p className={cn(directionSizeClass, "text-gray-200 [text-shadow:_0_1px_1px_rgb(0_0_0_/_70%)]")}>
+        <p className={cn(directionSizeClass, "text-gray-200 [text-shadow:_0_1px_1px_rgb(0_0_0_/_70%)] break-words")}>
           {isReversed ? "역방향" : "정방향"}
         </p>
       )}
@@ -169,7 +169,7 @@ export default function RuneReadingPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <WandSparkles className="text-primary h-6 w-6" /> 룬 문자 점
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             고대 룬 문자의 지혜를 통해 현재 상황에 대한 통찰과 조언을 얻어보세요.
           </CardDescription>
         </CardHeader>
@@ -221,7 +221,7 @@ export default function RuneReadingPage() {
           {(step === 'shuffling' || (step === 'interpreting' && isLoading)) && (
             <div className="flex flex-col items-center justify-center py-10 min-h-[200px] space-y-3">
               <LoadingSpinner size={32} />
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground break-words">
                 {step === 'shuffling' ? "룬을 섞고 있습니다..." : "룬의 메시지를 해석 중입니다..."}
               </p>
             </div>
@@ -230,8 +230,8 @@ export default function RuneReadingPage() {
           {step === 'drawing' && (
             <div className="space-y-6">
               <div className="text-center">
-                <h3 className="text-lg font-semibold">룬을 선택하세요 ({drawnRunesWithStatus.length}/{numToDraw})</h3>
-                <p className="text-sm text-muted-foreground">마음이 이끄는 대로 {numToDraw}개의 룬을 선택해주세요.</p>
+                <h3 className="text-lg font-semibold break-words">룬을 선택하세요 ({drawnRunesWithStatus.length}/{numToDraw})</h3>
+                <p className="text-sm text-muted-foreground break-words">마음이 이끄는 대로 {numToDraw}개의 룬을 선택해주세요.</p>
               </div>
               <div className="space-y-2">
                 {[firstRowRunes, secondRowRunes].map((rowRunes, rowIndex) => (
@@ -260,7 +260,7 @@ export default function RuneReadingPage() {
 
               {drawnRunesWithStatus.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="text-md font-semibold text-center mb-2">선택한 룬:</h4>
+                  <h4 className="text-md font-semibold text-center mb-2 break-words">선택한 룬:</h4>
                   <div className="flex flex-wrap justify-center gap-2 p-2 border rounded-md bg-card">
                     {drawnRunesWithStatus.map(({ rune, isReversed }) => (
                       <RuneDisplay key={`drawn-${rune.id}`} rune={rune} isReversed={isReversed} reveal={true} size="small"/>
@@ -279,7 +279,7 @@ export default function RuneReadingPage() {
           {error && (step === 'drawing' || step === 'initial') && (
              <Alert variant="destructive" className="mt-4">
                <AlertTitle>오류</AlertTitle>
-               <AlertDescription>{error}</AlertDescription>
+               <AlertDescription className="break-words">{error}</AlertDescription>
              </Alert>
            )}
           
@@ -290,11 +290,11 @@ export default function RuneReadingPage() {
                   <CardTitle className="text-2xl text-primary flex items-center gap-2">
                     <Sparkles className="h-6 w-6"/> 룬 해석 결과
                   </CardTitle>
-                  {form.getValues("question") && <CardDescription>질문: {form.getValues("question")}</CardDescription>}
+                  {form.getValues("question") && <CardDescription className="break-words">질문: {form.getValues("question")}</CardDescription>}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-secondary-foreground mb-3">뽑힌 룬:</h3>
+                    <h3 className="text-xl font-semibold text-secondary-foreground mb-3 break-words">뽑힌 룬:</h3>
                     <div className="flex flex-wrap justify-center gap-4 p-2 border rounded-md bg-secondary/20">
                         {interpretation.runeInterpretations.map(interp => {
                              const runeDetail = elderFutharkRunes.find(r => r.name === interp.name);
@@ -305,22 +305,22 @@ export default function RuneReadingPage() {
 
                   {interpretation.runeInterpretations.map((interp, index) => (
                     <div key={index} className="pb-3 border-b last:border-b-0">
-                      <h4 className="text-lg font-semibold text-secondary-foreground flex items-center gap-1">
+                      <h4 className="text-lg font-semibold text-secondary-foreground flex items-center gap-1 break-words">
                         {interp.koreanName} ({interp.symbol}) - {interp.isReversed ? "역방향" : "정방향"}
                       </h4>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{interp.interpretation}</p>
+                      <p className="text-muted-foreground whitespace-pre-wrap break-words">{interp.interpretation}</p>
                     </div>
                   ))}
                   
                   <div className="pt-4">
-                    <h3 className="text-xl font-semibold text-secondary-foreground mb-2 flex items-center gap-2">
+                    <h3 className="text-xl font-semibold text-secondary-foreground mb-2 flex items-center gap-1 break-words">
                         <HelpCircle className="h-5 w-5"/> 종합 해석 및 조언
                     </h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{interpretation.overallInterpretation}</p>
+                    <p className="text-muted-foreground whitespace-pre-wrap break-words">{interpretation.overallInterpretation}</p>
                   </div>
 
                   <div className="pt-4">
-                    <h3 className="text-xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2">
+                    <h3 className="text-xl font-semibold flex items-center gap-2 text-secondary-foreground mb-2 break-words">
                         <HandCoins className="h-5 w-5"/> 행운의 숫자
                     </h3>
                      <div className="flex space-x-3">
@@ -349,7 +349,7 @@ export default function RuneReadingPage() {
                 <CardTitle className="text-xl flex items-center gap-2">
                     <HelpCircle className="h-5 w-5 text-primary" /> 룬 문자 소개
                 </CardTitle>
-                <CardDescription>각 룬 문자의 기본적인 의미를 알아보세요.</CardDescription>
+                <CardDescription className="break-words">각 룬 문자의 기본적인 의미를 알아보세요.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Accordion type="single" collapsible className="w-full">
@@ -358,10 +358,10 @@ export default function RuneReadingPage() {
                             <AccordionTrigger className="text-base hover:no-underline">
                                 <div className="flex items-center gap-3">
                                     <span className="text-2xl font-bold text-primary w-8 text-center">{rune.symbol}</span>
-                                    <span>{rune.koreanName} ({rune.name})</span>
+                                    <span className="break-words">{rune.koreanName} ({rune.name})</span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="text-sm text-muted-foreground pl-11">
+                            <AccordionContent className="text-sm text-muted-foreground pl-11 break-words">
                                 {rune.description}
                                 <br/><strong>정방향 키워드:</strong> {rune.keywordsUpright}
                                 {rune.keywordsReversed && rune.id !== "gebo" && rune.id !== "hagalaz" && rune.id !== "isa" && rune.id !== "jera" && rune.id !== "sowilo" && rune.id !== "ingwaz" && rune.id !== "dagaz" &&
@@ -392,4 +392,5 @@ export default function RuneReadingPage() {
     </div>
   );
 }
+
 

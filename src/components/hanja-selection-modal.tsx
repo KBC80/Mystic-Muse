@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
@@ -141,8 +142,8 @@ export function HanjaSelectionModal({
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>한자 변환: {getTargetFieldNameDisplay()} </DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="break-words">한자 변환: {getTargetFieldNameDisplay()} </DialogTitle>
+          <DialogDescription className="break-words">
             "{currentSyllable}" ({currentSyllableIndex + 1}/{nameSyllables.length}) 글자에 대한 한자를 선택하거나 한글로 유지하세요.
           </DialogDescription>
         </DialogHeader>
@@ -150,7 +151,7 @@ export function HanjaSelectionModal({
         <div className="flex-grow overflow-y-auto pr-1"> {/* Changed to overflow-y-auto for vertical scroll only */}
           <div className="py-2">
             {isLoadingOptions ? (
-              <p className="text-center py-4 text-muted-foreground">옵션 로딩 중...</p>
+              <p className="text-center py-4 text-muted-foreground break-words">옵션 로딩 중...</p>
             ) : paginatedHanjaOptions.length > 0 ? (
               <div className="grid grid-cols-4 gap-2">
                 {paginatedHanjaOptions.map((opt, optIndex) => {
@@ -165,13 +166,13 @@ export function HanjaSelectionModal({
                     >
                       <span className="text-2xl font-semibold">{opt.hanja}</span>
                       {/* Ensure descriptivePart or a fallback is shown */}
-                      <span className="text-[10px] text-muted-foreground mt-0.5 truncate w-full">{descriptivePart || opt.specificReading}</span>
+                      <span className="text-[10px] text-muted-foreground mt-0.5 truncate w-full break-words">{descriptivePart || opt.specificReading}</span>
                     </Button>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-center py-4 text-muted-foreground">"{currentSyllable}"에 대한 추천 한자가 없습니다.</p>
+              <p className="text-center py-4 text-muted-foreground break-words">"{currentSyllable}"에 대한 추천 한자가 없습니다.</p>
             )}
           </div>
         </div>
@@ -204,7 +205,7 @@ export function HanjaSelectionModal({
           <Button 
             variant={selectedHanjaPerSyllable[currentSyllableIndex] === null && currentSyllableIndex < selectedHanjaPerSyllable.length && selectedHanjaPerSyllable[currentSyllableIndex] !== undefined ? "secondary" : "outline"} 
             onClick={handleKeepKorean}
-            className="w-full"
+            className="w-full break-words"
           >
             "{currentSyllable}" 한글로 유지
           </Button>
@@ -226,3 +227,4 @@ export function HanjaSelectionModal({
     </Dialog>
   );
 }
+

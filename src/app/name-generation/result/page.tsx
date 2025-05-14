@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -68,7 +69,7 @@ function NameGenerationResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">완벽한 이름을 만들고 있습니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">완벽한 이름을 만들고 있습니다...</p>
       </div>
     );
   }
@@ -78,7 +79,7 @@ function NameGenerationResultContent() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/name-generation')} variant="outline" className="mt-4">
           새 작명 시도
@@ -90,7 +91,7 @@ function NameGenerationResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
          <Button onClick={() => router.push('/name-generation')} variant="outline" className="mt-4">
           새 작명 시도
         </Button>
@@ -105,7 +106,7 @@ function NameGenerationResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <Sparkles className="h-8 w-8 text-primary" /> {childLastName}씨 {childGender}를 위한 추천 이름
           </CardTitle>
-          <CardDescription className="text-md pt-1">
+          <CardDescription className="text-md pt-1 break-words">
             부모님의 사주와 자녀의 성별을 고려하여 AI가 추천하는 길운의 이름들입니다.
           </CardDescription>
         </CardHeader>
@@ -114,8 +115,8 @@ function NameGenerationResultContent() {
             <Card key={index} className="p-6 bg-secondary/30 shadow-md">
               <h3 className="text-2xl font-bold text-primary mb-2">{name.name} {name.hanja && <span className="text-xl text-muted-foreground">({name.hanja})</span>}</h3>
               <div className="space-y-2 text-base">
-                <p className="text-muted-foreground"><strong className="text-secondary-foreground">이름 의미 및 풀이:</strong> {name.meaning}</p>
-                <p className="text-muted-foreground"><strong className="text-secondary-foreground">음양오행 및 사주 조화:</strong> {name.yinYangFiveElements}</p>
+                <p className="text-muted-foreground whitespace-pre-wrap"><strong className="text-secondary-foreground">이름 의미 및 풀이:</strong> {name.meaning}</p>
+                <p className="text-muted-foreground whitespace-pre-wrap"><strong className="text-secondary-foreground">음양오행 및 사주 조화:</strong> {name.yinYangFiveElements}</p>
               </div>
             </Card>
           ))}
@@ -149,10 +150,11 @@ export default function NameGenerationResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <NameGenerationResultContent />
     </Suspense>
   );
 }
+

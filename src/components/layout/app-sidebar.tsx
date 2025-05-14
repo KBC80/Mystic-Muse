@@ -28,7 +28,7 @@ export function AppSidebar() {
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
             <WandSparkles className="h-6 w-6" />
           </Button>
-          <h1 className="text-xl font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
+          <h1 className="text-xl font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden break-words">
             Mystic Muse
           </h1>
         </Link>
@@ -47,7 +47,7 @@ export function AppSidebar() {
                 >
                   <a>
                     <item.icon className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                    <span className="group-data-[collapsible=icon]:hidden break-words">{item.title}</span>
                   </a>
                 </SidebarMenuButton>
               </Link>
@@ -56,11 +56,12 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground break-words">
           &copy; {new Date().getFullYear()} Mystic Muse
         </p>
       </SidebarFooter>
     </Sidebar>
   );
 }
+
 

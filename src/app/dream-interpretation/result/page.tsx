@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
@@ -73,7 +74,7 @@ function DreamInterpretationResultContent() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">당신의 꿈의 신비를 풀고 있습니다...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">당신의 꿈의 신비를 풀고 있습니다...</p>
       </div>
     );
   }
@@ -83,7 +84,7 @@ function DreamInterpretationResultContent() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
         <Alert variant="destructive" className="w-full max-w-md">
           <AlertTitle>해석 오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
         <Button onClick={() => router.push('/dream-interpretation')} variant="outline" className="mt-4">
           다른 꿈 해석하기
@@ -95,7 +96,7 @@ function DreamInterpretationResultContent() {
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <p className="text-muted-foreground">결과를 표시할 수 없습니다.</p>
+        <p className="text-muted-foreground break-words">결과를 표시할 수 없습니다.</p>
          <Button onClick={() => router.push('/dream-interpretation')} variant="outline" className="mt-4">
           다른 꿈 해석하기
         </Button>
@@ -110,7 +111,7 @@ function DreamInterpretationResultContent() {
           <CardTitle className="text-3xl text-primary flex items-center gap-3">
             <WandSparkles className="h-8 w-8 text-primary"/> 당신의 꿈 해석
           </CardTitle>
-          <CardDescription className="text-md pt-1 flex items-start gap-1">
+          <CardDescription className="text-md pt-1 flex items-start gap-1 break-words">
             <MessageCircle className="h-4 w-4 mt-1 text-muted-foreground shrink-0"/>
             <span className="italic">"{dreamContent.length > 100 ? `${dreamContent.substring(0, 100)}...` : dreamContent}"</span>
           </CardDescription>
@@ -195,10 +196,11 @@ export default function DreamInterpretationResultPage() {
     <Suspense fallback={
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)] p-6">
         <LoadingSpinner size={48} />
-        <p className="mt-4 text-lg text-muted-foreground">결과 페이지 로딩 중...</p>
+        <p className="mt-4 text-lg text-muted-foreground break-words">결과 페이지 로딩 중...</p>
       </div>
     }>
       <DreamInterpretationResultContent />
     </Suspense>
   );
 }
+

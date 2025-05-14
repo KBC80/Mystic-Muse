@@ -140,7 +140,7 @@ export default function HoroscopePage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Star className="text-primary h-6 w-6" /> 별자리 운세
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             당신의 별자리를 확인하고 이번 주 운세를 알아보세요.
           </CardDescription>
         </CardHeader>
@@ -298,3 +298,4 @@ export default function HoroscopePage() {
     </div>
   );
 }
+

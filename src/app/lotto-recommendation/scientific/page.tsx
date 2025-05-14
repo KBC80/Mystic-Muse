@@ -226,7 +226,7 @@ export default function ScientificLottoRecommendationPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <TestTubeDiagonal className="text-primary h-6 w-6" /> 과학적 로또 번호 추천
           </CardTitle>
-          <CardDescription className="flex items-start gap-1">
+          <CardDescription className="flex items-start gap-1 break-words">
              <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0"/>
             <span>
                 실제 동행복권 API 데이터를 기반으로 로또 번호를 추천해 드립니다. 분석할 회차 수를 입력하고, 필요시 조건을 설정하세요.
@@ -238,14 +238,14 @@ export default function ScientificLottoRecommendationPage() {
       {isInitialLoading && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">최신 당첨 번호 로딩 중...</p>
+          <p className="ml-2 text-muted-foreground break-words">최신 당첨 번호 로딩 중...</p>
         </div>
       )}
       
       {error && !isInitialLoading && !isLoadingAnalysis && !isSubmittingRecommendation && ( 
         <Alert variant="destructive" className="my-4">
           <AlertTitle>오류 발생</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
       )}
 
@@ -255,35 +255,37 @@ export default function ScientificLottoRecommendationPage() {
             <CardTitle className="text-xl flex items-center gap-2"><BarChart className="h-5 w-5 text-secondary-foreground" />최근 당첨 번호 (최신 5회)</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>회차</TableHead>
-                  <TableHead>추첨일</TableHead>
-                  <TableHead>당첨 번호</TableHead>
-                  <TableHead>보너스</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentDrawsForDisplay.map((win) => (
-                  <TableRow key={win.drwNo}>
-                    <TableCell>{win.drwNo}회</TableCell>
-                    <TableCell>{win.drwNoDate}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {win.numbers.map(num => (
-                          <LottoBall key={num} number={num} size="small" />
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <LottoBall number={win.bnusNo} size="small" />
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>회차</TableHead>
+                    <TableHead>추첨일</TableHead>
+                    <TableHead>당첨 번호</TableHead>
+                    <TableHead>보너스</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-             <CardDescription className="text-xs mt-2 text-muted-foreground">* 최신 5회차의 당첨번호입니다. 실제 데이터는 동행복권 API를 통해 제공됩니다.</CardDescription>
+                </TableHeader>
+                <TableBody>
+                  {recentDrawsForDisplay.map((win) => (
+                    <TableRow key={win.drwNo}>
+                      <TableCell className="whitespace-nowrap">{win.drwNo}회</TableCell>
+                      <TableCell className="whitespace-nowrap">{win.drwNoDate}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {win.numbers.map(num => (
+                            <LottoBall key={num} number={num} size="small" />
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <LottoBall number={win.bnusNo} size="small" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+             <CardDescription className="text-xs mt-2 text-muted-foreground break-words">* 최신 5회차의 당첨번호입니다. 실제 데이터는 동행복권 API를 통해 제공됩니다.</CardDescription>
           </CardContent>
         </Card>
       )}
@@ -330,7 +332,7 @@ export default function ScientificLottoRecommendationPage() {
       {isLoadingAnalysis && (
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={28} />
-          <p className="ml-2 text-muted-foreground">과거 데이터 분석 중...</p>
+          <p className="ml-2 text-muted-foreground break-words">과거 데이터 분석 중...</p>
         </div>
       )}
 
@@ -343,21 +345,21 @@ export default function ScientificLottoRecommendationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                <p className="text-base text-muted-foreground">
+                <p className="text-base text-muted-foreground break-words">
                     평균 당첨 번호 합계: <strong className="text-foreground">{analysisResults.averageSum.toFixed(1)}</strong> (일반적인 범위: 100-180)
                 </p>
-                <p className="text-base text-muted-foreground">
+                <p className="text-base text-muted-foreground break-words">
                     가장 흔한 짝수:홀수 비율: <strong className="text-foreground">{analysisResults.averageEvenOddRatio}</strong>
                 </p>
 
                  {(analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0) || (analysisResults.leastFrequentNumbers && analysisResults.leastFrequentNumbers.length > 0) ? (
-                    <div className="mt-3">
+                    <div className="mt-3 overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[150px]">구분</TableHead>
+                            <TableHead className="w-[150px] whitespace-nowrap">구분</TableHead>
                             {Array.from({ length: Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0, 1) }).map((_, index) => (
-                              <TableHead key={`header-num-${index}`} className="text-center">번호 {index + 1}</TableHead>
+                              <TableHead key={`header-num-${index}`} className="text-center whitespace-nowrap">번호 {index + 1}</TableHead>
                             ))}
                           </TableRow>
                         </TableHeader>
@@ -365,15 +367,15 @@ export default function ScientificLottoRecommendationPage() {
                           {analysisResults.frequentNumbers && analysisResults.frequentNumbers.length > 0 && (
                             <>
                               <TableRow>
-                                <TableCell rowSpan={2} className="font-semibold align-middle text-foreground">자주 당첨된 번호</TableCell>
+                                <TableCell rowSpan={2} className="font-semibold align-middle text-foreground whitespace-nowrap">자주 당첨된 번호</TableCell>
                                 {analysisResults.frequentNumbers.map(item => (
-                                  <TableCell key={`freq-num-${item.num}`} className="text-center font-medium">{item.num}</TableCell>
+                                  <TableCell key={`freq-num-${item.num}`} className="text-center font-medium whitespace-nowrap">{item.num}</TableCell>
                                 ))}
                                 {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-pad-${i}`} />)}
                               </TableRow>
                               <TableRow>
                                 {analysisResults.frequentNumbers.map(item => (
-                                  <TableCell key={`freq-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
+                                  <TableCell key={`freq-count-${item.num}`} className="text-center text-xs text-muted-foreground whitespace-nowrap">({item.count}회)</TableCell>
                                 ))}
                                 {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.frequentNumbers.length) }).map((_, i) => <TableCell key={`freq-empty-count-pad-${i}`} />)}
                               </TableRow>
@@ -382,15 +384,15 @@ export default function ScientificLottoRecommendationPage() {
                           {analysisResults.leastFrequentNumbers && analysisResults.leastFrequentNumbers.length > 0 && (
                              <>
                               <TableRow>
-                                <TableCell rowSpan={2} className="font-semibold align-middle text-foreground">가장 적게 당첨된 번호</TableCell>
+                                <TableCell rowSpan={2} className="font-semibold align-middle text-foreground whitespace-nowrap">가장 적게 당첨된 번호</TableCell>
                                 {analysisResults.leastFrequentNumbers.map(item => (
-                                  <TableCell key={`least-num-${item.num}`} className="text-center font-medium">{item.num}</TableCell>
+                                  <TableCell key={`least-num-${item.num}`} className="text-center font-medium whitespace-nowrap">{item.num}</TableCell>
                                 ))}
                                  {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-pad-${i}`} />)}
                               </TableRow>
                               <TableRow>
                                 {analysisResults.leastFrequentNumbers.map(item => (
-                                  <TableCell key={`least-count-${item.num}`} className="text-center text-xs text-muted-foreground">({item.count}회)</TableCell>
+                                  <TableCell key={`least-count-${item.num}`} className="text-center text-xs text-muted-foreground whitespace-nowrap">({item.count}회)</TableCell>
                                 ))}
                                 {Array.from({ length: Math.max(0, Math.max(analysisResults.frequentNumbers?.length || 0, analysisResults.leastFrequentNumbers?.length || 0) - analysisResults.leastFrequentNumbers.length) }).map((_, i) => <TableCell key={`least-empty-count-pad-${i}`} />)}
                               </TableRow>
@@ -400,7 +402,7 @@ export default function ScientificLottoRecommendationPage() {
                       </Table>
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">번호 빈도수 데이터를 표시할 수 없습니다.</p>
+                    <p className="text-sm text-muted-foreground break-words">번호 빈도수 데이터를 표시할 수 없습니다.</p>
                   )}
             </CardContent>
         </Card>
@@ -412,7 +414,7 @@ export default function ScientificLottoRecommendationPage() {
             <CardTitle className="text-xl flex items-center gap-2">
               <HelpCircle className="text-primary h-5 w-5" /> AI 번호 추천 조건 설정
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="break-words">
               포함하거나 제외할 숫자를 선택하고, AI 추천 번호를 받아보세요.
             </CardDescription>
           </CardHeader>
@@ -473,4 +475,5 @@ export default function ScientificLottoRecommendationPage() {
     </div>
   );
 }
+
 

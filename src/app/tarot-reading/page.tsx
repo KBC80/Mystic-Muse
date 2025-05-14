@@ -135,7 +135,7 @@ export default function TarotReadingPage() {
           <CardTitle className="text-2xl flex items-center gap-2">
             <LayoutGrid className="text-primary h-6 w-6" /> 타로 운세
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="break-words">
             질문을 하고, 카드를 섞고, 세 장을 선택하여 당신의 지침을 받으세요.
           </CardDescription>
         </CardHeader>
@@ -172,9 +172,9 @@ export default function TarotReadingPage() {
       {questionSubmitted && (
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl">카드 선택</CardTitle>
+            <CardTitle className="text-xl break-words">카드 선택</CardTitle>
             <div className="flex justify-between items-center">
-              <CardDescription>
+              <CardDescription className="break-words">
                 {selectedCards.length < 3 ? `${3 - selectedCards.length}장 더 선택해주세요.` : "모든 카드를 선택했습니다. 해석 준비 완료."}
               </CardDescription>
               <Button onClick={shuffleDeck} variant="outline" size="sm" disabled={isShuffling || isLoading || (selectedCards.length >= 3 && !isLoading) }>
@@ -186,7 +186,7 @@ export default function TarotReadingPage() {
             {isShuffling ? (
               <div className="flex justify-center items-center py-10 min-h-[200px]">
                 <LoadingSpinner size={32} />
-                <p className="ml-2 text-muted-foreground">카드를 섞고 있습니다...</p>
+                <p className="ml-2 text-muted-foreground break-words">카드를 섞고 있습니다...</p>
               </div>
             ) : (
               <div className="space-y-3 py-4">
@@ -233,14 +233,14 @@ export default function TarotReadingPage() {
       {isLoading && !isShuffling && questionSubmitted && selectedCards.length !==3 && ( 
         <div className="flex justify-center items-center p-6">
           <LoadingSpinner size={32} />
-          <p className="ml-2 text-muted-foreground">카드를 불러오는 중...</p>
+          <p className="ml-2 text-muted-foreground break-words">카드를 불러오는 중...</p>
         </div>
       )}
 
       {error && (
         <Alert variant="destructive" className="mt-4">
           <AlertTitle>오류</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="break-words">{error}</AlertDescription>
         </Alert>
       )}
 
@@ -255,3 +255,4 @@ export default function TarotReadingPage() {
     </div>
   );
 }
+
