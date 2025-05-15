@@ -9,6 +9,7 @@
     ],
     "frameworksBackend": {
       "region": "us-central1",
+      "memory": "512MiB",
       "maxInstances": 10
     }
   }
